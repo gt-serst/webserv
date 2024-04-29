@@ -138,8 +138,6 @@ int main(int argc, char **argv) {
 	pid_t		childpid;
 	std::string	dir;
 
-	std::cout << "Logs from your program will appear here!\n";
-
 	if (argc == 3 && strcmp(argv[1], "--directory") == 0)
 		dir = argv[2];
 
