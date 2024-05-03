@@ -5,7 +5,65 @@
 #include <string>
 #include <poll.h>
 #include <fcntl.h>
-#include <curses.h>
+#include <cstring>
+#include <fstream>
+#include <sstream>
+#include <stdio.h>
+#include <cstdlib>
+
+static std::string	handle_get_request(std::string& filename)
+{
+	std::string	response;
+	char*		home;
+	
+	//std::cout << "|" << filename << "|" << std::endl;
+	std::ifstream file(filename);
+	if (!file.is_open())
+	{
+		response = "HTTP/1.1 404 Not Found\r\n\r\n";
+		//write(client_fd, response, response.length());
+	}
+	else
+	{
+		std::ostringstream content;
+    		content << file.rdbuf();
+    		file.close();
+		response = "HTTP/1.1 200 OK\r\n\r\n" + content.str();
+		//write(client_fd, response.c_str(), response.length());
+	}
+	return (response);
+}
+
+static std::string	parse_request(std::string buffer)
+{
+	int		first_delim;
+	int		second_delim;
+	std::string	request_methods;
+	std::string	path_to_file;
+	std::string	response;
+	
+	if (buffer.empty())
+		return (response);
+	else
+	{
+		first_delim = buffer.find(' ');
+		second_delim = buffer.find(' ', first_delim + 1);
+		request_methods = buffer.substr(0, first_delim);
+		path_to_file = buffer.substr(first_delim + 1, second_delim - first_delim - 1);
+		//std::cout << "|" << request_methods << "|" << std::endl;
+		//std::cout << "|" << path_to_file << "|"  << std::endl;
+		if (path_to_file == "/")
+			path_to_file += "index.html";
+		if (request_methods == std::string("GET"))
+		{
+			char* home = getenv("HOME");
+			std::string filename = std::string(home) + "/Desktop/webserv/var/www/html" + path_to_file;
+			response = handle_get_request(filename);
+			return (response);
+		}
+		return (response);
+	}
+}
 
 int	main(int argc, char ** argv)
 {
@@ -76,6 +134,7 @@ int	main(int argc, char ** argv)
 			{
 				while (1)
 				{
+					std::string response;
 					char	buffer[255];
 					int		len;
 
@@ -84,9 +143,12 @@ int	main(int argc, char ** argv)
 						break;
 					if (rc == 0)
 						break;
-					std::cout << buffer << std::endl;
-					len = rc;
-					rc = send(fds[i].fd, buffer, len, 0);
+					response = parse_request(buffer);
+					if (response.empty())
+						break;
+					std::cout << response << std::endl;
+					len = response.length();
+					rc = send(fds[i].fd, response.c_str(), len, 0);
 					if (rc < 0)
 						break;
 				}
