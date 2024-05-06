@@ -3,39 +3,47 @@
 
 #include <string>
 #include <iostream>
+#include <sstream>
+#include <vector>
+#include <map>
+#include <exception>
 
 class Request
 {
     private:
         std::string _request;
-        Server _server;
+        //Server _server;
         std::string _request_method;
         std::string _path_to_file;
         std::string _version;
-        std::string _header;
+        std::map<std::string, std::string> _headers;
         std::string _body;
         int _len;
 
-        void setRequestMethod(std::string _request);
-        void setPathToFile(std::string _request);
-        void setVersion(std::string _request);
-        void setHeader(std::string _request);
-        void setBody(std::string _request);
-        void setLen(std::string _request);
+        // class RequestParseError : public std::exception {
+        //     public : 
+        //         const char* what() const noexcept override { return "Error request parsing"}
+        // }
+        void setRequestMethod(void);
+        // void setPathToFile(std::string _request);
+        // void setVersion(std::string _request);
+        void setHeader(std::stringstream& ss, std::streampos startpos);
+        // void setBody(std::string _request);
+        // void setLen(std::string _request);
 
-        std::string getRequestMethod();
-        std::string getPathToFile();
-        std::string getVersion();
-        std::string getHeader();
-        std::string getBody();
-        int getLen();
+        // std::string getRequestMethod();
+        // std::string getPathToFile();
+        // std::string getVersion();
+        // std::string getHeader();
+        // std::string getBody();
+        // int getLen();
 
     public:
-        Request(std::string& buffer);
+        Request(std::string& buffer/*, Server& server*/);
         ~Request();
 
         void setRequest(std::string& buffer);
-        std::string getRequest();
+        //std::string getRequest();
 };
 
 #endif

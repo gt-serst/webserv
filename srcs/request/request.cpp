@@ -1,8 +1,9 @@
 #include "request.hpp"
 
-Request::Request(std::string& buffer)
+Request::Request(std::string& buffer/*, Server& server*/)
 {
-    setRequest(buffer)
+    // _server = server;
+    setRequest(buffer);
     std::cout << "request created" << std::endl;
 }
 
@@ -14,6 +15,59 @@ Request::~Request()
 void Request::setRequest(std::string& buffer)
 {
     _request = buffer;
+    setRequestMethod();
+}
 
-    
+void Request::setRequestMethod(void)
+{
+    std::stringstream ss(_request);
+    std::string line;
+
+    std::getline(ss, line);
+    std::istringstream firstLine(line);
+    firstLine >> _request_method >> _path_to_file >> _version;
+
+    if (_request_method.compare("GET") 
+        && _request_method.compare("POST") 
+        && _request_method.compare("DELETE"))
+    {
+        exit(0); //handle error
+    }
+    if (_version.compare(0, 4, "HTTP"))
+        exit(0); //handle error
+
+    //will manage the path in response probly ?
+    std::cout << "Method: " << _request_method << std::endl;
+    std::cout << "Path: " << _path_to_file << std::endl;
+    std::cout << "Version: " << _version << std::endl;
+    std::streampos currentpos = ss.tellg();
+    setHeader(ss, currentpos);
+}
+
+void Request::setHeader(std::stringstream& ss, std::streampos startpos)
+{
+    std::cout << "headers" << std::endl;
+    ss.seekg(startpos);
+    std::string line;
+
+    while (std::getline(ss, line) && !line.empty())
+    {
+        size_t pos = line.find(':');
+        if (pos != std::string::npos) 
+        {
+            std::string key = line.substr(0, pos);
+            std::string value = line.substr(pos + 1);
+            // Trim leading and trailing whitespace
+            key.erase(0, key.find_first_not_of(" \t"));
+            key.erase(key.find_last_not_of(" \t") + 1);
+            value.erase(0, value.find_first_not_of(" \t"));
+            value.erase(value.find_last_not_of(" \t") + 1);
+            // Store the header
+            _headers[key] = value;
+        }
+    }
+
+    for (std::map<std::string, std::string>::const_iterator it = _headers.begin(); it != _headers.end(); ++it) {
+        std::cout << it->first << ": " << it->second << std::endl;
+    }
 }
