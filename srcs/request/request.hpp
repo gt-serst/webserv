@@ -25,15 +25,13 @@ class Request
         //         const char* what() const noexcept override { return "Error request parsing"}
         // }
         void setRequestMethod(void);
-        // void setPathToFile(std::string _request);
-        // void setVersion(std::string _request);
         void setHeader(std::stringstream& ss, std::streampos startpos);
         // void setBody(std::string _request);
         // void setLen(std::string _request);
 
-        // std::string getRequestMethod();
-        // std::string getPathToFile();
-        // std::string getVersion();
+        std::string getRequestMethod();
+        std::string getPathToFile();
+        std::string getVersion();
         // std::string getHeader();
         // std::string getBody();
         // int getLen();

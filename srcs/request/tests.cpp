@@ -2,7 +2,7 @@
 
 int main()
 {
-    std::string getRequest = "GET / HTTP/1.1\r\n"
+    std::string getRequest = "GET https:lol HTTP/1.1\r\n"
                              "Host: localhost:4242\r\n"
                              "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:121.0) Gecko/20100101 Firefox/121.0\r\n"
                              "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8\r\n"
