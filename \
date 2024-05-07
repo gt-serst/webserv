@@ -29,8 +29,7 @@ int	main(int argc, char ** argv)
 	server_addr.sin_family = AF_INET;
 	server_addr.sin_addr.s_addr = INADDR_ANY;
 	server_addr.sin_port = htons(4242);
-	int	server_addr_len = sizeof(server_addr);
-	rc = bind(server_fd, (struct sockaddr *) &server_addr, &server_addr_len);
+	rc = bind(server_fd, (struct sockaddr *) &server_addr, sizeof(server_addr));
 	if (rc < 0)
 		exit(1);
 
