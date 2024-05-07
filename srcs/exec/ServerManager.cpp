@@ -6,14 +6,22 @@
 /*   By: gt-serst <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/07 11:04:51 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/05/07 16:01:53 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/05/07 17:14:08 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "ServerManager.hpp"
+#include "Client.hpp"
 #include <vector>
+#include <algorithm>
+#include <sys/socket.h>
+#include <fcntl.h>
+#include <stdio.h>
+#include <curses.h>
+#include <poll.h>
+#include <unistd.h>
 
-ServerManager::ServerManager(){}
+ServerManager::ServerManager() : _nfds(0){}
 
 ServerManager::~ServerManager(){}
 
@@ -28,7 +36,7 @@ void	ServerManager::createSockets(void){
 
 	int	rc;
 
-	memset(_fds, 0, sizeof(_fds));
+	std::fill(std::begin(_fds), std::end(_fds), pollfd{0});
 	for (int i = 0; i < _servers.size(); i++)
 	{
 		_servers[i]._server_fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -69,8 +77,8 @@ void	ServerManager::createSockets(void){
 		}
 		_fds[i].fd = _servers[i]._server_fd;
 		_fds[i].events = POLLIN;
+		_nfds++;
 	}
-	_nfds = i;
 }
 
 void	ServerManager::checkSockets(void){
@@ -126,8 +134,8 @@ void	ServerManager::checkSockets(void){
 					}
 					if (rc == 0)
 						break;
-					len = buffer.c_str().length();
-					rc = send(_fds[i].fd, buffer.c_str(), len, 0);
+					len = rc;
+					rc = send(_fds[i].fd, buffer, len, 0);
 					if (rc < 0)
 					{
 						perror("send() failed");
