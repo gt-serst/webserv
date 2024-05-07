@@ -20,13 +20,9 @@ class Request
         std::string _body;
         int _len;
 
-        // class RequestParseError : public std::exception {
-        //     public : 
-        //         const char* what() const noexcept override { return "Error request parsing"}
-        // }
         void setRequestMethod(void);
         void setHeader(std::stringstream& ss, std::streampos startpos);
-        // void setBody(std::string _request);
+        void setBody(std::stringstream& ss, std::streampos startpos);
         // void setLen(std::string _request);
 
         std::string getRequestMethod();

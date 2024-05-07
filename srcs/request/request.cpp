@@ -77,6 +77,20 @@ void Request::setHeader(std::stringstream& ss, std::streampos startpos)
     {
         std::cout << it->first << ": " << it->second << std::endl;
     }
+    if (_request_method.compare("GET"))
+    {
+        startpos = ss.tellg();
+        setBody(ss, startpos);
+    }
+}
+
+void Request::setBody(std::stringstream& ss, std::streampos startpos)
+{
+    std::cout << "Body" << std::endl;
+
+    ss.seekg(startpos);
+    std::string line;
+    
 }
 
 //GET FUNCTIONS
