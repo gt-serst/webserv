@@ -4,7 +4,7 @@
 # include <string>
 # include <iostream>
 # include <fstream>
-
+# include <cctype>
 //----------ENUMS----------//
 
 typedef enum e_allowed_methods

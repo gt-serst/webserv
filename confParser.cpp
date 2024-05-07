@@ -26,10 +26,29 @@ static t_server_scope	*isServerName(int *i, std::string buffer, t_server_scope *
 
 static t_server_scope	*isServerHost(int *i, std::string buffer, t_server_scope *serverConfig, int *servers)
 {
-	(void)servers;
-	std::cout << "I : " << *i << std::endl;
-	std::cout << "buffer[*i] = " << buffer[*i] << std::endl;
-	return (serverConfig);
+	if (buffer.substr(*i, 6) == "listen" && buffer[*i + 6] == '\t' && buffer[*i + 7] == '\t')
+	{
+		*i += 8;
+		int j =	*i;
+		while (isdigit(buffer[j]))
+			j++;
+		if (j == *i)
+		{
+			freeConfig(serverConfig, *servers);
+			return (NULL);
+		}
+		int res = stoi(buffer.substr(*i, j - *i));
+		*i = j;
+		if (buffer[*i] != '\n' || res <= 0 || res >= 65353)
+		{
+			freeConfig(serverConfig, *servers);
+			return (NULL);
+		}
+		serverConfig[*servers].port = res;
+		return (serverConfig);
+	}
+	freeConfig(serverConfig, *servers);
+	return (NULL);
 }
 
 static t_server_scope	*isServerErrPage(int *i, std::string buffer, t_server_scope *serverConfig, int *servers)
@@ -74,7 +93,6 @@ static t_server_scope	*isServerLocation(int *i, std::string buffer, t_server_sco
 
 static t_server_scope	*getServerConfig(int *i, std::string buffer, t_server_scope *serverConfig, int *servers)
 {
-	std::cout << *i << " " << *servers << " " << buffer[*i] << std::endl;
 	//While inside a 'server' block, calling the appropriate function according to the first character.
 	while (buffer[*i] && buffer[*i] != '}')
 	{
