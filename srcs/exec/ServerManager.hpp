@@ -6,7 +6,7 @@
 /*   By: gt-serst <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/07 11:00:48 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/05/07 13:21:38 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/05/07 15:57:34 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,12 +20,13 @@ class ServerManager
 	private:
 		ServerManager();
 		~ServerManager();
-		void	launchServers(void);
-		void	createSockets(void);
-		void	checkSockets(void);
+		void				launchServers(void);
+		void				createSockets(void);
+		void				checkSockets(void);
+		void				closeSockets(void);
 		std::vector<Server> _servers;
-		struct pollfd* _fds;
-		int	_nfds;
+		struct pollfd*		_fds;
+		int					_nfds;
 }
 
 #endif
