@@ -1,37 +1,34 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   ServerManager.hpp                                  :+:      :+:    :+:   */
+/*   Server.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: gt-serst <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/05/07 11:00:48 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/05/08 13:16:20 by gt-serst         ###   ########.fr       */
+/*   Created: 2024/05/08 09:43:45 by gt-serst          #+#    #+#             */
+/*   Updated: 2024/05/08 10:45:04 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef SERVERMANAGER_HPP
-# define SERVERMANAGER_HPP
+#ifndef SERVER_HPP
+# define SERVER_HPP
 
-# include "Server.hpp"
-# include <vector>
-# include <poll.h>
+# include <sys/socket.h>
+# include <arpa/inet.h>
 
-class ServerManager
+class Server
 {
 	public:
-		ServerManager();
-		~ServerManager();
-		void				launchServers(void);
-	
+		Server(unsigned int port);
+		~Server();
+		unsigned int		getPort(void) const;
+		int					_server_fd;
+		struct sockaddr_in	_server_addr;
+		socklen_t			_server_addr_len;
+
 	private:
-		void				createSockets(void);
-		void				checkSockets(void);
-		void				closeSockets(void);
-		void				setBlocking(int fd, bool val);
-		std::vector<Server> _servers;
-		struct pollfd		_fds[254];
-		int					_nfds;
+		unsigned int	_port;
+		
 };
 
 #endif

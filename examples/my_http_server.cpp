@@ -76,7 +76,6 @@ int	main(int argc, char ** argv)
 
 	server_fd = socket(AF_INET, SOCK_STREAM, 0);
 
-	int reuse = 1;
 	rc = setsockopt(server_fd, SOL_SOCKET, SO_REUSEPORT, &reuse, sizeof(reuse));
 	if (rc < 0)
 		exit(1);

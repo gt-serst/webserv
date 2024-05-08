@@ -6,20 +6,24 @@
 /*   By: gt-serst <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/07 11:04:51 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/05/07 17:14:08 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/05/08 17:51:24 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "ServerManager.hpp"
+#include "Server.hpp"
 #include "Client.hpp"
 #include <vector>
 #include <algorithm>
 #include <sys/socket.h>
+#include <arpa/inet.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <curses.h>
 #include <poll.h>
 #include <unistd.h>
+#include <string.h>
+#include <iostream>
 
 ServerManager::ServerManager() : _nfds(0){}
 
@@ -27,6 +31,8 @@ ServerManager::~ServerManager(){}
 
 void	ServerManager::launchServers(void){
 
+	Server s1(8080);
+	_servers.push_back(s1);
 	createSockets();
 	checkSockets();
 	closeSockets();
@@ -35,8 +41,8 @@ void	ServerManager::launchServers(void){
 void	ServerManager::createSockets(void){
 
 	int	rc;
-
-	std::fill(std::begin(_fds), std::end(_fds), pollfd{0});
+	
+	memset(_fds, 0, sizeof(_fds));
 	for (int i = 0; i < _servers.size(); i++)
 	{
 		_servers[i]._server_fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -60,9 +66,9 @@ void	ServerManager::createSockets(void){
 		}
 		_servers[i]._server_addr.sin_family = AF_INET;
 		_servers[i]._server_addr.sin_addr.s_addr = INADDR_ANY;
-		_servers[i]._server_addr.sin_port = htons(_servers[i]._port);
+		_servers[i]._server_addr.sin_port = htons(_servers[i].getPort());
 		_servers[i]._server_addr_len = sizeof(_servers[i]._server_addr);
-		rc = bind(_servers[i]._server_fd, (struct sockaddr *) &(_servers[i]._server_addr), &(_servers[i]._server_addr_len));
+		rc = bind(_servers[i]._server_fd, (struct sockaddr *) &(_servers[i]._server_addr), _servers[i]._server_addr_len);
 		if (rc < 0)
 		{
 			perror("bind() failed");
@@ -105,42 +111,41 @@ void	ServerManager::checkSockets(void){
 			Client client;
 
 			client._client_addr_len = sizeof(client._client_addr);
-			if (_fds[i].revents == 0)
+			if (!(_fds[i].revents & POLLIN))
 				continue;
-			if (_fds[i].revents != POLLIN)
-				break;
 			if (_fds[i].fd == _servers[i]._server_fd)
-				while (1)
-				{
-					client._client_fd = accept(_servers[i]._server_fd, (struct sockaddr *) &(client._client_addr), (socklen_t *) &(client._client_addr_len));
-					if (client._client_fd < 0)
-						break;
-					_fds[_nfds].fd = client._client_fd;
-					_fds[_nfds].events = POLLIN;
-					_nfds++;	
-				}
+			{
+				client._client_fd = accept(_servers[i]._server_fd, (struct sockaddr *) &(client._client_addr), &(client._client_addr_len));
+				_fds[_nfds].fd = client._client_fd;
+				_fds[_nfds].events = POLLIN;
+				_nfds++;
+			}
 			else
 			{
-				while (1)
-				{
-					char	buffer[255];
-					int		len;
+				char	buffer[255];
+				int		len;
 
-					rc = recv(_fds[i].fd, buffer, sizeof(buffer), 0);
-					if (rc < 0)
-					{
+				setBlocking(client._client_fd, false);
+				rc = recv(_fds[i].fd, buffer, sizeof(buffer), 0);
+				if (rc <= 0)
+				{
+					if (rc < 0)	
 						perror("recv() failed");
-						break;
+					else
+					{
+						close(_fds[i].fd);
+						std::cout << "Connection fd= " << _fds[i].fd << " closed" << std::endl;
 					}
-					if (rc == 0)
-						break;
+				}
+				else
+				{
+					setBlocking(client._client_fd, true);
+					std::cout << buffer << std::endl;
 					len = rc;
 					rc = send(_fds[i].fd, buffer, len, 0);
 					if (rc < 0)
-					{
 						perror("send() failed");
-						break;
-					}
+					setBlocking(client._client_fd, false);
 				}
 			}
 		}
@@ -154,4 +159,21 @@ void	ServerManager::closeSockets(void){
 		if (_fds[i].fd >= 0)
 			close(_fds[i].fd);
 	}
+}
+
+void	ServerManager::setBlocking(int fd, bool val){
+
+	int	fl;
+	int	res;
+
+	fl = fcntl(fd, F_GETFL, 0);
+	if (fl == -1)
+		perror("fcntl() failed");
+	if (val)
+		fl &= ~O_NONBLOCK;
+	else
+		fl |= O_NONBLOCK;
+	res = fcntl(fd, F_SETFL, fl);
+	if (fl == -1)
+		perror("fcntl() failed");
 }
