@@ -11,7 +11,7 @@ Request::Request(std::string& buffer/*, Server& server*/)
 {
     // _server = server;
     setRequest(buffer);
-    std::cout << "request created" << std::endl;
+    std::cout << "Parsing request" << std::endl;
 }
 
 Request::~Request()
@@ -22,7 +22,20 @@ Request::~Request()
 void Request::setRequest(std::string& buffer)
 {
     _request = buffer;
-    setRequestMethod();
+    parseRequestLine();
+    //setRequestMethod();
+}
+
+void Request::parseRequestLine(void)
+{
+    std::stringstream ss(_request);
+    std::string extract_line;
+    std::getline(ss, extract_line);
+    const char *line = extract_line.c_str();
+
+    
+
+
 }
 
 void Request::setRequestMethod(void)
@@ -34,14 +47,14 @@ void Request::setRequestMethod(void)
     std::istringstream firstLine(line);
     firstLine >> _request_method >> _path_to_file >> _version;
 
-    if (_request_method.compare("GET") 
-        && _request_method.compare("POST") 
+    if (_request_method.compare("GET")
+        && _request_method.compare("POST")
         && _request_method.compare("DELETE"))
     {
         exit(0); //handle error
     }
-    if (_version.compare(0, 4, "HTTP"))
-        exit(0); //handle error
+    if (_version.compare(0, 8, "HTTP/1.1"))
+        exit(0); //handle error (this server only support http 1.1 requests)
     if (_path_to_file.compare(0, 7, "http://") && _path_to_file.compare(0, 1, "/")
         && _path_to_file.compare(0, 8, "https://"))
         exit(0); // handle error
@@ -90,6 +103,7 @@ void Request::setBody(std::stringstream& ss, std::streampos startpos)
 
     ss.seekg(startpos);
     std::string line;
+
     
 }
 
