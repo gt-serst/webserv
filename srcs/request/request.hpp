@@ -27,6 +27,7 @@ enum state //state is current state so the name is what we previsly validated ||
     R_abs_schema_end, //checking for //
     R_abs_slashes, //checking if first char after // is [ or not
     R_abs_literal_ip, //parse literal ip and check : (port) stop when ]
+	R_abs_literal_ip_end,
     R_abs_host_start, //check for characters validity and check : (port)
     R_abs_port, //parse port check if /
     R_uri_after_slash, //after the / of the root

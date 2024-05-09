@@ -33,8 +33,9 @@ void Request::parseRequestLine(const char *line)
 {
 	int len = strlen(line);
 	int state = R_line;
+	int path_start = 0;
 
-	for (int i = 0; i < len; i++)
+	for (int i = 0; i < len; i++) //for security I should be goint to the begin of loop / switch after uptating each state because of i
 	{
 		switch (state)
 		{
@@ -68,16 +69,45 @@ void Request::parseRequestLine(const char *line)
 				else
 					return ; //error 400 bad request : first space
 			}
-			case R_first_space:
+			case R_first_space: //checking if we have absolute or relative path 
 			{
 				if (line[i] == '/')
 				{
 					i++;
+					path_start = i;
 					state = R_uri_after_slash;
 				}
-				if () //using strncmp by passing the adress of the first char &line[i]
+				else if (strncmp(&line[i], "http://", 7)) //using strncmp by passing the adress of the first char &line[i]
 				{
-					state = R_abs_http_s;
+					i += 7;
+					state = R_abs_slashes;
+				}
+				else if (strncmp(&line[i], "https://", 8))
+				{
+					i += 8;
+					state = R_abs_slashes;
+				}
+				else
+					return ; //error 400 bad request
+			}
+			case R_abs_slashes:
+			{
+				if (line[i] == '[')
+				{
+					i++;
+					state = R_abs_literal_ip;
+				}
+				else
+					state = R_abs_host_start;
+			}
+			case R_abs_literal_ip:
+			{
+				if (!isdigit(line[i]) || line[i] != '.' || line[i] != ']')
+					return ; //error 400 bad request : unsuported litteral ip 
+				if (line[i] == ']')
+				{
+					state = R_abs_literal_ip_end;
+					break ;
 				}
 			}
 		}
