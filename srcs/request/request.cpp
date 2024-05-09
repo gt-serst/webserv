@@ -22,20 +22,66 @@ Request::~Request()
 void Request::setRequest(std::string& buffer)
 {
     _request = buffer;
-    parseRequestLine();
+	std::stringstream ss(_request);
+	std::string extract_line;
+	std::getline(ss, extract_line);
+    parseRequestLine(extract_line.c_str());
     //setRequestMethod();
 }
 
-void Request::parseRequestLine(void)
+void Request::parseRequestLine(const char *line)
 {
-    std::stringstream ss(_request);
-    std::string extract_line;
-    std::getline(ss, extract_line);
-    const char *line = extract_line.c_str();
+	int len = strlen(line);
+	int state = R_line;
 
-    
-
-
+	for (int i = 0; i < len; i++)
+	{
+		switch (state)
+		{
+			case R_line: //checking for the method not accepting leading WS
+			{
+				if (strncmp(line, "GET", 3) == 0)
+				{
+					_request_method = GET;
+					i += 3;
+					state = R_method;
+				}
+				else if (strncmp(line, "POST", 4) == 0)
+				{
+					_request_method = POST;
+					i += 4;
+					state = R_method;
+				}
+				else if (strncmp(line, "DELETE", 6) == 0)
+				{
+					_request_method = DELETE;
+					i += 6;
+					state = R_method;
+				}
+				else
+					return ; //error 400 bad request : method if we want to be picky it could be a 405 : method not available if they enter another existing but unsported method
+			}
+			case R_method: //checking for a single space after method
+			{
+				if (line[i++] == ' ')
+					state = R_first_space;
+				else
+					return ; //error 400 bad request : first space
+			}
+			case R_first_space:
+			{
+				if (line[i] == '/')
+				{
+					i++;
+					state = R_uri_after_slash;
+				}
+				if () //using strncmp by passing the adress of the first char &line[i]
+				{
+					state = R_abs_http_s;
+				}
+			}
+		}
+	}	
 }
 
 void Request::setRequestMethod(void)
@@ -45,14 +91,7 @@ void Request::setRequestMethod(void)
 
     std::getline(ss, line);
     std::istringstream firstLine(line);
-    firstLine >> _request_method >> _path_to_file >> _version;
 
-    if (_request_method.compare("GET")
-        && _request_method.compare("POST")
-        && _request_method.compare("DELETE"))
-    {
-        exit(0); //handle error
-    }
     if (_version.compare(0, 8, "HTTP/1.1"))
         exit(0); //handle error (this server only support http 1.1 requests)
     if (_path_to_file.compare(0, 7, "http://") && _path_to_file.compare(0, 1, "/")
@@ -90,11 +129,6 @@ void Request::setHeader(std::stringstream& ss, std::streampos startpos)
     {
         std::cout << it->first << ": " << it->second << std::endl;
     }
-    if (_request_method.compare("GET"))
-    {
-        startpos = ss.tellg();
-        setBody(ss, startpos);
-    }
 }
 
 void Request::setBody(std::stringstream& ss, std::streampos startpos)
@@ -109,7 +143,7 @@ void Request::setBody(std::stringstream& ss, std::streampos startpos)
 
 //GET FUNCTIONS
 
-std::string Request::getRequestMethod()
+t_method Request::getRequestMethod()
 {
     return _request_method;
 }
