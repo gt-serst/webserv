@@ -7,6 +7,14 @@
 
 //SET FUNCTIONS
 
+bool    allowedCharURI(char ch)
+{
+    if ((ch >= '#' && ch <= ';') || (ch >= '?' && ch <= '[') || (ch >= 'a' && ch <= 'z') ||
+       ch == '!' || ch == '=' || ch == ']' || ch == '_' || ch == '~')
+        return (true);
+    return (false);
+}
+
 Request::Request(std::string& buffer/*, Server& server*/)
 {
     // _server = server;
@@ -37,6 +45,9 @@ void Request::parseRequestLine(const char *line)
 
 	for (int i = 0; i < len; i++) //for security I should be goint to the begin of loop / switch after uptating each state because of i
 	{
+		std::cout << "hello" << std::endl;
+		// if (i > MAX_URI_SIZE)
+		// 	return ; //error URI too long
 		switch (state)
 		{
 			case R_line: //checking for the method not accepting leading WS
@@ -44,71 +55,141 @@ void Request::parseRequestLine(const char *line)
 				if (strncmp(line, "GET", 3) == 0)
 				{
 					_request_method = GET;
-					i += 3;
+					i += 2;
 					state = R_method;
 				}
 				else if (strncmp(line, "POST", 4) == 0)
 				{
 					_request_method = POST;
-					i += 4;
+					i += 3;
 					state = R_method;
 				}
 				else if (strncmp(line, "DELETE", 6) == 0)
 				{
 					_request_method = DELETE;
-					i += 6;
+					i += 5;
 					state = R_method;
 				}
 				else
 					return ; //error 400 bad request : method if we want to be picky it could be a 405 : method not available if they enter another existing but unsported method
+				break ;
 			}
 			case R_method: //checking for a single space after method
 			{
-				if (line[i++] == ' ')
+				if (line[i] == ' ')
 					state = R_first_space;
 				else
 					return ; //error 400 bad request : first space
+				break ;
 			}
 			case R_first_space: //checking if we have absolute or relative path 
 			{
 				if (line[i] == '/')
 				{
-					i++;
 					path_start = i;
 					state = R_uri_after_slash;
 				}
 				else if (strncmp(&line[i], "http://", 7)) //using strncmp by passing the adress of the first char &line[i]
 				{
-					i += 7;
+					i += 6;
 					state = R_abs_slashes;
 				}
 				else if (strncmp(&line[i], "https://", 8))
 				{
-					i += 8;
+					i += 7;
 					state = R_abs_slashes;
 				}
 				else
 					return ; //error 400 bad request
+				break ;
 			}
 			case R_abs_slashes:
 			{
 				if (line[i] == '[')
 				{
-					i++;
 					state = R_abs_literal_ip;
 				}
 				else
 					state = R_abs_host_start;
+				break ;
 			}
-			case R_abs_literal_ip:
+			case R_abs_literal_ip: //devoir stocker 
 			{
 				if (!isdigit(line[i]) || line[i] != '.' || line[i] != ']')
 					return ; //error 400 bad request : unsuported litteral ip 
 				if (line[i] == ']')
-				{
-					state = R_abs_literal_ip_end;
-					break ;
-				}
+					state = R_abs_host_end;
+				break ;
+			}
+			case R_abs_host_start:
+			{
+				if (!allowedCharURI(line[i]))
+					return ; //error bad request
+				else if (line[i] == ':')
+					state = R_abs_port;
+				else if (line[i] )
+				break ;
+			}
+			case R_abs_host_end:
+			{
+				if (line[i] == ':')
+					state = R_abs_port;
+				else if (line[i] == '/')
+					state = R_abs_path;
+				else
+					return ; //error
+				break ;
+			}
+			case R_abs_port:
+			{
+				if (line[i] == '/')
+					state = R_abs_path;
+				else if (line[i] == ' ')
+					state = R_second_space;
+				else if(!isdigit(line[i]))
+					return ; //error port
+				break ;
+			}
+			case R_abs_path:
+			{
+				if (line[i] == '?')
+					state = R_uri_query;
+				if (line[i] == '#')
+					state = R_fragment ; //manage fragment
+				else if (line[i] == ' ')
+					state = R_second_space;
+				break ;
+			}
+			case R_second_space:
+			{
+				if (strncmp(&line[i], "HTTP/1.1", 8) != 0)
+					return ; //error server only supports http 1.1
+				else
+					state = R_version;
+				break ;
+			}
+			case R_version:
+			{
+				if (line[i] == '\r')
+					state = R_cr;
+				else
+					return ; //error;
+				break ;
+			}
+			case R_cr:
+			{
+				if (line[i] == '\n' )
+					state = R_crlf;
+				else
+					return ; //error;
+				break ;
+			}
+			case R_crlf:
+			{
+				if (i == len)
+					return ; //good
+				else
+					return ; //error
 			}
 		}
 	}	
