@@ -6,7 +6,7 @@
 /*   By: gt-serst <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/07 11:04:51 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/05/08 17:51:24 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/05/13 15:40:22 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,14 +25,17 @@
 #include <string.h>
 #include <iostream>
 
-ServerManager::ServerManager() : _nfds(0){}
+#define MAX_FD 20
+#define BUFFER_SIZE 9999
+
+ServerManager::ServerManager(){}
 
 ServerManager::~ServerManager(){}
 
 void	ServerManager::launchServers(void){
 
-	Server s1(8080);
-	_servers.push_back(s1);
+	Server server(8080);
+	_servers.push_back(server);
 	createSockets();
 	checkSockets();
 	closeSockets();
@@ -40,140 +43,163 @@ void	ServerManager::launchServers(void){
 
 void	ServerManager::createSockets(void){
 
-	int	rc;
+	int		rc;
+	int		flags;
+
+	memset(_pollfds, 0, sizeof(_pollfds));
 	
-	memset(_fds, 0, sizeof(_fds));
-	for (int i = 0; i < _servers.size(); i++)
+	for (int x = 0; x < MAX_FD; x++)
 	{
-		_servers[i]._server_fd = socket(AF_INET, SOCK_STREAM, 0);
-		if (_servers[i]._server_fd < 0)
-		{
-			perror("socket() failed");
-			exit(-1);
-		}
+		_servers[x]._server_fd = socket(AF_INET, SOCK_STREAM, 0);
+		if (_servers[x]._server_fd < 0)
+			perror("Socket() failed");
+
 		int reuse = 1;
-		rc = setsockopt(_servers[i]._server_fd, SOL_SOCKET, SO_REUSEPORT, &reuse, sizeof(reuse));
+		rc = setsockopt(_servers[x]._server_fd, SOL_SOCKET, SO_REUSEPORT, &reuse, sizeof(reuse));
 		if (rc < 0)
-		{
-			perror("setsockopt() failed");
-			exit(-1);
-		}
-		rc = fcntl(_servers[i]._server_fd, F_SETFL, O_NONBLOCK);
+			perror("Setsockopt() failed");
+
+		flags = fcntl(_servers[x]._server_fd, F_GETFL, 0);
+		if (flags < 0)
+			perror("Fcntl() failed");
+		fcntl(_servers[x]._server_fd, F_SETFL, flags | O_NONBLOCK);
+
+		_servers[x]._server_addr.sin_family = AF_INET;
+		_servers[x]._server_addr.sin_addr.s_addr = INADDR_ANY;
+		int port = 8080;
+		_servers[x]._server_addr.sin_port = htons(port);
+
+		rc = bind(_servers[x]._server_fd, (struct sockaddr *) &_servers[x]._server_addr, sizeof(_servers[x]._server_addr));
 		if (rc < 0)
-		{
-			perror("fcntl() failed");
-			exit(-1);
-		}
-		_servers[i]._server_addr.sin_family = AF_INET;
-		_servers[i]._server_addr.sin_addr.s_addr = INADDR_ANY;
-		_servers[i]._server_addr.sin_port = htons(_servers[i].getPort());
-		_servers[i]._server_addr_len = sizeof(_servers[i]._server_addr);
-		rc = bind(_servers[i]._server_fd, (struct sockaddr *) &(_servers[i]._server_addr), _servers[i]._server_addr_len);
+			perror("Bind() failed");
+
+		int	connection_backlog = 5;
+		rc = listen(_servers[x]._server_fd, connection_backlog);
 		if (rc < 0)
-		{
-			perror("bind() failed");
-			exit(-1);
-		}
-		int connection_backlog = 5;
-		rc = listen(_servers[i]._server_fd, connection_backlog);
-		if (rc < 0)
-		{
-			perror("listen() failed");
-			exit(-1);
-		}
-		_fds[i].fd = _servers[i]._server_fd;
-		_fds[i].events = POLLIN;
-		_nfds++;
+			perror("Listen() failed");
+
+		_pollfds[x].fd = _servers[x]._server_fd;
+		_pollfds[x].events = POLLIN;
 	}
 }
 
 void	ServerManager::checkSockets(void){
 
-	int	timeout;
 	int	rc;
+	int	flags;
+	int	nready;
 
-	timeout = (3 * 60 * 1000);
 	while (1)
 	{
-		rc = poll(_fds, _nfds, timeout);
+		std::cout << "New loop" << std::endl;
+
+		rc = poll(_pollfds, MAX_FD, -1);
 		if (rc < 0)
-		{
-			perror("poll() failed");
-			exit(-1);
-		}
-		if (rc == 0)
-		{
-			perror("poll() time limit expires");
-			exit(-1);
-		}
-		for (int i = 0; i < _nfds; i++)
-		{
-			Client client;
+			perror("Poll() failed");
 
-			client._client_addr_len = sizeof(client._client_addr);
-			if (!(_fds[i].revents & POLLIN))
-				continue;
-			if (_fds[i].fd == _servers[i]._server_fd)
+		for (int x = 0; x < _servers.size(); x++)
+		{
+			std::cout << "Listening loop" << std::endl;
+			if (_pollfds[x].revents & POLLIN)
 			{
-				client._client_fd = accept(_servers[i]._server_fd, (struct sockaddr *) &(client._client_addr), &(client._client_addr_len));
-				_fds[_nfds].fd = client._client_fd;
-				_fds[_nfds].events = POLLIN;
-				_nfds++;
-			}
-			else
-			{
-				char	buffer[255];
-				int		len;
-
-				setBlocking(client._client_fd, false);
-				rc = recv(_fds[i].fd, buffer, sizeof(buffer), 0);
-				if (rc <= 0)
+				if (_pollfds[x].fd == _servers[x]._server_fd)
 				{
-					if (rc < 0)	
-						perror("recv() failed");
-					else
+					Client client;
+					//std::cout << "Waiting for connection" << std::endl;
+
+					client._client_fd = accept(_pollfds[x].fd, (struct sockaddr *) &(client._client_addr), (socklen_t *) &(client._client_addr_len));
+					if (client._client_fd < 0)
+						perror("Accept() failed");
+
+					//std::cout << "Connected" << std::endl;
+
+					flags = fcntl(client._client_fd, F_GETFL, 0);
+					if (flags < 0)
+						perror("Fcntl() failed");
+					fcntl(client._client_fd, F_SETFL, flags | O_NONBLOCK);
+
+					for (int z = _servers.size(); z < MAX_FD; z++)
 					{
-						close(_fds[i].fd);
-						std::cout << "Connection fd= " << _fds[i].fd << " closed" << std::endl;
+						//std::cout << "Poll elem initialization loop" << std::endl;
+						if (_pollfds[z].fd == 0)
+						{
+							//std::cout << "Elem initialization" << std::endl;
+							_pollfds[z].fd = client._client_fd;
+							_pollfds[z].events = POLLIN;
+							break;
+						}
 					}
 				}
-				else
+				for (int y = _servers.size(); y < MAX_FD; y++)
 				{
-					setBlocking(client._client_fd, true);
-					std::cout << buffer << std::endl;
-					len = rc;
-					rc = send(_fds[i].fd, buffer, len, 0);
-					if (rc < 0)
-						perror("send() failed");
-					setBlocking(client._client_fd, false);
+					//std::cout << "Writing loop" << std::endl;
+					if (_pollfds[y].revents & POLLIN)
+					{
+						char	buffer[BUFFER_SIZE];
+						int		len;
+						std::string response;
+
+						//std::cout << "Waiting to write" << std::endl;
+						rc = recv(_pollfds[y].fd, buffer, sizeof(buffer) - 1, 0);
+						if (rc < 0)
+							perror("Recv() failed");
+						else
+						{
+							buffer[rc] = '\0';
+							std::cout << buffer << std::endl;
+
+							std::string response = "HTTP/1.1 200 OK\r\n";
+							std::string body = "<!DOCTYPE html>\n"
+                			"<html>\n"
+                 			"<head>\n"
+                 			"<title>Welcome to nginx!</title>\n"
+                 			"<style>\n"
+                 			"html { color-scheme: light dark; }\n"
+                 			"body { width: 35em; margin: 0 auto;\n"
+                 			"font-family: Tahoma, Verdana, Arial, sans-serif; }\n"
+                 			"</style>\n"
+                 			"</head>\n"
+                 			"<body>\n"
+                 			"<h1>Welcome to nginx!</h1>\n"
+                 			"<p>If you see this page, the nginx web server is successfully installed and\n"
+                 			"working. Further configuration is required.</p>\n"
+                 			"<p>For online documentation and support please refer to\n"
+                 			"<a href=\"http://nginx.org/\">nginx.org</a>.<br/>\n"
+                 			"Commercial support is available at\n"
+                 			"<a href=\"http://nginx.com/\">nginx.com</a>.</p>\n"
+                 			"<p><em>Thank you for using nginx.</em></p>\n"
+                 			"</body>\n"
+                 			"</html>\n";
+
+							response = std::string("HTTP/1.1 200 OK") + std::string("Content-Type: application/octet-stream\r\nContent-Length: ") + std::to_string(body.length()) + std::string("\r\n\r\n") + body + std::string("\r\n\r\n");
+
+							len = response.length();
+							rc = send(_pollfds[y].fd, response.c_str(), len, 0);
+							if (rc < 0)
+								perror("Send() failed");
+						}
+						close(_pollfds[y].fd);
+						_pollfds[y].fd = 0;
+						_pollfds[y].events = 0;
+						_pollfds[y].revents = 0;
+					}
+					if (--nready <= -1)
+						break;
 				}
 			}
 		}
-	}
+
+		//std::cout << "End loop" << std::endl;
+
+	}	
 }
 
 void	ServerManager::closeSockets(void){
 
-	for (int i = 0; i < _nfds; i++)
+	for (int x = 0; x < MAX_FD; x++)
 	{
-		if (_fds[i].fd >= 0)
-			close(_fds[i].fd);
+		if (_pollfds[x].fd >= 0)
+			close(_pollfds[x].fd);
+		close(_pollfds[x].fd);
 	}
-}
-
-void	ServerManager::setBlocking(int fd, bool val){
-
-	int	fl;
-	int	res;
-
-	fl = fcntl(fd, F_GETFL, 0);
-	if (fl == -1)
-		perror("fcntl() failed");
-	if (val)
-		fl &= ~O_NONBLOCK;
-	else
-		fl |= O_NONBLOCK;
-	res = fcntl(fd, F_SETFL, fl);
-	if (fl == -1)
-		perror("fcntl() failed");
 }

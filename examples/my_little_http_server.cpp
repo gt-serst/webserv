@@ -10,7 +10,7 @@
 #define MAX_SV 20
 #define BUFFER_SIZE 9999
 
-int	main(int argc, char ** argv)
+int	main(int argc, char** argv)
 {
 	int		server_fd[MAX_SV];
 	int		client_fd;
@@ -105,7 +105,6 @@ int	main(int argc, char ** argv)
 				for (int y = 0; y < MAX_CL; y++)
 				{
 					std::cout << "Writing loop" << std::endl;
-					std::cout << pollfd_clients[y].fd << std::endl;;
 					if (pollfd_clients[y].revents & POLLIN)
 					{
 						char	buffer[BUFFER_SIZE];
@@ -151,10 +150,10 @@ int	main(int argc, char ** argv)
 							if (rc < 0)
 								perror("Send() failed");
 						}
-						//close(pollfd_clients[y].fd);
-						//pollfd_clients[y].fd = 0;
-						//pollfd_clients[y].events = 0;
-						//pollfd_clients[y].revents = 0;
+						close(pollfd_clients[y].fd);
+						pollfd_clients[y].fd = 0;
+						pollfd_clients[y].events = 0;
+						pollfd_clients[y].revents = 0;
 					}
 					if (--nready <= -1)
 						break;
