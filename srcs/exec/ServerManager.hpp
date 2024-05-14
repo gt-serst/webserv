@@ -6,7 +6,7 @@
 /*   By: gt-serst <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/07 11:00:48 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/05/13 15:24:10 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/05/14 09:51:36 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,6 +32,7 @@ class ServerManager
 		std::vector<Server> _servers;
 		std::vector<Client> _clients;
 		struct pollfd		_pollfds[20];
+		int					nfds;
 };
 
 #endif

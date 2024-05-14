@@ -6,7 +6,7 @@
 /*   By: gt-serst <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/07 11:04:51 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/05/13 15:40:22 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/05/14 10:03:29 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,7 +48,7 @@ void	ServerManager::createSockets(void){
 
 	memset(_pollfds, 0, sizeof(_pollfds));
 	
-	for (int x = 0; x < MAX_FD; x++)
+	for (int x = 0; x < 1; x++)
 	{
 		_servers[x]._server_fd = socket(AF_INET, SOCK_STREAM, 0);
 		if (_servers[x]._server_fd < 0)
@@ -80,6 +80,7 @@ void	ServerManager::createSockets(void){
 
 		_pollfds[x].fd = _servers[x]._server_fd;
 		_pollfds[x].events = POLLIN;
+		nfds++;
 	}
 }
 
@@ -93,44 +94,46 @@ void	ServerManager::checkSockets(void){
 	{
 		std::cout << "New loop" << std::endl;
 
-		rc = poll(_pollfds, MAX_FD, -1);
+		rc = poll(_pollfds, nfds, -1);
 		if (rc < 0)
 			perror("Poll() failed");
 
 		for (int x = 0; x < _servers.size(); x++)
 		{
 			std::cout << "Listening loop" << std::endl;
+			std::cout << "Server number " << x << std::endl;
 			if (_pollfds[x].revents & POLLIN)
 			{
-				if (_pollfds[x].fd == _servers[x]._server_fd)
+				std::cout << _pollfds[x].fd << std::endl;
+				std::cout << _servers[x]._server_fd << std::endl;
+				Client client;
+				std::cout << "Waiting for connection" << std::endl;
+
+				client._client_fd = accept(_pollfds[x].fd, (struct sockaddr *) &(client._client_addr), (socklen_t *) &(client._client_addr_len));
+				if (client._client_fd < 0)
+					perror("Accept() failed");
+
+				std::cout << "Connected" << std::endl;
+
+				flags = fcntl(client._client_fd, F_GETFL, 0);
+				if (flags < 0)
+					perror("Fcntl() failed");
+				fcntl(client._client_fd, F_SETFL, flags | O_NONBLOCK);
+
+				for (int z = _servers.size(); z < MAX_FD; z++)
 				{
-					Client client;
-					//std::cout << "Waiting for connection" << std::endl;
-
-					client._client_fd = accept(_pollfds[x].fd, (struct sockaddr *) &(client._client_addr), (socklen_t *) &(client._client_addr_len));
-					if (client._client_fd < 0)
-						perror("Accept() failed");
-
-					//std::cout << "Connected" << std::endl;
-
-					flags = fcntl(client._client_fd, F_GETFL, 0);
-					if (flags < 0)
-						perror("Fcntl() failed");
-					fcntl(client._client_fd, F_SETFL, flags | O_NONBLOCK);
-
-					for (int z = _servers.size(); z < MAX_FD; z++)
+					std::cout << _pollfds[z].fd << std::endl;
+					std::cout << "Poll elem initialization loop" << std::endl;
+					if (_pollfds[z].fd == 0)
 					{
-						//std::cout << "Poll elem initialization loop" << std::endl;
-						if (_pollfds[z].fd == 0)
-						{
-							//std::cout << "Elem initialization" << std::endl;
-							_pollfds[z].fd = client._client_fd;
-							_pollfds[z].events = POLLIN;
-							break;
-						}
+						std::cout << "Elem initialization" << std::endl;
+						_pollfds[z].fd = client._client_fd;
+						_pollfds[z].events = POLLIN;
+						nfds++;
+						break;
 					}
 				}
-				for (int y = _servers.size(); y < MAX_FD; y++)
+				for (int y = _servers.size(); y < nfds; y++)
 				{
 					//std::cout << "Writing loop" << std::endl;
 					if (_pollfds[y].revents & POLLIN)
@@ -182,6 +185,7 @@ void	ServerManager::checkSockets(void){
 						_pollfds[y].fd = 0;
 						_pollfds[y].events = 0;
 						_pollfds[y].revents = 0;
+						nfds--;
 					}
 					if (--nready <= -1)
 						break;
