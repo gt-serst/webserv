@@ -7,6 +7,30 @@
 
 //SET FUNCTIONS
 
+// int setPort_andCheck(const char *line, int start, int end)
+// {
+// 	return ;
+// }
+
+std::string convert_charptr_string(const char *line, int start, int end)
+{
+    char *extract = new char[end - start + 1];
+    strncpy(extract, &line[start], end - start);
+    extract[end - start] = '\0';
+    std::string retval(extract);
+    delete[] extract;
+    return retval;
+}
+
+bool	unreserved_char(char ch)
+{
+	if (isalnum(ch) || ch == '-' || ch == '_' || ch == '.' || ch == '!'
+		|| ch == '~' || ch == '*' || ch == '\'' || ch == '(' || ch == ')' || ch == '=')
+		return true;
+	else
+		return false;
+}
+
 bool    allowedCharURI(char ch)
 {
     if ((ch >= '#' && ch <= ';') || (ch >= '?' && ch <= '[') || (ch >= 'a' && ch <= 'z') ||
@@ -17,13 +41,28 @@ bool    allowedCharURI(char ch)
 
 Request::Request(std::string& buffer/*, Server& server*/)
 {
-    // _server = server;
-    setRequest(buffer);
     std::cout << "Parsing request" << std::endl;
+    // _server = server;
+	_version = "HTTP/1.1";
+	_path_to_file = "/";
+	_hostname = "";
+	_body = "";
+	_query = "";
+	_error_code = -1;
+	state = R_line;
+    setRequest(buffer);
 }
 
 Request::~Request()
 {
+	std::cout << "Printing request params" << std::endl;
+	std::cout << "Method == " << _request_method << std::endl;
+	std::cout << "Path == " << _path_to_file << std::endl;
+	std::cout << "Query == " << _query << std::endl;
+	for (std::map<std::string, std::string>::const_iterator it = _headers.begin(); it != _headers.end(); ++it)
+    {
+        std::cout << it->first << ": " << it->second << std::endl;
+    }
     std::cout << "Request destroyed" << std::endl;
 }
 
@@ -32,22 +71,27 @@ void Request::setRequest(std::string& buffer)
     _request = buffer;
 	std::stringstream ss(_request);
 	std::string extract_line;
-	std::getline(ss, extract_line);
+	std::getline(ss, extract_line, '\n');
+	extract_line += '\n';
     parseRequestLine(extract_line.c_str());
-    //setRequestMethod();
+	std::streampos pos = ss.tellg();
+    pos = setHeader(ss, pos);
+	if (state == R_done)
+		return ;
+	setBody(ss, pos);
 }
 
 void Request::parseRequestLine(const char *line)
 {
 	int len = strlen(line);
-	int state = R_line;
-	int path_start = 0;
+	
+	int start = 0;
 
-	for (int i = 0; i < len; i++) //for security I should be goint to the begin of loop / switch after uptating each state because of i
+	for (int i = 0; i <=len; i++) //for security I should be goint to the begin of loop / switch after uptating each state because of i
 	{
-		std::cout << "hello" << std::endl;
-		// if (i > MAX_URI_SIZE)
-		// 	return ; //error URI too long
+		//std::cout << "hello : i == " << i << " state == " << state << " char == " << line[i] << " ascii value :" << (int)line[i] << std::endl;
+		if (i > MAX_URI_SIZE)
+			return ; //error URI too long
 		switch (state)
 		{
 			case R_line: //checking for the method not accepting leading WS
@@ -71,7 +115,10 @@ void Request::parseRequestLine(const char *line)
 					state = R_method;
 				}
 				else
+				{
+					std::cout << "Error : method" << std::endl;
 					return ; //error 400 bad request : method if we want to be picky it could be a 405 : method not available if they enter another existing but unsported method
+				}
 				break ;
 			}
 			case R_method: //checking for a single space after method
@@ -79,15 +126,18 @@ void Request::parseRequestLine(const char *line)
 				if (line[i] == ' ')
 					state = R_first_space;
 				else
+				{
+					std::cout << "Error : first space" << std::endl;
 					return ; //error 400 bad request : first space
+				}
 				break ;
 			}
 			case R_first_space: //checking if we have absolute or relative path 
 			{
 				if (line[i] == '/')
 				{
-					path_start = i;
-					state = R_uri_after_slash;
+					start = i;
+					state = R_abs_path;
 				}
 				else if (strncmp(&line[i], "http://", 7)) //using strncmp by passing the adress of the first char &line[i]
 				{
@@ -100,7 +150,10 @@ void Request::parseRequestLine(const char *line)
 					state = R_abs_slashes;
 				}
 				else
+				{
+					std::cout << "Error : path" << std::endl;
 					return ; //error 400 bad request
+				}
 				break ;
 			}
 			case R_abs_slashes:
@@ -123,106 +176,179 @@ void Request::parseRequestLine(const char *line)
 			}
 			case R_abs_host_start:
 			{
-				if (!allowedCharURI(line[i]))
+				if (line[i] == ' ')
+					state = R_second_space;
+				else if (!allowedCharURI(line[i]))
+				{
+					std::cout << "Error : URI char" << std::endl;
 					return ; //error bad request
+				}
 				else if (line[i] == ':')
+				{
+					// start = i;
 					state = R_abs_port;
-				else if (line[i] )
+				}
 				break ;
 			}
 			case R_abs_host_end:
 			{
 				if (line[i] == ':')
+				{
+					// start = i;
 					state = R_abs_port;
+				}
 				else if (line[i] == '/')
+				{
+					start = i;
 					state = R_abs_path;
+				}
 				else
+				{
+					std::cout << "Error : host end" << std::endl;
 					return ; //error
+				}
 				break ;
 			}
 			case R_abs_port:
 			{
 				if (line[i] == '/')
+				{
+					// _port = setPort_andCheck(line, start, i);
+					start = i;
 					state = R_abs_path;
+				}
 				else if (line[i] == ' ')
+				{
+					// _port = setPort_andCheck(line, start, i);
+					// start = 0;
 					state = R_second_space;
+				}
 				else if(!isdigit(line[i]))
+				{
+					std::cout << "Error : port" << std::endl;
 					return ; //error port
+				}
 				break ;
 			}
 			case R_abs_path:
 			{
 				if (line[i] == '?')
+				{
+					_path_to_file = convert_charptr_string(line, start, i);
+					start = i + 1;
 					state = R_uri_query;
+				}
 				if (line[i] == '#')
+				{
+					start = i + 1;
 					state = R_fragment ; //manage fragment
+				}
 				else if (line[i] == ' ')
+				{
+					_path_to_file = convert_charptr_string(line, start, i);
+					start = 0;
 					state = R_second_space;
+				}
 				break ;
 			}
 			case R_second_space:
 			{
 				if (strncmp(&line[i], "HTTP/1.1", 8) != 0)
+				{
+					std::cout << "Error : version" << std::endl;
 					return ; //error server only supports http 1.1
+				}
 				else
+				{
+					i += 7;
 					state = R_version;
+				}
 				break ;
 			}
 			case R_version:
 			{
+				std::cout << i << std::endl;
 				if (line[i] == '\r')
 					state = R_cr;
 				else
+				{
+					std::cout << "Error : CR" << std::endl;
 					return ; //error;
+				}
 				break ;
 			}
 			case R_cr:
 			{
+				std::cout << "ender" << std::endl;
 				if (line[i] == '\n' )
 					state = R_crlf;
 				else
+				{
+					std::cout << "Error : LF" << std::endl;
 					return ; //error;
+				}
 				break ;
 			}
 			case R_crlf:
 			{
+				std::cout << " crlf" << std::endl;
 				if (i == len)
+				{
+					std::cout << "First line parsing succesfull" << std::endl;
 					return ; //good
+				}
+				else
+				{
+					std::cout << "Error : CRLF" << std::endl;
+					return ; //error
+				}
+			}
+			case R_uri_query:
+			{
+				if (line[i] == ' ')
+				{
+					_query = convert_charptr_string(line, start, i);
+					start = 0;
+					state = R_second_space;
+				}
+				else if (line[i] == '#')
+				{
+					_query = convert_charptr_string(line, start, i);
+					start = i + 1;
+					state = R_fragment;
+				}
+				// else if (line[i] == '%')
+				// {
+				// 	manage_hex_conv(&line, i);
+				// }
+				else if (unreserved_char(line[i]) || line[i] == '&')
+				{
+					break ;
+				}
 				else
 					return ; //error
+				break ;
 			}
 		}
-	}	
+	}
+	std::cout << "Error : fatal state == " << state << std::endl;
+	return ;
 }
 
-void Request::setRequestMethod(void)
-{
-    std::stringstream ss(_request);
-    std::string line;
-
-    std::getline(ss, line);
-    std::istringstream firstLine(line);
-
-    if (_version.compare(0, 8, "HTTP/1.1"))
-        exit(0); //handle error (this server only support http 1.1 requests)
-    if (_path_to_file.compare(0, 7, "http://") && _path_to_file.compare(0, 1, "/")
-        && _path_to_file.compare(0, 8, "https://"))
-        exit(0); // handle error
-    std::cout << "Method: " << _request_method << std::endl;
-    std::cout << "Path: " << _path_to_file << std::endl;
-    std::cout << "Version: " << _version << std::endl;
-    std::streampos currentpos = ss.tellg();
-    setHeader(ss, currentpos);
-}
-
-void Request::setHeader(std::stringstream& ss, std::streampos startpos)
+std::streampos Request::setHeader(std::stringstream& ss, std::streampos startpos)
 {
     std::cout << "headers" << std::endl;
     ss.seekg(startpos);
     std::string line;
 
-    while (std::getline(ss, line) && !line.empty())
+    while (std::getline(ss, line, '\n') && !line.empty())
     {
+		if (line.compare("\r") == 0)
+		{
+			state = R_headers;
+			std::cout << "plop" << std::endl;
+			return(ss.tellg());
+		}
         size_t pos = line.find(':');
         if (pos != std::string::npos) 
         {
@@ -235,11 +361,8 @@ void Request::setHeader(std::stringstream& ss, std::streampos startpos)
             _headers[key] = value;
         }
     }
-
-    for (std::map<std::string, std::string>::const_iterator it = _headers.begin(); it != _headers.end(); ++it)
-    {
-        std::cout << it->first << ": " << it->second << std::endl;
-    }
+	state = R_done;
+	return 0;
 }
 
 void Request::setBody(std::stringstream& ss, std::streampos startpos)

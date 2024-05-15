@@ -8,7 +8,10 @@
 #include <map>
 #include <exception>
 #include <string.h>
-#define MAX_URI_SIZE 60
+#include <limits.h>
+#define MAX_URI_SIZE 200
+#define MAX_REQUEST_SIZE  
+#define MAX_BODY 1000000
 
 typedef enum s_method
 {
@@ -52,16 +55,17 @@ class Request
         //Server _server;
         t_method _request_method;
         std::string _hostname; //?
-        int _port; //?
         std::string _path_to_file;
         std::string _version;
         std::map<std::string, std::string> _headers;
         std::string _body;
+        std::string _query;
+        int _error_code;
         int _len;
+        int state;
 
         void parseRequestLine(const char *line);
-        void setRequestMethod(void);
-        void setHeader(std::stringstream& ss, std::streampos startpos);
+        std::streampos setHeader(std::stringstream& ss, std::streampos startpos);
         void setBody(std::stringstream& ss, std::streampos startpos);
         // void setLen(std::string _request);
 
