@@ -6,7 +6,7 @@
 /*   By: gt-serst <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/07 11:00:48 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/05/14 13:03:29 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/05/16 18:23:19 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,7 +27,11 @@ class ServerManager
 	private:
 		void				createSockets(void);
 		void				checkSockets(void);
-		bool				checkConnection(unsigned int i) const;
+		bool				socketIsServer(unsigned int fd) const;
+		void				listenConnections(unsigned int fd);
+		int					readClientSocket(unsigned int fd);
+		void				handleRequest(unsigned int fd, char* buffer);
+		void				sendResponse(unsigned int fd, char* buffer);
 		void				closeServerSockets(void) const;
 		std::vector<Server> _servers;
 		std::vector<Client> _clients;
