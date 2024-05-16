@@ -346,7 +346,6 @@ std::streampos Request::setHeader(std::stringstream& ss, std::streampos startpos
 		if (line.compare("\r") == 0)
 		{
 			state = R_headers;
-			std::cout << "plop" << std::endl;
 			return(ss.tellg());
 		}
         size_t pos = line.find(':');
@@ -371,6 +370,7 @@ void Request::setBody(std::stringstream& ss, std::streampos startpos)
 
     ss.seekg(startpos);
     std::string line;
+	
 
     
 }

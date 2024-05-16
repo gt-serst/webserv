@@ -2,7 +2,7 @@
 
 int main()
 {
-    std::string getRequest = "GET https://lol:80/path/resource?value=papa HTTP/1.1\r\n"
+    std::string getRequest = "GET https://lol:80/path/resource?value=papa&hello=lol HTTP/1.1\r\n"
                              "Host: localhost:4242\r\n"
                              "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:121.0) Gecko/20100101 Firefox/121.0\r\n"
                              "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8\r\n"
@@ -14,7 +14,15 @@ int main()
                              "Sec-Fetch-Mode: navigate\r\n"
                              "Sec-Fetch-Site: none\r\n"
                              "Sec-Fetch-User: ?1\r\n";
-    Request test(getRequest);
+    std::string postRequest = 
+    "POST /api/login HTTP/1.1\r\n"
+    "Host: example.com\r\n"
+    "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:97.0) Gecko/20100101 Firefox/97.0\r\n"
+    "Content-Type: application/json\r\n"
+    "Content-Length: 43\r\n"
+    "\r\n"
+    "{\"username\": \"john_doe\", \"password\": \"password123\"}";
+    Request test(postRequest);
 
     return 0;
 }
