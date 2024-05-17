@@ -6,7 +6,7 @@
 /*   By: gt-serst <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/07 11:04:51 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/05/16 18:25:20 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/05/17 15:36:39 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,6 +24,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <iostream>
+#include <cerrno>
 
 #define BUFFER_SIZE 9999
 
@@ -81,40 +82,38 @@ void	ServerManager::createSockets(void){
 void	ServerManager::checkSockets(void){
 
 	int		rc;
-	fd_set	current_sockets;
-	fd_set	ready_sockets;
 
-	FD_ZERO(&current_sockets);
+	FD_ZERO(&_current_sockets);
 	for (int x = 0; x < _servers.size(); x++)
-		FD_SET(_servers[x]._server_fd, &current_sockets);
+		FD_SET(_servers[x]._server_fd, &_current_sockets);
 
 	while (1)
 	{
-		//std::cout << "New loop" << std::endl;
+		std::cout << "New loop" << std::endl;
 		
-		ready_sockets = current_sockets;
+		_ready_sockets = _current_sockets;
 		
-		rc = select(FD_SETSIZE, &ready_sockets, NULL, NULL, NULL);
+		rc = select(FD_SETSIZE, &_ready_sockets, NULL, NULL, NULL);
 		if (rc < 0)
 			perror("Select() failed");
 
 		for (int i = 0; i < FD_SETSIZE; i++)
 		{
-			if (FD_ISSET(i, &ready_sockets))
+			if (FD_ISSET(i, &_ready_sockets))
 			{
-				if (socketIsServer(i))
+				if (serverEvent(i) == 1)
 					listenConnections(i);	
 				else
 				{
-					if (readClientSocket(i) < 0)
-						perror("Recv failed");
-					else
-						handleRequest(i);
+					std::string	buffer;
+
+					buffer = readClientSocket(i);
+					handleRequest(i, buffer);
 				}
 			}
 		}
 
-		//std::cout << "End loop" << std::endl;
+		std::cout << "End loop" << std::endl;
 	}
 }
 
@@ -136,42 +135,79 @@ void	ServerManager::listenConnections(unsigned int fd){
 		perror("Fcntl() failed");	
 	fcntl(client._client_fd, F_GETFL, 0);
 
-	FD_SET(client._client_fd, &current_sockets);
+	FD_SET(client._client_fd, &_current_sockets);
 }
 
-int	ServerManager::readClientSocket(unsigned int fd){
+std::string	ServerManager::readClientSocket(unsigned int fd){
 
-	int		rc;
-	char	buffer[BUFFER_SIZE];
+	int			rc;
+    char		buffer[BUFFER_SIZE];
+    std::string	data;
+    
+    std::cout << "Start reading" << std::endl;
+    while (0 < (rc = recv(fd, buffer, BUFFER_SIZE, 0))) 
+	{
+        buffer[rc] = '\0';
+        data.append(buffer, rc);
+    }
 
-	rc = recv(fd, buffer, sizeof(buffer) - 1, 0);
-	buffer[rc] = '\0';
-	return (rc);
+    if (rc < 0 && errno != EWOULDBLOCK)
+        perror("Recv failed");
+
+	std::cout << data << std::endl;
+    return (data);
 }
 
-void	ServerManager::handleRequest(unsigned int fd, char* buffer){
+void	ServerManager::handleRequest(unsigned int fd, std::string buffer){
 
 	sendResponse(fd, buffer);
 }
 
-void	ServerManager::sendResponse(unsigned int fd, char* buffer){
+void	ServerManager::sendResponse(unsigned int fd, std::string buffer){
 
 	int	rc;
 	int	len;
 
+//	len = buffer.length();
+//	std::string response = "HTTP/1.1 200 OK\r\n";
+//	std::string body = "<!DOCTYPE html>\n"
+//    "<html>\n"
+//    "<head>\n"
+//    "<title>Welcome to nginx!</title>\n"
+//    "<style>\n"
+//    "html { color-scheme: light dark; }\n"
+//    "body { width: 35em; margin: 0 auto;\n"
+//    "font-family: Tahoma, Verdana, Arial, sans-serif; }\n"
+//    "</style>\n"
+//    "</head>\n"
+//    "<body>\n"
+//    "<h1>Welcome to nginx!</h1>\n"
+//    "<p>If you see this page, the nginx web server is successfully installed and\n"
+//    "working. Further configuration is required.</p>\n"
+//    "<p>For online documentation and support please refer to\n"
+//    "<a href=\"http://nginx.org/\">nginx.org</a>.<br/>\n"
+//    "Commercial support is available at\n"
+//    "<a href=\"http://nginx.com/\">nginx.com</a>.</p>\n"
+//    "<p><em>Thank you for using nginx.</em></p>\n"
+//    "</body>\n"
+//    "</html>\n";
+//
+//     response = std::string("HTTP/1.1 200 OK") + std::string("Content-Type: application/octet-stream\r\nContent-Length: ") + std::to_string(body.length()) + std::string("\r\n\r\n") + body + std::string("\r\n\r\n");
+
+//    len = response.length();
 	len = buffer.length();
-	rc = send(fd, buffer, len, 0);
+	rc = send(fd, buffer.c_str(), len, 0);
 	if (rc < 0)
 		perror("Send() failed");
-	FD_CLR(fd, &current_sockets);
+	FD_CLR(fd, &_current_sockets);
 	close(fd);
 }
 
-bool	ServerManager::socketIsServer(unsigned int fd) const{
+bool	ServerManager::serverEvent(unsigned int fd) const{
 	
 	for (int i = 0; i < _servers.size(); i++)
 	{
-		if (socket_fd == _servers[i]._server_fd)
+		if (fd == _servers[i]._server_fd)
 			return (true);
 	}
 	return (false);
