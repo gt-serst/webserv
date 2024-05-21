@@ -6,7 +6,7 @@
 #    By: gt-serst <marvin@42.fr>                    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/05/21 15:52:59 by gt-serst          #+#    #+#              #
-#    Updated: 2024/05/21 15:56:59 by gt-serst         ###   ########.fr        #
+#    Updated: 2024/05/21 16:17:55 by gt-serst         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -18,7 +18,7 @@ REQUEST		=	srcs/request/Request.cpp
 
 SRCS		=	$(EXECUTION)\
 				$(REQUEST)\
-				main.cpp\
+				srcs/main.cpp\
 
 NAME		= webserv
 

@@ -6,7 +6,7 @@
 /*   By: gt-serst <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/07 11:04:51 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/05/21 15:57:29 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/05/21 16:48:00 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -85,7 +85,7 @@ void	ServerManager::serverRoutine(void){
 	int		rc;
 
 	FD_ZERO(&_current_sockets);
-	for (int x = 0; x < _servers.size(); x++)
+	for (int x = 0; x < static_cast<int>(_servers.size()); x++)
 		FD_SET(_servers[x]._server_fd, &_current_sockets);
 
 	while (1)
@@ -208,9 +208,9 @@ void	ServerManager::sendResponse(unsigned int fd, std::string data){
 
 bool	ServerManager::serverEvent(unsigned int fd) const{
 	
-	for (int i = 0; i < _servers.size(); i++)
+	for (int i = 0; i < static_cast<int>(_servers.size()); i++)
 	{
-		if (fd == _servers[i]._server_fd)
+		if (static_cast<int>(fd) == _servers[i]._server_fd)
 			return (true);
 	}
 	return (false);
@@ -218,6 +218,6 @@ bool	ServerManager::serverEvent(unsigned int fd) const{
 
 void	ServerManager::closeServerSocket(void) const{
 
-	for (int x = 0; x < _servers.size(); x++)
+	for (int x = 0; x < static_cast<int>(_servers.size()); x++)
 		close(_servers[x]._server_fd);
 }

@@ -61,7 +61,6 @@ class Request
         std::string _body;
         std::string _query;
         int _error_code;
-        int _len;
         int state;
 
         void parseRequestLine(const char *line);
