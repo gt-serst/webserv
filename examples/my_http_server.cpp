@@ -79,23 +79,23 @@ int	main(int argc, char ** argv)
 
 	server_fd = socket(AF_INET, SOCK_STREAM, 0);
 
-	int reuse = 1;
 	rc = setsockopt(server_fd, SOL_SOCKET, SO_REUSEPORT, &reuse, sizeof(reuse));
 	if (rc < 0)
 		exit(1);
 
-	fcntl(server_fd, F_SETFL, O_NONBLOCK);	
+	fcntl(server_fd, F_SETFL, O_NONBLOCK);
 
 	struct sockaddr_in server_addr;
 	server_addr.sin_family = AF_INET;
 	server_addr.sin_addr.s_addr = INADDR_ANY;
 	server_addr.sin_port = htons(4242);
-	rc = bind(server_fd, (struct sockaddr *) &server_addr, sizeof(server_addr));
+	int	server_addr_len = sizeof(server_addr);
+	rc = bind(server_fd, (struct sockaddr *) &server_addr, &server_addr_len);
 	if (rc < 0)
 		exit(1);
 
 	int	connection_backlog = 5;
-	rc = listen(server_fd, connection_backlog);	
+	rc = listen(server_fd, connection_backlog);
 	if (rc < 0)
 		exit(1);
 
