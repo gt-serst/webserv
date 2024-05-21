@@ -6,7 +6,7 @@
 /*   By: gt-serst <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/07 11:04:51 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/05/17 15:36:39 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/05/21 15:38:49 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,18 +32,18 @@ ServerManager::ServerManager(){}
 
 ServerManager::~ServerManager(){}
 
-void	ServerManager::launchServers(void){
+void	ServerManager::launchServer(void){
 
 	Server alpha(8080);
 	Server bravo(9090);
 	_servers.push_back(alpha);
 	_servers.push_back(bravo);
-	createSockets();
-	checkSockets();
-	closeServerSockets();
+	createServerSocket();
+	serverRoutine();
+	closeServerSocket();
 }
 
-void	ServerManager::createSockets(void){
+void	ServerManager::createServerSocket(void){
 
 	int		rc;
 	int		flags;
@@ -79,7 +79,7 @@ void	ServerManager::createSockets(void){
 	}
 }
 
-void	ServerManager::checkSockets(void){
+void	ServerManager::serverRoutine(void){
 
 	int		rc;
 
@@ -102,7 +102,7 @@ void	ServerManager::checkSockets(void){
 			if (FD_ISSET(i, &_ready_sockets))
 			{
 				if (serverEvent(i) == 1)
-					listenConnections(i);	
+					listenClientConnection(i);	
 				else
 				{
 					std::string	buffer;
@@ -117,7 +117,7 @@ void	ServerManager::checkSockets(void){
 	}
 }
 
-void	ServerManager::listenConnections(unsigned int fd){
+void	ServerManager::listenClientConnection(unsigned int fd){
 
 	int		flags;
 	Client client;
@@ -213,7 +213,7 @@ bool	ServerManager::serverEvent(unsigned int fd) const{
 	return (false);
 }
 
-void	ServerManager::closeServerSockets(void) const{
+void	ServerManager::closeServerSocket(void) const{
 
 	for (int x = 0; x < _servers.size(); x++)
 		close(_servers[x]._server_fd);
