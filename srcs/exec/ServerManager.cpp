@@ -6,13 +6,14 @@
 /*   By: gt-serst <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/07 11:04:51 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/05/21 15:38:49 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/05/21 15:57:29 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "ServerManager.hpp"
 #include "Server.hpp"
 #include "Client.hpp"
+#include "../request/Request.hpp"
 #include <vector>
 #include <algorithm>
 #include <sys/socket.h>
@@ -105,10 +106,10 @@ void	ServerManager::serverRoutine(void){
 					listenClientConnection(i);	
 				else
 				{
-					std::string	buffer;
+					std::string	data;
 
-					buffer = readClientSocket(i);
-					handleRequest(i, buffer);
+					data = readClientSocket(i);
+					handleRequest(i, data);
 				}
 			}
 		}
@@ -158,12 +159,14 @@ std::string	ServerManager::readClientSocket(unsigned int fd){
     return (data);
 }
 
-void	ServerManager::handleRequest(unsigned int fd, std::string buffer){
+void	ServerManager::handleRequest(unsigned int fd, std::string data){
 
-	sendResponse(fd, buffer);
+	Request request(data);
+
+	sendResponse(fd, data);
 }
 
-void	ServerManager::sendResponse(unsigned int fd, std::string buffer){
+void	ServerManager::sendResponse(unsigned int fd, std::string data){
 
 	int	rc;
 	int	len;
@@ -195,8 +198,8 @@ void	ServerManager::sendResponse(unsigned int fd, std::string buffer){
 //     response = std::string("HTTP/1.1 200 OK") + std::string("Content-Type: application/octet-stream\r\nContent-Length: ") + std::to_string(body.length()) + std::string("\r\n\r\n") + body + std::string("\r\n\r\n");
 
 //    len = response.length();
-	len = buffer.length();
-	rc = send(fd, buffer.c_str(), len, 0);
+	len = data.length();
+	rc = send(fd, data.c_str(), len, 0);
 	if (rc < 0)
 		perror("Send() failed");
 	FD_CLR(fd, &_current_sockets);
