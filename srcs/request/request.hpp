@@ -72,7 +72,7 @@ class Request
         t_method getRequestMethod();
         std::string getPathToFile();
         std::string getVersion();
-        // std::string getHeader();
+        std::string getHeader(const std::string& key) const;
         // std::string getBody();
         // int getLen();
 

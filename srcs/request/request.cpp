@@ -391,3 +391,16 @@ std::string Request::getVersion()
 {
     return _version;
 }
+
+std::string Request::getHeader(const std::string& key) const
+{
+    std::map<std::string, std::string>::const_iterator it = _headers.find(key);
+    if (it != _headers.end())
+	{
+        return it->second;
+    }
+	else
+	{
+        return "";
+    }
+}
