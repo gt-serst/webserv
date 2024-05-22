@@ -6,7 +6,7 @@
 /*   By: gt-serst <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/07 11:04:51 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/05/21 16:48:00 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/05/22 13:06:01 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,8 @@
 #include "Server.hpp"
 #include "Client.hpp"
 #include "../request/Request.hpp"
+#include "../parser/confParser.hpp"
+#include "../response/Router.hpp"
 #include <vector>
 #include <algorithm>
 #include <sys/socket.h>
@@ -33,12 +35,17 @@ ServerManager::ServerManager(){}
 
 ServerManager::~ServerManager(){}
 
-void	ServerManager::launchServer(void){
+void	ServerManager::launchServer(t_server_scope *servers){
 
-	Server alpha(8080);
-	Server bravo(9090);
-	_servers.push_back(alpha);
-	_servers.push_back(bravo);
+	int	i;
+
+	i = 0;
+	while (servers[i] != NULL)
+	{
+		_servers.push_back(Server(servers[i]);
+		_router.registerRoute(servers[i]->locations);
+		i++;
+	}
 	createServerSocket();
 	serverRoutine();
 	closeServerSocket();
@@ -103,13 +110,15 @@ void	ServerManager::serverRoutine(void){
 			if (FD_ISSET(i, &_ready_sockets))
 			{
 				if (serverEvent(i) == 1)
-					listenClientConnection(i);	
+					listenClientConnection(i);
 				else
 				{
 					std::string	data;
 
 					data = readClientSocket(i);
 					handleRequest(i, data);
+					_current_client = NULL;
+					_current_server = NULL;
 				}
 			}
 		}
@@ -118,25 +127,21 @@ void	ServerManager::serverRoutine(void){
 	}
 }
 
-void	ServerManager::listenClientConnection(unsigned int fd){
+void	ServerManager::listenClientConnection(t_main _main, unsigned int fd){
 
 	int		flags;
-	Client client;
 
-	client._client_fd = accept(fd, (struct sockaddr *) &(client._client_addr), (socklen_t *) &(client._client_addr_len));
+	_current_client._client_fd = accept(fd, (struct sockaddr *) &(_current_client._client_addr), (socklen_t *) &(_current_client._client_addr_len));
 
-	Client copy_client(client);
-	_clients.push_back(copy_client);
-
-	if (client._client_fd < 0)
+	if (_current_client._client_fd < 0)
 		perror("Accept() failed");
 				
-	flags = fcntl(client._client_fd, F_GETFL, 0);
+	flags = fcntl(_current_client._client_fd, F_GETFL, 0);
 	if (flags < 0)
 		perror("Fcntl() failed");	
-	fcntl(client._client_fd, F_GETFL, 0);
+	fcntl(_current_client._client_fd, F_GETFL, 0);
 
-	FD_SET(client._client_fd, &_current_sockets);
+	FD_SET(_current_client._client_fd, &_current_sockets);
 }
 
 std::string	ServerManager::readClientSocket(unsigned int fd){
@@ -161,8 +166,8 @@ std::string	ServerManager::readClientSocket(unsigned int fd){
 
 void	ServerManager::handleRequest(unsigned int fd, std::string data){
 
-	Request request(data);
-
+	_current_client.request = Request(data);
+	_router.routeRequest();
 	sendResponse(fd, data);
 }
 
@@ -206,12 +211,15 @@ void	ServerManager::sendResponse(unsigned int fd, std::string data){
 	close(fd);
 }
 
-bool	ServerManager::serverEvent(unsigned int fd) const{
+bool	ServerManager::serverEvent(unsigned int fd){
 	
 	for (int i = 0; i < static_cast<int>(_servers.size()); i++)
 	{
 		if (static_cast<int>(fd) == _servers[i]._server_fd)
+		{
+			_current_server = _servers[i];
 			return (true);
+		}
 	}
 	return (false);
 }

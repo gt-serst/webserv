@@ -1,17 +1,17 @@
 #ifndef REQUEST_H
-#define REQUEST_H
+# define REQUEST_H
 
-#include <string>
-#include <iostream>
-#include <sstream>
-#include <vector>
-#include <map>
-#include <exception>
-#include <string.h>
-#include <limits.h>
-#define MAX_URI_SIZE 200
-#define MAX_REQUEST_SIZE  
-#define MAX_BODY 1000000
+# include <string>
+# include <iostream>
+# include <sstream>
+# include <vector>
+# include <map>
+# include <exception>
+# include <string.h>
+# include <limits.h>
+# define MAX_URI_SIZE 200
+# define MAX_REQUEST_SIZE  
+# define MAX_BODY 1000000
 
 typedef enum s_method
 {
@@ -83,4 +83,4 @@ class Request
         //std::string getRequest();
 };
 
-#endif
+# endif

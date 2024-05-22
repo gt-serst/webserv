@@ -1,23 +1,25 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   Server.cpp                                         :+:      :+:    :+:   */
+/*   Router.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: gt-serst <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/05/08 09:59:24 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/05/22 13:06:03 by gt-serst         ###   ########.fr       */
+/*   Created: 2024/05/22 11:15:20 by gt-serst          #+#    #+#             */
+/*   Updated: 2024/05/22 13:05:58 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "Server.hpp"
+#include "Router.hpp"
 #include "../parser/confParser.hpp"
 
-Server::Server(t_server_scope conf) : _conf(conf){}
+Router::Router(){}
 
-Server::~Server(){}
+Router::~Router(){}
 
-unsigned int	Server::getPort(void) const{
+void	Router::registerRoute(t_locations route){
 
-	return (this->_conf.port);
+	this->_routes.push_back(route);
 }
+
+void	Router::routeRequest(){}
