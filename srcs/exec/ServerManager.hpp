@@ -6,7 +6,7 @@
 /*   By: gt-serst <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/07 11:00:48 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/05/22 13:06:05 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/05/22 15:29:41 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -46,6 +46,7 @@ class ServerManager
 		std::vector<Server> _servers;
 		Server				_current_server;
 		Client				_current_client;
+		Request				_current_request;
 		Router				_router;
 		fd_set				_current_sockets;
 		fd_set				_ready_sockets;

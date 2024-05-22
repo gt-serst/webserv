@@ -6,7 +6,7 @@
 /*   By: gt-serst <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/07 11:04:51 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/05/22 13:06:01 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/05/22 15:29:39 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -166,8 +166,8 @@ std::string	ServerManager::readClientSocket(unsigned int fd){
 
 void	ServerManager::handleRequest(unsigned int fd, std::string data){
 
-	_current_client.request = Request(data);
-	_router.routeRequest();
+	_current_request = Request(data);
+	_router.routeRequest(_current_request, _router);
 	sendResponse(fd, data);
 }
 
