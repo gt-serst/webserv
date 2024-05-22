@@ -369,10 +369,20 @@ void Request::setBody(std::stringstream& ss, std::streampos startpos)
     std::cout << "Body" << std::endl;
 
     ss.seekg(startpos);
-    std::string line;
-	
+    std::string bodyContent((std::istreambuf_iterator<char>(ss)), std::istreambuf_iterator<char>());
 
-    
+    // Check if body ends with CRLF
+    if (bodyContent.size() >= 2 && bodyContent.compare(bodyContent.size() - 2, 2, "\r\n") == 0)
+	{
+        _body = bodyContent;
+        state = R_done; //
+    }
+	else
+	{
+        std::cerr << "Body does not end with CRLF" << std::endl;
+        //set error and go next
+    }
+	return ;
 }
 
 //GET FUNCTIONS
