@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ServerManager.hpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: gt-serst <marvin@42.fr>                    +#+  +:+       +#+        */
+/*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/07 11:00:48 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/05/22 15:29:41 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/05/22 18:28:20 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,24 +16,19 @@
 # include "Server.hpp"
 # include "Client.hpp"
 # include "../parser/confParser.hpp"
+# include "../request/Request.hpp"
 # include "../response/Router.hpp"
+# include "../response/Response.hpp"
+# include <string>
 # include <vector>
 
 class ServerManager
 {
-	
-	typedef s_main{
-		
-		Server	current_server;
-		Client	current_client;
-		Router	router;
-	}	t_main;
-
 	public:
 		ServerManager();
 		~ServerManager();
 		void				launchServer(t_server_scope *servers);
-	
+
 	private:
 		void				createServerSocket(void);
 		void				serverRoutine(void);
@@ -47,10 +42,11 @@ class ServerManager
 		Server				_current_server;
 		Client				_current_client;
 		Request				_current_request;
+		Response			_current_response;
 		Router				_router;
 		fd_set				_current_sockets;
 		fd_set				_ready_sockets;
-		
+
 };
 
 #endif

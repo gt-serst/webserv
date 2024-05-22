@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: gt-serst <marvin@42.fr>                    +#+  +:+       +#+        */
+/*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/08 09:43:45 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/05/22 12:07:41 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/05/22 18:32:38 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,16 +20,13 @@
 class Server
 {
 	public:
-		Server(t_server_scope conf);
+		Server(t_server_scope config);
 		~Server();
-		unsigned int		getPort(void) const;
-		int					_server_fd;
-		struct sockaddr_in	_server_addr;
-		socklen_t			_server_addr_len;
+		int					server_fd;
+		struct sockaddr_in	server_addr;
+		socklen_t			server_addr_len;
+		t_server_scope		config;
 
-	private:
-		t_server_scope	conf;
-		
 };
 
 #endif

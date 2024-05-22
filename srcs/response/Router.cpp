@@ -3,93 +3,66 @@
 /*                                                        :::      ::::::::   */
 /*   Router.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: gt-serst <marvin@42.fr>                    +#+  +:+       +#+        */
+/*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 11:15:20 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/05/22 15:29:33 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/05/22 18:31:08 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Router.hpp"
 #include "../parser/confParser.hpp"
+#include <stdio.h>
+#include <string>
+#include <map>
 
 Router::Router(){}
 
 Router::~Router(){}
 
-void	Router::registerRoute(t_locations route){
+t_locations	Router::routeRequest(std::string path_to_file, std::map<std::string, t_locations> routes){
 
-	this->_routes.push_back(route);
+	std::string	tmp;
+
+	tmp = path_to_file;
+	return (recursiveRouteRequest(tmp, path_to_file, routes));
 }
 
-void	Router::routeRequest(Request *req){
+t_location	Router::recursiveRouteRequest(std::string tmp, std::string path_to_file, std::map<std::string, t_locations> routes){
 
-	for (std::vector<t_locations>::iterator it = _routes.begin(); it != _routes.end; ++it)
-	{
-		// Exact prefix location
-		if (*it->location_path.(req->_path_to_file) == 0)
-		{
-			implementDirectives(req, *it->location_path);
-			return;
-		}
-	}
-	recursiveMatch(removeLastPath(req->path_to_file));
-}
-
-void	Router::recursiveMatch(std::string new_path_to_file){
-
-	if (new_path_to_file.empty())
+	if (tmp.empty())
 		perror("Router failed");
-	// Default prefix location
-	else if (new_path_to_file.compare("/") == 0)
+	for (std::map<std::string, t_locations>::iterator it = routes.begin(); it != routes.end; ++it)
 	{
-		implementDirectives(req, "/");
-		return;
-	}
-	else
-	{
-		for (std::vector<t_locations>::iterator it = _routes.begin(); it != _routes.end; ++it)
+		if (it->first.compare(tmp) == 0)
 		{
-			// Most specific prefix location
-			if (*it->location_path.(new_path_to_file) == 0)
-			{
-				implementDirectives(req, *it->location_path);
-				return;
-			}
+			handleRedirection(path_to_file, it->second.redirections, routes);
+			return (it->second);
 		}
 	}
-	recursiveMatch(removeLastPath(new_path_to_file));
+	return (recursiveRouteRequest(removeLastPath(tmp)));
 }
 
-std::string	Router::removeLastPath(std::string path_to_file){
+std::string	Router::removeLastPath(std::string tmp){
 
-	int slash_position; 
-	
-	if (!path_to_file.empty())
-	{
-		slash_position = path_to_file.find_last_of('/');
-		pah_to_file.erase(slash_position, path_to_file.length());
-	}
-	return (path_to_file);
+	int	slash_position;
+
+	slash_position = tmp.find_last_of('/');
+	if (slash_position == 0)
+		return (tmp);
+	tmp.erase(slash_position, tmp.length());
+	return (tmp);
 }
 
-void	Router::implementDirectives(std::string route){
+void	Router::handleRedirection(std::string path_to_file, std::map<std::string, std::string> redirections, std::map<std::string, t_locations> routes){
 
-	if (!(_routes[route].redirections.empty()))
+	for (std::map<std::string, std::string>::iterator it = redirections.begin(); it != redirections.end(); ++it)
 	{
-		for (std::map<std::string, std::string>::iterator it = redirections.begin(); it != redirections.end(); ++it);
+		if (it->first.compare(path_to_file))
 		{
-			// Redirections
-			if (*it.compare(req->_path_to_file))
-			{
-				req->_path_to_file = *it;
-				routeRequest();
-				break;
-			}
+			path_to_file = it->second;
+			routeRequest(path_to_file, routes);
+			break;
 		}
-	}
-	if (!(_routes[route].root_path.emtpy()))
-	{
-
 	}
 }

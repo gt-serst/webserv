@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: gt-serst <marvin@42.fr>                    +#+  +:+       +#+        */
+/*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/08 09:37:41 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/05/22 14:00:20 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/05/22 18:27:46 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,9 +21,9 @@ class Client
 	public:
 		Client();
 		~Client();
-		int					_client_fd;
-		struct sockaddr_in	_client_addr;
-		socklen_t			_client_addr_len;
+		int					client_fd;
+		struct sockaddr_in	client_addr;
+		socklen_t			client_addr_len;
 };
 
 #endif
