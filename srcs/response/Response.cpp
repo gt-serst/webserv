@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:28:16 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/05/23 17:42:41 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/05/23 17:57:20 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -53,31 +53,31 @@ void	Response::getFileType(std::string path, t_locations loc, std::map<std::stri
 	else if (S_ISREG(path_stat.st_mode) == true)
 		isFile(path, loc, req);
 	else
-		perror("Neither a dir nor a file");
+		perror("404 Neither a dir nor a file");
 }
 
 void	Response::isDir(std::string path, t_locations loc, std::map<std::string, t_locations> routes, Request *req) {
-	
+
 	std::string	index;
 
 	if (path[path.length()] == "/")
-	{	
+	{
 		if(loc.default_path.empty() == false)
 		{
 			for (int i = 0; i < loc.default_path.size(); i++)
 			{
 				index = path;
 				index.append(loc.default_path[i]);
-				if (access(index, X_OK) == 0)
+				if (access(index, F_OK) == 0)
 					routeRequest(loc.default_path[i], routes);
 			}
-			perror("Access failed");
+			perror("403 Access failed");
 		}
 		else
 			if (isMethodAllowed(loc, req) == true)
 				runDirMethod(path, loc, req)
 			else
-				perror("Method failed");
+				perror("405 Method failed");
 	}
 	else
 	{
@@ -92,16 +92,17 @@ void	Response::isDir(std::string path, t_locations loc, std::map<std::string, t_
 
 void	Response::isFile(std::string path, t_locations loc, Request *req){
 
-	if (access(path, X_OK) == 0)
+	if (access(path, F_OK) == 0)
 	{
 		if (isCGI(path, loc, req) == true && isMethodAllowed(loc, req) == true)
 			runCGI(cgi_path);
 		else if (isMethodAllowed(loc, req) == true)
 			runFileMethod(path, loc, req);
 		else
-			perror("Method failed");
+			perror("405 Method failed");
+	}
 	else
-		perror("Access failed");
+		perror("403 Access failed");
 }
 
 bool	Response::isMethodAllowed(t_locations loc, Request *req){
@@ -149,7 +150,7 @@ void	Response::isAutoIndex(DIR *dr, std::string path, t_locations loc){
 }
 
 void	Response::deleteDir(DIR *dr, std::string path){
-	
+
 	if (access(path, W_OK) == 0)
 	{
 		if (rmdir(path) < 0)
@@ -171,7 +172,7 @@ void	Response::isCGI(std::string path, t_locations loc, Request *req){
 }
 
 void	Response::runFileMethod(std::string path, t_locations loc, Request *req){
-	
+
 	if (req->_request_method == GET)
 		openFile(path);
 	else if (req->_request_method == POST)
@@ -181,7 +182,7 @@ void	Response::runFileMethod(std::string path, t_locations loc, Request *req){
 }
 
 void	Response::openFile(std::string path){
-	
+
 	std::ifstream input(path);
 
 	if (input.is_open())
@@ -201,7 +202,7 @@ void	Response::openFile(std::string path){
 }
 
 void	Response::uploadFile(std::string path, Request *req){
-	
+
 	if (access(path, W_OK) == 0)
 	{
 		std::ofstream output(path);
@@ -216,7 +217,7 @@ void	Response::uploadFile(std::string path, Request *req){
 			perror("File creation failed");
 	}
 	else
-		perror("Write access failed");
+		perror("403 Write access failed");
 }
 
 void	Response::deleteFile(std::string path){
