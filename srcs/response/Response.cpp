@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:28:16 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/05/23 16:04:42 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/05/23 17:12:21 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,19 +19,18 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <fstream>
+#include <dirent.h>
 
 Response::Response(){}
 
 Response::~Response(){}
 
-void	Response::handleDirective(std::string path, t_locations loc, std::map<std::string, t_locations> routes){
+void	Response::handleDirective(std::string path, t_locations loc, std::map<std::string, t_locations> routes, Request *req){
 
 	if (isLocationRooted(path, loc.root_path, loc) == false)
 		perror("Root failed");
 	else
-	{
-		getFileType(path, loc, routes);
-	}
+		getFileType(path, loc, routes, req);
 }
 
 bool	Response::isLocationRooted(std::string& path, std::string root, t_locations loc){
@@ -43,21 +42,21 @@ bool	Response::isLocationRooted(std::string& path, std::string root, t_locations
 	return (true);
 }
 
-void	Response::getFileType(std::string path, t_locations loc, std::map<std::string, t_locations> routes){
+void	Response::getFileType(std::string path, t_locations loc, std::map<std::string, t_locations> routes, Request *req){
 
 	struct stat path_stat;
 
 	if (stat(path.c_str(), &path_stat) != 0)
 		perror("Stat failed");
 	if (S_ISDIR(path_stat.st_mode) == true)
-		isDir(path, loc, routes);
+		isDir(path, loc, routes, req);
 	else if (S_ISREG(path_stat.st_mode) == true)
-		isFile(path, loc);
+		isFile(path, loc, req);
 	else
 		perror("Neither a dir nor a file");
 }
 
-void	Response::isDir(std::string path, t_locations loc, std::map<std::string, t_locations> routes) {
+void	Response::isDir(std::string path, t_locations loc, std::map<std::string, t_locations> routes, Request *req) {
 	
 	std::string	index;
 
@@ -91,7 +90,7 @@ void	Response::isDir(std::string path, t_locations loc, std::map<std::string, t_
 	}
 }
 
-void	Response::isFile(std::string path, t_locations loc){
+void	Response::isFile(std::string path, t_locations loc, Request *req){
 
 	if (access(path, X_OK) == 0)
 	{
@@ -176,14 +175,14 @@ void	Response::runFileMethod(std::string path, t_locations loc, Request *req){
 	if (req->_request_method == GET)
 		openFile(path);
 	else if (req->_request_method == POST)
-		uploadFile(path);
+		uploadFile(path, req);
 	else if (req->_request_method == DELETE)
 		deleteFile(path);
 }
 
 void	Response::openFile(std::string path){
 	
-	std::ifstream input[path];
+	std::ifstream input(path);
 
 	if (input.is_open())
 	{
@@ -194,38 +193,35 @@ void	Response::openFile(std::string path){
 			stack += buffer;
 			stack += '\n';
 		}
-		this->_response = stack;
 		input.close();
+		getResponse(path);
 	}
 	else
 		perror("Open failed");
 }
 
-void	Response::uploadFile(std::string path){
+void	Response::uploadFile(std::string path, Request *req){
+	
+	if (access(path, W_OK) == 0)
+	{
+		std::ofstream output(path);
 
+		if (output.is_open())
+		{
+			output << req->_body;
+			output.close();
+			postResponse(path, req);
+		}
+		else
+			perror("File creation failed");
+	}
+	else
+		perror("Write access failed");
 }
 
 void	Response::deleteFile(std::string path){
 
+	if (remove(path) < 0)
+		perror("Delete file failed");
+	deleteResponse(path);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
