@@ -73,7 +73,7 @@ class Request
         std::string getPathToFile();
         std::string getVersion();
         std::string getHeader(const std::string& key) const;
-        // std::string getBody();
+        std::string getBody();
         // int getLen();
 
     public:

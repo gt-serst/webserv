@@ -414,3 +414,8 @@ std::string Request::getHeader(const std::string& key) const
         return "";
     }
 }
+
+std::string Request::getBody()
+{
+	return _body;	
+}
