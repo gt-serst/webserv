@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 11:15:20 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/05/22 18:31:08 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/05/23 12:33:18 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,7 +30,7 @@ t_locations	Router::routeRequest(std::string path_to_file, std::map<std::string,
 
 t_location	Router::recursiveRouteRequest(std::string tmp, std::string path_to_file, std::map<std::string, t_locations> routes){
 
-	if (tmp.empty())
+	if (tmp.empty() == true)
 		perror("Router failed");
 	for (std::map<std::string, t_locations>::iterator it = routes.begin(); it != routes.end; ++it)
 	{
@@ -40,6 +40,8 @@ t_location	Router::recursiveRouteRequest(std::string tmp, std::string path_to_fi
 			return (it->second);
 		}
 	}
+	if (tmp.compare("/") == 0)
+		perror("Router failed");
 	return (recursiveRouteRequest(removeLastPath(tmp)));
 }
 
