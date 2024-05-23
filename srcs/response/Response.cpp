@@ -6,14 +6,19 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:28:16 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/05/23 12:33:11 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/05/23 16:04:42 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Response.hpp"
 #include "../parser/confParser.hpp"
+#include "../request/Request.hpp"
 #include <string>
 #include <map>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <fstream>
 
 Response::Response(){}
 
@@ -40,35 +45,187 @@ bool	Response::isLocationRooted(std::string& path, std::string root, t_locations
 
 void	Response::getFileType(std::string path, t_locations loc, std::map<std::string, t_locations> routes){
 
-	if (path[path.length()] == "/")
+	struct stat path_stat;
+
+	if (stat(path.c_str(), &path_stat) != 0)
+		perror("Stat failed");
+	if (S_ISDIR(path_stat.st_mode) == true)
 		isDir(path, loc, routes);
-	else
+	else if (S_ISREG(path_stat.st_mode) == true)
 		isFile(path, loc);
+	else
+		perror("Neither a dir nor a file");
 }
 
 void	Response::isDir(std::string path, t_locations loc, std::map<std::string, t_locations> routes) {
 	
 	std::string	index;
 
-	if(loc.default_path.empty() == false)
-	{
-		for (int i = 0; i < loc.default_path.size(); i++)
+	if (path[path.length()] == "/")
+	{	
+		if(loc.default_path.empty() == false)
 		{
-			index = path;
-			index.append(loc.default_path[i]);
-			if (access(index, X_OK) == 0)
-				routeRequest(loc.default_path[i], routes);
+			for (int i = 0; i < loc.default_path.size(); i++)
+			{
+				index = path;
+				index.append(loc.default_path[i]);
+				if (access(index, X_OK) == 0)
+					routeRequest(loc.default_path[i], routes);
+			}
+			perror("Access failed");
 		}
-		perror("Access failed");
+		else
+			if (isMethodAllowed(loc, req) == true)
+				runDirMethod(path, loc, req)
+			else
+				perror("Method failed");
 	}
 	else
-		isMethodAllowed(path, loc);
+	{
+		if (req->_request_method == DELETE)
+			perror("301 URI failed");
+		if (req->_request_method == GET)
+			perror("409 URI failed");
+		else
+			perror("URI failed");
+	}
 }
 
 void	Response::isFile(std::string path, t_locations loc){
 
 	if (access(path, X_OK) == 0)
-		isCGI(loc);
+	{
+		if (isCGI(path, loc, req) == true && isMethodAllowed(loc, req) == true)
+			runCGI(cgi_path);
+		else if (isMethodAllowed(loc, req) == true)
+			runFileMethod(path, loc, req);
+		else
+			perror("Method failed");
 	else
-		perrro("Access failed");
+		perror("Access failed");
 }
+
+bool	Response::isMethodAllowed(t_locations loc, Request *req){
+
+	for (int i = 0; i < loc.allowed_methods.size(); i++)
+	{
+		if (req->_request_method == loc.allowed_methods[i])
+			return (true);
+	}
+	return (false);
+}
+
+void	Response::runDirMethod(std::string path, t_locations loc, Request *req){
+
+	DIR *dr;
+
+	if ((dr = opendir(path)) != NULL)
+	{
+		if (req->_request_method == GET)
+			isAutoIndex(dr, path, loc);
+		else if (req->_request_method == DELETE)
+			deleteDir(dr, path);
+	}
+	else
+		perror("Opendir failed");
+}
+
+void	Response::isAutoIndex(DIR *dr, std::string path, t_locations loc){
+
+	struct dirent	*de;
+	std::string		dir_list;
+
+	if (loc.autoindex == true)
+	{
+		while ((de = readdir(dr)) != NULL)
+			dir_list.append(de->d_name);
+		this->_response = dir_list;
+		closedir(dr);
+	}
+	else
+	{
+		closedir(dr);
+		perror("403 Autoindex failed");
+	}
+}
+
+void	Response::deleteDir(DIR *dr, std::string path){
+	
+	if (access(path, W_OK) == 0)
+	{
+		if (rmdir(path) < 0)
+			perror("500 Delete directory failed");
+	}
+	else
+	{
+		closedir(dr);
+		perror("403 Write access failed");
+	}
+}
+
+void	Response::isCGI(std::string path, t_locations loc, Request *req){
+
+	if (loc.cgi_path.empty() == false)
+		return (true);
+	else if (loc.cgi_path.empty() == true)
+		return (false);
+}
+
+void	Response::runFileMethod(std::string path, t_locations loc, Request *req){
+	
+	if (req->_request_method == GET)
+		openFile(path);
+	else if (req->_request_method == POST)
+		uploadFile(path);
+	else if (req->_request_method == DELETE)
+		deleteFile(path);
+}
+
+void	Response::openFile(std::string path){
+	
+	std::ifstream input[path];
+
+	if (input.is_open())
+	{
+		std::string buffer;
+		std::string stack;
+		while (std::getline(input, buffer))
+		{
+			stack += buffer;
+			stack += '\n';
+		}
+		this->_response = stack;
+		input.close();
+	}
+	else
+		perror("Open failed");
+}
+
+void	Response::uploadFile(std::string path){
+
+}
+
+void	Response::deleteFile(std::string path){
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

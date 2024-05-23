@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/07 11:04:51 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/05/23 12:33:15 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/05/23 16:04:20 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,7 +28,7 @@
 #include <iostream>
 #include <cerrno>
 
-#define BUFFER_SIZE 9999
+#define BUFFER_SIZE 1024
 
 ServerManager::ServerManager(){}
 
@@ -149,10 +149,10 @@ std::string	ServerManager::readClientSocket(unsigned int fd){
 	std::string	data;
 
 	std::cout << "Start reading" << std::endl;
-	while (0 < (rc = recv(fd, buffer, BUFFER_SIZE, 0)))
+	while (0 < (rc = recv(fd, buffer, sizeof(buffer) - 1, 0)))
 	{
 		buffer[rc] = '\0';
-		data.append(buffer, rc);
+		data += buffer;
 	}
 
 	if (rc < 0 && errno != EWOULDBLOCK)
@@ -172,6 +172,7 @@ void	ServerManager::handleRequest(unsigned int fd, std::string data){
 	std::cout << location.location_path << std::endl;
 
 	_current_response.handleDirective(_current_request._path_to_file, location, _current_server._config.locations);
+
 	sendResponse(_current_response, fd);
 }
 
