@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:12:17 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/05/24 13:15:41 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/05/24 18:40:13 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,6 +20,18 @@
 # include <dirent.h>
 
 class Response{
+
+	typedef enum e_file_type
+	{
+		PNG,
+		JPEG,
+		SVG,
+		GIF,
+		PDF,
+		ZIP,
+		MP4,
+		TXT
+	}	t_file_type;
 
 	public:
 		void		handleDirective(std::string path, t_locations loc, std::map<std::string, t_locations> routes, Request *req, std::map<int, std::string> error_paths);
@@ -45,8 +57,7 @@ class Response{
 		std::string	_status_code;
 		std::string	_status_message;
 		std::string	_content_type;
-		std::string	_content_length;
-		std::string	_connection;
+		std::string	_content_len;
 		std::string	_body;
 };
 

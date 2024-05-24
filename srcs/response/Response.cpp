@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:28:16 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/05/24 13:15:40 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/05/24 19:37:12 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,7 +40,10 @@ void	Response::handleDirective(std::string path, t_locations loc, std::map<std::
 bool	Response::isLocationRooted(std::string& path, std::string root, t_locations loc){
 
 	if (loc.root_path.empty() == false)
+	{
+		// if slash derniere lettre alors l'enlever
 		path.replace(0, loc.location_path.length(), loc.root_path);
+	}
 	else
 		return (false);
 	return (true);
@@ -64,6 +67,7 @@ void	Response::isDir(std::string path, t_locations loc, std::map<std::string, t_
 
 	std::string	index;
 
+	// si un slash a la fin du path et autoindex alors on printera le repertoire plus bas, si pas de slash et autoindex alors on printera le repertoire actuel
 	if (path[path.length()] == "/")
 	{
 		if(loc.default_path.empty() == false)
@@ -73,7 +77,11 @@ void	Response::isDir(std::string path, t_locations loc, std::map<std::string, t_
 				index = path;
 				index.append(loc.default_path[i]);
 				if (access(index, F_OK) == 0)
-					routeRequest(loc.default_path[i], routes);
+				{
+					loc = routeRequest(loc.default_path[i], routes);
+					// rappeler handleDirective et arreter le process avec l'ancienne loc en cours
+					break;
+				}
 			}
 			perror("403 Access failed");
 		}
@@ -188,7 +196,7 @@ void	Response::runFileMethod(std::string path, t_locations loc, Request *req){
 
 void	Response::downloadFile(std::string path){
 
-	std::ifstream input(path);
+	std::ifstream input(path, std::ios::binary);
 
 	if (input.is_open())
 	{
@@ -200,7 +208,7 @@ void	Response::downloadFile(std::string path){
 			stack += '\n';
 		}
 		input.close();
-		downloadFileResponse(path);
+		downloadFileResponse(stack);
 	}
 	else
 		perror("404 Open failed");
@@ -230,4 +238,113 @@ void	Response::deleteFile(std::string path){
 	if (remove(path) < 0)
 		perror("404 Delete file failed");
 	deleteFileResponse(path);
+}
+
+void	Response::downloadFileResponse(std::string stack){
+
+	this->_status_code = "200";
+	this->_status_message = "OK";
+	this->_content_type = getContentType();
+	this->_content_len = stack.length();
+	this->_body = stack;
+	generateResponse();
+}
+
+std::string	Response::getContentType(std::string stack){
+
+	std::stringstream	ss;
+	std::stringstream	ss_hex;
+	std::vector<char>	bytes(8);
+	std::string			octets;
+
+	ss << stack;
+	ss.read(&bytes[0], bytes.size());
+	for (int i = 0; i < bytes.size(); i++)
+		ss_hex << std::hex << (static_cast<int>(bytes[i]) & 0xFF) << " ";
+	octets = ss_hex.str();
+	switch (stringToEnum(octets))
+	{
+		case PNG:
+			return ("image/png");
+		case JPEG:
+			return ("image/jpeg");
+		case SVG:
+			return ("image/svg+xml");
+		case GIF:
+			return ("image/gif");
+		case PDF:
+			return ("application/pdf");
+		case ZIP:
+			return ("application/zip");
+		case MP4:
+			return ("video/mp4");
+		case TXT:
+			return ("text/plain");
+		default:
+			perror("No file recognised");
+	}
+}
+
+t_file_type	Response::stringToEnum(std::string const& str)
+{
+	if (str.compare(0, 20, "89 50 4e 47 d a 1a a") == 0) return (PNG);
+	if (str.compare(0, 5, "ff d8") == 0) return (JPEG);
+	if (str.compare(0, 23, "3c 3f 78 6d 6c 20 76 65") == 0) return (SVG);
+	if (str.compare(0, 17, "47 49 46 38 39 61") == 0) return (GIF);
+	if (str.compare(0, 11, "25 50 44 46") == 0) return (PDF);
+	if (str.compare(0, 18, "50 4b 3 4 14 0 8 0") == 0) return (ZIP);
+	if (str.compare(0, 20, "0 0 0 20 66 74 79 70") == 0) return (MP4);
+	else
+		return (TXT);
+}
+
+void	Response::uploadFileResponse(void){
+
+	this->_status_code = "201";
+	this->_status_message = "Created";
+	generateResponse();
+}
+
+void	Response::autoIndexResponse(std::string dir_list){
+
+}
+
+void	Response::deleteResponse(void){
+
+	this->_status_code = "200";
+	this->_status_message = "OK";
+	generateResponse();
+}
+
+void	Response::errorResponse(std::string error_code, std::string message, std::string path){
+
+	if (!path)
+		path = "/var/www/html/error";
+	this->_status_code = error_code;
+	this->_status_message = message;
+	this->_content_type = "text/html";
+
+	ifstream	input(path);
+	if (is_open(input))
+	{
+		std::string	buffer;
+		std::string	stack;
+
+		while (std::getline(input, buffer))
+		{
+			stack += buffer;
+			stack += '\n';
+		}
+		input.close();
+		this->_content_len = stack.length();
+		this->_body = stack;
+		generateResponse();
+	}
+	else
+		errorResponse("404", "Not Found", "/var/www/html/error");
+}
+
+void	Response::generateResponse(void){
+
+	this->_response = this->_http_version + " " + this->_status_code + " " + this->_status_message + "\r\n" + this->_content_type + "\r\n" + this->_content_len + "\r\n" + this->_body + "\r\n\r\n";
 }
