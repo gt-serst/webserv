@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/07 11:04:51 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/05/23 17:42:18 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/05/24 13:15:45 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -171,7 +171,7 @@ void	ServerManager::handleRequest(unsigned int fd, std::string data){
 
 	std::cout << location.location_path << std::endl;
 
-	_current_response.handleDirective(_current_request._path_to_file, location, _current_server._config.locations, _current_request);
+	_current_response.handleDirective(_current_request._path_to_file, location, _current_server._config.locations, _current_request, _current_server.conf.error_page_paths);
 
 	sendResponse(_current_response, fd);
 }

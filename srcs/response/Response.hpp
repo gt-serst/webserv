@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.hpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: gt-serst <marvin@42.fr>                    +#+  +:+       +#+        */
+/*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:12:17 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/05/23 17:41:43 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/05/24 13:15:41 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,7 +22,7 @@
 class Response{
 
 	public:
-		void		handleDirective(std::string path, t_locations loc, std::map<std::string, t_locations> routes, Request *req);
+		void		handleDirective(std::string path, t_locations loc, std::map<std::string, t_locations> routes, Request *req, std::map<int, std::string> error_paths);
 
 	private:
 		Response();
@@ -37,15 +37,16 @@ class Response{
 		void		deleteDir(DIR *dr, std::string path);
 		void		isCGI(std::string path, t_locations loc, Request *req);
 		void		runFileMethod(std::string path, t_locations loc, Request *req);
-		void		openFile(std::string path);
-		void		uploadFile(std::string path, Request *req);	
+		void		downloadFile(std::string path);
+		void		uploadFile(std::string path, Request *req);
 		void		deleteFile(std::string path);
 		std::string	_response;
 		std::string	_http_version;
-		std::string	_code_statut;
-		std::string	_statut_message;
+		std::string	_status_code;
+		std::string	_status_message;
 		std::string	_content_type;
 		std::string	_content_length;
+		std::string	_connection;
 		std::string	_body;
 };
 

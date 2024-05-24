@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:28:16 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/05/23 17:57:20 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/05/24 13:15:40 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,10 +25,14 @@ Response::Response(){}
 
 Response::~Response(){}
 
-void	Response::handleDirective(std::string path, t_locations loc, std::map<std::string, t_locations> routes, Request *req){
+void	Response::handleDirective(std::string path, t_locations loc, std::map<std::string, t_locations> routes, Request *req, std::map<int, std::string> error_paths){
+
+	this->_http_version = req->_version;
+	this->_status_code = "404";
+	this->_status_message = "Not Found";
 
 	if (isLocationRooted(path, loc.root_path, loc) == false)
-		perror("Root failed");
+		perror("404 Root failed");
 	else
 		getFileType(path, loc, routes, req);
 }
@@ -47,7 +51,7 @@ void	Response::getFileType(std::string path, t_locations loc, std::map<std::stri
 	struct stat path_stat;
 
 	if (stat(path.c_str(), &path_stat) != 0)
-		perror("Stat failed");
+		perror("404 Stat failed");
 	if (S_ISDIR(path_stat.st_mode) == true)
 		isDir(path, loc, routes, req);
 	else if (S_ISREG(path_stat.st_mode) == true)
@@ -127,7 +131,7 @@ void	Response::runDirMethod(std::string path, t_locations loc, Request *req){
 			deleteDir(dr, path);
 	}
 	else
-		perror("Opendir failed");
+		perror("404 Opendir failed");
 }
 
 void	Response::isAutoIndex(DIR *dr, std::string path, t_locations loc){
@@ -139,7 +143,7 @@ void	Response::isAutoIndex(DIR *dr, std::string path, t_locations loc){
 	{
 		while ((de = readdir(dr)) != NULL)
 			dir_list.append(de->d_name);
-		this->_response = dir_list;
+		autoIndexResponse();
 		closedir(dr);
 	}
 	else
@@ -155,6 +159,7 @@ void	Response::deleteDir(DIR *dr, std::string path){
 	{
 		if (rmdir(path) < 0)
 			perror("500 Delete directory failed");
+		deleteDirResponse();
 	}
 	else
 	{
@@ -174,14 +179,14 @@ void	Response::isCGI(std::string path, t_locations loc, Request *req){
 void	Response::runFileMethod(std::string path, t_locations loc, Request *req){
 
 	if (req->_request_method == GET)
-		openFile(path);
+		downloadFile(path);
 	else if (req->_request_method == POST)
 		uploadFile(path, req);
 	else if (req->_request_method == DELETE)
 		deleteFile(path);
 }
 
-void	Response::openFile(std::string path){
+void	Response::downloadFile(std::string path){
 
 	std::ifstream input(path);
 
@@ -195,10 +200,10 @@ void	Response::openFile(std::string path){
 			stack += '\n';
 		}
 		input.close();
-		getResponse(path);
+		downloadFileResponse(path);
 	}
 	else
-		perror("Open failed");
+		perror("404 Open failed");
 }
 
 void	Response::uploadFile(std::string path, Request *req){
@@ -211,10 +216,10 @@ void	Response::uploadFile(std::string path, Request *req){
 		{
 			output << req->_body;
 			output.close();
-			postResponse(path, req);
+			uploadFileResponse(path, req);
 		}
 		else
-			perror("File creation failed");
+			perror("500 File creation failed");
 	}
 	else
 		perror("403 Write access failed");
@@ -223,6 +228,6 @@ void	Response::uploadFile(std::string path, Request *req){
 void	Response::deleteFile(std::string path){
 
 	if (remove(path) < 0)
-		perror("Delete file failed");
-	deleteResponse(path);
+		perror("404 Delete file failed");
+	deleteFileResponse(path);
 }
