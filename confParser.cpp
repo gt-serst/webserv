@@ -555,13 +555,12 @@ static t_server_scope	*parseServer(int *i, std::string buffer, t_server_scope *s
 	return (serverConfig);
 }
 
-t_server_scope		*confParser(std::string buffer)
+t_server_scope		*confParser(std::string buffer, int *servers)
 {
 	t_server_scope	*serverConfig = NULL;
-	int		servers = 0;
 	for (int i = 0; buffer[i]; i++)
 	{
-		if (!(serverConfig = parseServer(&i, buffer, serverConfig, &servers)))
+		if (!(serverConfig = parseServer(&i, buffer, serverConfig, servers)))
 			return (NULL);
 	}
 	//delete[] serverConfig;

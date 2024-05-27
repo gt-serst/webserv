@@ -43,6 +43,6 @@ typedef struct s_server_scope
 
 int						webserv(int argc, char **argv);
 std::string					confChecker(int argc, char **argv);
-t_server_scope					*confParser(std::string buffer);
+t_server_scope					*confParser(std::string buffer, int *servers);
 
 #endif

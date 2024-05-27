@@ -6,7 +6,8 @@ int	webserv(int argc, char **argv)
 	if (file.empty())
 		return (1);
 	t_server_scope	*servers = NULL;
-	if(!(servers = confParser(file)))
+	int		serverCount = 0;
+	if(!(servers = confParser(file, &serverCount)))
 		return (1);	
 	/*std::cout << "Locations /lol root path : |" << servers[1].locations["/lol"].root_path << "|" << std::endl;
 	std::cout << "Locations /lol autoindex : |" << servers[1].locations["/lol"].auto_index << "|" << std::endl;
