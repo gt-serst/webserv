@@ -10,7 +10,7 @@
 #include <string.h>
 #include <limits.h>
 #define MAX_URI_SIZE 200
-#define MAX_REQUEST_SIZE  
+#define MAX_REQUEST_SIZE
 #define MAX_BODY 1000000
 
 typedef enum s_method
@@ -36,7 +36,7 @@ enum state //state is current state so the name is what we previsly validated ||
     R_abs_port, //parse port check if /
     R_abs_path,
     R_uri_after_slash, //after the / of the root
-    R_uri_query, //if ? in the path 
+    R_uri_query, //if ? in the path
     R_second_space,
     R_version,
     R_version_major,
@@ -57,7 +57,7 @@ class Request
 {
     private:
         std::string _request;
-        //Server _server;
+        Server _server;
         t_method _request_method;
         std::string _hostname; //?
         std::string _path_to_file;
@@ -83,7 +83,7 @@ class Request
         // int getLen();
 
     public:
-        Request(std::string& buffer/*, Server& server*/);
+        Request(std::string& buffer, Server& server);
         ~Request();
 
         void setRequest(std::string& buffer);

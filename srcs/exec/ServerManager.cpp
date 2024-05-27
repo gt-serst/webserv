@@ -6,14 +6,14 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/07 11:04:51 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/05/27 17:38:31 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/05/27 18:03:52 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "ServerManager.hpp"
 #include "Server.hpp"
 #include "Client.hpp"
-//#include "../parser/confParser.hpp"
+#include "../parser/confParser.hpp"
 #include "../request/Request.hpp"
 #include "../response/Router.hpp"
 #include <vector>
@@ -34,16 +34,16 @@ ServerManager::ServerManager(){}
 
 ServerManager::~ServerManager(){}
 
-void	ServerManager::launchServer(t_server_scope *servers){
+void	ServerManager::launchServer(t_server_scope *servers, int nb_servers){
 
 	int	i;
 
-	i = 0;
-	//while (servers[i])
-	//{
+	i = 1;
+	while (i <= nb_servers)
+	{
 		_servers.push_back(Server(servers[i]));
 		i++;
-	//}
+	}
 	createServerSocket();
 	serverRoutine();
 	closeServerSocket();
@@ -164,7 +164,7 @@ void	ServerManager::handleRequest(unsigned int fd, std::string data){
 
 	t_locations	location;
 
-	_current_request = Request(data);
+	_current_request = Request(data, _current_server);
 
 	if (_current_request._error_code == -1)
 	{

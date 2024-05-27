@@ -6,10 +6,11 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/08 10:35:22 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/05/27 17:32:26 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/05/27 17:55:25 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
+#include "parser/confParser.hpp"
 #include "exec/ServerManager.hpp"
 #include "exec/Client.hpp"
 #include "exec/Server.hpp"
@@ -17,9 +18,8 @@
 #include "request/Request.hpp"
 #include "response/Response.hpp"
 #include "response/Router.hpp"
-#include <map>
 
-t_server_scope	*initServer(void)
+/*t_server_scope	*initServer(void)
 {
 	t_server_scope	*server = NULL;
 	t_locations		loc;
@@ -32,13 +32,9 @@ t_server_scope	*initServer(void)
 	loc.auto_index = false;
 	server->locations.insert(std::pair<std::string, t_locations>(loc.location_path, loc));
 	return (server);
-}
+}*/
 
-int	main(int argc, char **argv)
+int main(int argc, char **argv)
 {
-	ServerManager	sm;
-
-	(void)argc, (void)argv;
-	sm.launchServer(initServer());
-	return (0);
+	return (webserv(argc, argv));
 }

@@ -6,14 +6,14 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 11:21:28 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/05/27 16:46:04 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/05/27 17:57:51 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef ROUTER_HPP
 # define ROUTER_HPP
 
-//#include "../parser/confParser.hpp"
+#include "../parser/confParser.hpp"
 # include <string>
 # include <map>
 # include <vector>

@@ -6,23 +6,19 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/08 09:43:45 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/05/27 17:20:55 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/05/27 18:10:41 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef SERVER_HPP
 # define SERVER_HPP
 
-//# include "../parser/confParser.hpp"
+# include "../parser/confParser.hpp"
 # include <string>
-// test
-# include <map>
-# include <vector>
-// test
 # include <sys/socket.h>
 # include <arpa/inet.h>
 
-typedef struct s_locations
+/*typedef struct s_locations
 {
 	std::string							location_path;
 	std::string							root_path;
@@ -41,7 +37,7 @@ typedef struct s_server_scope
 	std::map<std::string, t_locations>	locations;
 	std::string							cgi_path;
 	std::string							upload_path;
-}	t_server_scope;
+}	t_server_scope;*/
 
 class Server
 {
@@ -53,7 +49,6 @@ class Server
 		struct sockaddr_in	server_addr;
 		socklen_t			server_addr_len;
 		t_server_scope		config;
-
 };
 
 #endif

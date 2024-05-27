@@ -8,15 +8,6 @@
 # include <vector>
 # include <map>
 
-//----------ENUMS----------//
-
-typedef enum e_allowed_methods
-{
-	GET,
-	POST,
-	DELETE
-}	t_allowed_methods;
-
 //----------STRUCTS----------//
 
 typedef struct s_locations

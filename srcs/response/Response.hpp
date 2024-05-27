@@ -6,14 +6,14 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:12:17 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/05/27 17:20:09 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/05/27 17:57:46 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef RESPONSE_HPP
 # define RESPONSE_HPP
 
-//# include "../parser/confParser.hpp"
+# include "../parser/confParser.hpp"
 # include "../request/Request.hpp"
 # include <string>
 # include <map>

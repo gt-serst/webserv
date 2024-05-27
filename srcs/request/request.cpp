@@ -3,7 +3,7 @@
 //on devra check si on recoit bien toute la requete en un seul bloc
 //si pas un fera un precheck pour l'envoyer ici en un coup
 
-//only POST should have a body 
+//only POST should have a body
 
 //SET FUNCTIONS
 
@@ -34,10 +34,10 @@ bool    allowedCharURI(char ch)
     return (false);
 }
 
-Request::Request(std::string& buffer/*, Server& server*/)
+Request::Request(std::string& buffer, Server& server)
 {
     std::cout << "Parsing request" << std::endl << std::endl;
-    // _server = server;
+    _server = server;
 	_version = "";
 	_path_to_file = "/";
 	_hostname = "";
@@ -94,7 +94,7 @@ void Request::parseRequestLine(const char *line)
 		_error_msg = "Request-URI Too Large";
 		_error_code = 414;
 		state = R_error;
-		return ; 
+		return ;
 	}
 
 	for (int i = 0; i <=len; i++)
@@ -143,7 +143,7 @@ void Request::parseRequestLine(const char *line)
 				}
 				break ;
 			}
-			case R_first_space: //checking if we have absolute or relative path 
+			case R_first_space: //checking if we have absolute or relative path
 			{
 				if (line[i] == '/')
 				{
@@ -184,7 +184,7 @@ void Request::parseRequestLine(const char *line)
 					_error_msg = "Bad request";
 					_error_code = 400;
 					state = R_error;
-					return ; //error 400 bad request : unsuported litteral ip 
+					return ; //error 400 bad request : unsuported litteral ip
 				}
 				if (line[i] == ']')
 					state = R_abs_host_end;
@@ -294,7 +294,7 @@ void Request::parseRequestLine(const char *line)
 			}
 			case R_version_major:
 			{
-				if (line[i] != '1' && 
+				if (line[i] != '1' &&
 					line[i] != '2' &&
 					line[i] != '3')
 				{
@@ -496,5 +496,5 @@ std::string Request::getHeader(const std::string& key) const
 
 std::string Request::getBody()
 {
-	return _body;	
+	return _body;
 }
