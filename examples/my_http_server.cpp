@@ -46,6 +46,9 @@ static std::string	parse_request(std::string buffer)
 		return (response);
 	else
 	{
+		std::cout << "begin" << std::endl;
+		std::cout << buffer << std::endl;
+		std::cout << "end" << std::endl;
 		first_delim = buffer.find(' ');
 		second_delim = buffer.find(' ', first_delim + 1);
 		request_methods = buffer.substr(0, first_delim);
@@ -135,7 +138,7 @@ int	main(int argc, char ** argv)
 				while (1)
 				{
 					std::string response;
-					char	buffer[255];
+					char	buffer[8000];
 					int		len;
 
 					rc = recv(fds[i].fd, buffer, sizeof(buffer), 0);
