@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:12:17 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/05/24 18:40:13 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/05/27 12:41:24 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,6 +20,13 @@
 # include <dirent.h>
 
 class Response{
+
+	typedef enum e_file
+	{
+		DIR,
+		FILE,
+		UNKNOWN
+	}	t_file;
 
 	typedef enum e_file_type
 	{
@@ -39,7 +46,7 @@ class Response{
 	private:
 		Response();
 		~Response();
-		bool		isLocationRooted(std::string& path, std::string root, t_locations loc);
+		bool		attachRootToPath(std::string& path, std::string root, t_locations loc);
 		void		getFileType(std::string path, t_locations loc, std::map<std::string, t_locations> routes, Request *req);
 		void		isDir(std::string path, t_locations loc, std::map<std::string, t_locations> routes, Request *req);
 		void		isFile(std::string path, t_locations loc, Request *req);

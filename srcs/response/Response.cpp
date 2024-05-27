@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:28:16 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/05/24 19:37:12 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/05/27 12:18:52 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,6 +20,7 @@
 #include <unistd.h>
 #include <fstream>
 #include <dirent.h>
+#include <sstream>
 
 Response::Response(){}
 
@@ -31,13 +32,36 @@ void	Response::handleDirective(std::string path, t_locations loc, std::map<std::
 	this->_status_code = "404";
 	this->_status_message = "Not Found";
 
-	if (isLocationRooted(path, loc.root_path, loc) == false)
+	if (attachRootToPath(path, loc.root_path, loc) == false)
 		perror("404 Root failed");
 	else
-		getFileType(path, loc, routes, req);
+	{
+		if (getFileType(path, loc, routes, req) == DIR)
+		{
+			if (findIndexFile(path, loc, routes) == true)
+			{
+				attachRootToPath(path, loc.root_path, loc);
+				if (findCGI(path, loc, req) == true && isMethodAllowed(loc, req) == true)
+					runCGI(cgi_path);
+				else
+					isFile(path, loc, req);
+			}
+			else
+				isDir(path, loc, routes, req);
+		}
+		else if (getFileType(path, loc, routes, req) == FILE)
+		{
+			if (findCGI(path, loc, req) == true && isMethodAllowed(loc, req) == true)
+				runCGI(cgi_path);
+			else
+				isFile(path, loc, req);
+		}
+		else
+			perror("404 Neither a dir nor a file");
+	}
 }
 
-bool	Response::isLocationRooted(std::string& path, std::string root, t_locations loc){
+bool	Response::attachRootToPath(std::string& path, std::string root, t_locations loc){
 
 	if (loc.root_path.empty() == false)
 	{
@@ -56,65 +80,56 @@ void	Response::getFileType(std::string path, t_locations loc, std::map<std::stri
 	if (stat(path.c_str(), &path_stat) != 0)
 		perror("404 Stat failed");
 	if (S_ISDIR(path_stat.st_mode) == true)
-		isDir(path, loc, routes, req);
+		return (DIR);
 	else if (S_ISREG(path_stat.st_mode) == true)
-		isFile(path, loc, req);
+		return (FILE);
 	else
-		perror("404 Neither a dir nor a file");
+		return (UNKNOWN);
+}
+
+bool	Response::findIndexFile(std::string path, t_locations& loc, std::map<std::string, t_locations> routes){
+
+	std::string	index;
+
+	if(loc.default_path.empty() == false)
+	{
+		for (int i = 0; i < loc.default_path.size(); i++)
+		{
+			index = path;
+			index.append(loc.default_path[i]);
+			if (access(index, F_OK) == 0)
+			{
+				loc = routeRequest(loc.default_path[i], routes);
+				return (true);
+			}
+		}
+		perror("403 Access failed");
+	}
+	return (false);
+}
+
+bool	Response::findCGI(std::string path, t_locations loc, Request *req){
+
+	if (loc.cgi_path.empty() == false)
+		return (true);
+	else if (loc.cgi_path.empty() == true)
+		return (false);
 }
 
 void	Response::isDir(std::string path, t_locations loc, std::map<std::string, t_locations> routes, Request *req) {
 
-	std::string	index;
-
-	// si un slash a la fin du path et autoindex alors on printera le repertoire plus bas, si pas de slash et autoindex alors on printera le repertoire actuel
-	if (path[path.length()] == "/")
-	{
-		if(loc.default_path.empty() == false)
-		{
-			for (int i = 0; i < loc.default_path.size(); i++)
-			{
-				index = path;
-				index.append(loc.default_path[i]);
-				if (access(index, F_OK) == 0)
-				{
-					loc = routeRequest(loc.default_path[i], routes);
-					// rappeler handleDirective et arreter le process avec l'ancienne loc en cours
-					break;
-				}
-			}
-			perror("403 Access failed");
-		}
-		else
-			if (isMethodAllowed(loc, req) == true)
-				runDirMethod(path, loc, req)
-			else
-				perror("405 Method failed");
-	}
+	if (isMethodAllowed(loc, req) == true)
+		runDirMethod(path, loc, req)
 	else
-	{
-		if (req->_request_method == DELETE)
-			perror("301 URI failed");
-		if (req->_request_method == GET)
-			perror("409 URI failed");
-		else
-			perror("URI failed");
-	}
+		perror("405 Method failed");
 }
 
 void	Response::isFile(std::string path, t_locations loc, Request *req){
 
-	if (access(path, F_OK) == 0)
-	{
-		if (isCGI(path, loc, req) == true && isMethodAllowed(loc, req) == true)
-			runCGI(cgi_path);
-		else if (isMethodAllowed(loc, req) == true)
-			runFileMethod(path, loc, req);
-		else
-			perror("405 Method failed");
-	}
+	if (isMethodAllowed(loc, req) == true)
+		runFileMethod(path, loc, req);
 	else
-		perror("403 Access failed");
+		perror("405 Method failed");
 }
 
 bool	Response::isMethodAllowed(t_locations loc, Request *req){
@@ -174,14 +189,6 @@ void	Response::deleteDir(DIR *dr, std::string path){
 		closedir(dr);
 		perror("403 Write access failed");
 	}
-}
-
-void	Response::isCGI(std::string path, t_locations loc, Request *req){
-
-	if (loc.cgi_path.empty() == false)
-		return (true);
-	else if (loc.cgi_path.empty() == true)
-		return (false);
 }
 
 void	Response::runFileMethod(std::string path, t_locations loc, Request *req){
