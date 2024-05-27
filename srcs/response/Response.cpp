@@ -6,19 +6,19 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:28:16 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/05/27 16:19:08 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/05/27 17:10:20 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Response.hpp"
-#include "../parser/confParser.hpp"
+//#include "../parser/confParser.hpp"
 #include "../request/Request.hpp"
 #include <string>
 #include <map>
-#include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <fstream>
+#include <sys/types.h>
 #include <dirent.h>
 #include <sstream>
 
@@ -26,9 +26,9 @@ Response::Response(){}
 
 Response::~Response(){}
 
-void	Response::handleDirective(std::string path, t_locations loc, std::map<std::string, t_locations> routes, Request *req, std::map<int, std::string> error_paths){
+void	Response::handleDirective(std::string path, t_locations loc, std::map<std::string, t_locations> routes, Request req, std::map<int, std::string> error_paths){
 
-	this->_http_version = req->_version;
+	this->_http_version = req._version;
 	this->_status_code = "404";
 	this->_status_message = "Not Found";
 
@@ -44,7 +44,7 @@ void	Response::handleDirective(std::string path, t_locations loc, std::map<std::
 			{
 				attachRootToPath(path, loc.root_path, loc);
 				if (findCGI(path, loc, req) == true && isMethodAllowed(loc, req) == true)
-					runCGI(req->_server.cgi_path);
+					runCGI(req._server.cgi_path);
 				else
 					isFile(path, loc, req);
 			}
@@ -54,7 +54,7 @@ void	Response::handleDirective(std::string path, t_locations loc, std::map<std::
 		else if (getFileType(path, loc, routes, req) == FILE)
 		{
 			if (findCGI(path, loc, req) == true && isMethodAllowed(loc, req) == true)
-				runCGI(req->_server.cgi_path);
+				runCGI(req._server.cgi_path);
 			else
 				isFile(path, loc, req);
 		}
@@ -76,7 +76,7 @@ bool	Response::attachRootToPath(std::string& path, std::string root, t_locations
 	return (true);
 }
 
-void	Response::getFileType(std::string path, t_locations loc, std::map<std::string, t_locations> routes, Request *req){
+void	Response::getFileType(std::string path, t_locations loc, std::map<std::string, t_locations> routes, Request req){
 
 	struct stat path_stat;
 
@@ -112,7 +112,7 @@ bool	Response::findIndexFile(std::string& path, t_locations& loc, std::map<std::
 	return (false);
 }
 
-bool	Response::findCGI(std::string path, t_locations loc, Request *req){
+bool	Response::findCGI(std::string path, t_locations loc, Request req){
 
 	if (loc.cgi_path.empty() == false)
 		return (true);
@@ -120,7 +120,7 @@ bool	Response::findCGI(std::string path, t_locations loc, Request *req){
 		return (false);
 }
 
-void	Response::isDir(std::string path, t_locations loc, std::map<std::string, t_locations> routes, Request *req) {
+void	Response::isDir(std::string path, t_locations loc, std::map<std::string, t_locations> routes, Request req) {
 
 	if (isMethodAllowed(loc, req) == true)
 		runDirMethod(path, loc, req)
@@ -128,7 +128,7 @@ void	Response::isDir(std::string path, t_locations loc, std::map<std::string, t_
 		perror("405 Method failed");
 }
 
-void	Response::isFile(std::string path, t_locations loc, Request *req){
+void	Response::isFile(std::string path, t_locations loc, Request req){
 
 	if (isMethodAllowed(loc, req) == true)
 		runFileMethod(path, loc, req);
@@ -136,25 +136,25 @@ void	Response::isFile(std::string path, t_locations loc, Request *req){
 		perror("405 Method failed");
 }
 
-bool	Response::isMethodAllowed(t_locations loc, Request *req){
+bool	Response::isMethodAllowed(t_locations loc, Request req){
 
 	for (int i = 0; i < loc.allowed_methods.size(); i++)
 	{
-		if (req->_request_method == loc.allowed_methods[i])
+		if (req._request_method == loc.allowed_methods[i])
 			return (true);
 	}
 	return (false);
 }
 
-void	Response::runDirMethod(std::string path, t_locations loc, Request *req){
+void	Response::runDirMethod(std::string path, t_locations loc, Request req){
 
 	DIR *dr;
 
 	if ((dr = opendir(path)) != NULL)
 	{
-		if (req->_request_method == GET)
+		if (req._request_method == GET)
 			isAutoIndex(dr, path, loc);
-		else if (req->_request_method == DELETE)
+		else if (req._request_method == DELETE)
 			deleteDir(dr, path);
 	}
 	else
@@ -195,13 +195,13 @@ void	Response::deleteDir(DIR *dr, std::string path){
 	}
 }
 
-void	Response::runFileMethod(std::string path, t_locations loc, Request *req){
+void	Response::runFileMethod(std::string path, t_locations loc, Request req){
 
-	if (req->_request_method == GET)
+	if (req._request_method == GET)
 		downloadFile(path);
-	else if (req->_request_method == POST)
+	else if (req._request_method == POST)
 		uploadFile(path, req);
-	else if (req->_request_method == DELETE)
+	else if (req._request_method == DELETE)
 		deleteFile(path);
 }
 
@@ -225,7 +225,7 @@ void	Response::downloadFile(std::string path){
 		perror("404 Open failed");
 }
 
-void	Response::uploadFile(std::string path, Request *req){
+void	Response::uploadFile(std::string path, Request req){
 
 	if (access(path, W_OK) == 0)
 	{
@@ -233,7 +233,7 @@ void	Response::uploadFile(std::string path, Request *req){
 
 		if (output.is_open())
 		{
-			output << req->_body;
+			output << req._body;
 			output.close();
 			uploadFileResponse(path, req);
 		}
@@ -296,8 +296,8 @@ std::string	Response::getContentType(std::string stack){
 	}
 }
 
-t_file_type	Response::stringToEnum(std::string const& str)
-{
+t_file_type	Response::stringToEnum(std::string const& str){
+
 	if (str.compare(0, 20, "89 50 4e 47 d a 1a a") == 0) return (PNG);
 	if (str.compare(0, 5, "ff d8") == 0) return (JPEG);
 	if (str.compare(0, 23, "3c 3f 78 6d 6c 20 76 65") == 0) return (SVG);
@@ -328,7 +328,7 @@ void	Response::deleteResponse(void){
 	generateResponse();
 }
 
-void	Response::errorResponse(std::string error_code, std::string message, std::string path){
+void	Response::errorResponse(int error_code, std::string message, std::string path){
 
 	if (path.empty() == true)
 		path = "/var/www/html/error";

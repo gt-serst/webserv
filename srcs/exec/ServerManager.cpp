@@ -6,14 +6,14 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/07 11:04:51 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/05/27 16:36:14 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/05/27 17:38:31 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "ServerManager.hpp"
 #include "Server.hpp"
 #include "Client.hpp"
-#include "../parser/confParser.hpp"
+//#include "../parser/confParser.hpp"
 #include "../request/Request.hpp"
 #include "../response/Router.hpp"
 #include <vector>
@@ -39,11 +39,11 @@ void	ServerManager::launchServer(t_server_scope *servers){
 	int	i;
 
 	i = 0;
-	while (servers[i] != NULL)
-	{
+	//while (servers[i])
+	//{
 		_servers.push_back(Server(servers[i]));
 		i++;
-	}
+	//}
 	createServerSocket();
 	serverRoutine();
 	closeServerSocket();
@@ -72,7 +72,7 @@ void	ServerManager::createServerSocket(void){
 
 		_servers[x].server_addr.sin_family = AF_INET;
 		_servers[x].server_addr.sin_addr.s_addr = INADDR_ANY;
-		_servers[x].server_addr.sin_port = htons(_servers[x]._config.port);
+		_servers[x].server_addr.sin_port = htons(_servers[x].config.port);
 
 		rc = bind(_servers[x].server_fd, (struct sockaddr *) &_servers[x].server_addr, sizeof(_servers[x].server_addr));
 		if (rc < 0)
@@ -115,8 +115,6 @@ void	ServerManager::serverRoutine(void){
 
 					data = readClientSocket(i);
 					handleRequest(i, data);
-					_current_client = NULL;
-					_current_server = NULL;
 				}
 			}
 		}
@@ -125,7 +123,7 @@ void	ServerManager::serverRoutine(void){
 	}
 }
 
-void	ServerManager::listenClientConnection(t_main _main, unsigned int fd){
+void	ServerManager::listenClientConnection(unsigned int fd){
 
 	int		flags;
 
@@ -168,17 +166,17 @@ void	ServerManager::handleRequest(unsigned int fd, std::string data){
 
 	_current_request = Request(data);
 
-	if (_current_request == -1)
+	if (_current_request._error_code == -1)
 	{
-		location = _router.routeRequest(_current_request._path_to_file, _current_server._config.locations);
+		location = _router.routeRequest(_current_request._path_to_file, _current_server.config.locations);
 
 		std::cout << location.location_path << std::endl;
 
-		_current_response.handleDirective(_current_request._path_to_file, location, _current_server._config.locations, _current_request, _current_server.conf.error_page_paths);
+		_current_response.handleDirective(_current_request._path_to_file, location, _current_server.config.locations, _current_request, _current_server.config.error_page_paths);
 	}
 	else
-		_current_response.errorResponse(_current_request._error_code, _current_request._error_msg, req->_server.conf.error_page_paths[_current_request._error_code]);
-	sendResponse(fd, _current_response);
+		_current_response.errorResponse(_current_request._error_code, _current_request._error_msg, _current_request._server.config.error_page_paths[_current_request._error_code]);
+	sendResponse(fd, _current_response._response);
 }
 
 void	ServerManager::sendResponse(unsigned int fd, std::string response){

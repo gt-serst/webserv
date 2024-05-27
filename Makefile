@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    Makefile                                           :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: gt-serst <marvin@42.fr>                    +#+  +:+       +#+         #
+#    By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/05/21 15:52:59 by gt-serst          #+#    #+#              #
-#    Updated: 2024/05/21 16:17:55 by gt-serst         ###   ########.fr        #
+#    Updated: 2024/05/27 17:34:46 by gt-serst         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -16,8 +16,12 @@ EXECUTION	=	srcs/exec/ServerManager.cpp\
 
 REQUEST		=	srcs/request/Request.cpp
 
+RESPONSE	=	srcs/response/Response.cpp\
+				srcs/response/Router.cpp
+
 SRCS		=	$(EXECUTION)\
 				$(REQUEST)\
+				$(RESPONSE)\
 				srcs/main.cpp\
 
 NAME		= webserv
