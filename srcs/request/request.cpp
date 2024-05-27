@@ -423,7 +423,7 @@ std::streampos Request::setHeader(std::stringstream& ss, std::streampos startpos
 			return(ss.tellg());
 		}
         size_t pos = line.find(':');
-        if (pos != std::string::npos) 
+        if (pos != std::string::npos)
         {
             std::string key = line.substr(0, pos);
             std::string value = line.substr(pos + 1);
