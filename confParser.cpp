@@ -229,16 +229,226 @@ static t_server_scope	*isServerMaxBodySize(int *i, std::string buffer, t_server_
 	return (NULL);
 }
 
-static t_server_scope	*isServerLocation(int *i, std::string buffer, t_server_scope *serverConfig, int *servers)
+static t_locations	*handleA(int *i, std::string buffer, t_locations *res)
 {
-	(void)servers;
-	std::cout << "I : " << *i << std::endl;
-	std::cout << "buffer[*i] = " << buffer[*i] << std::endl;
-	return (serverConfig);
+	if (buffer.substr(*i, 10) == "autoindex ")
+	{
+		*i += 10;
+		if (buffer.substr(*i, 3) == "on\n")
+		{
+			*i += 3;
+			res->auto_index = true;
+			return (res);
+		}
+		else if (buffer.substr(*i, 4) == "off\n")
+		{
+			*i += 4;
+			res->auto_index = false;
+			return (res);
+		}
+		return (nullptr);
+	}
+	else if (buffer.substr(*i, 15) == "allowed_methods")
+	{
+		std::map<std::string, bool> result;
+		result["GET"] = false;
+		result["POST"] = false;
+		result["DELETE"] = false;
+		*i += 15;
+		while (buffer[*i] && buffer[*i] == ' ')
+		{
+			if (buffer.substr(*i, 4) == " GET")
+			{
+				*i += 4;
+				result["GET"] = true;
+			}
+			else if (buffer.substr(*i, 5) == " POST")
+			{
+				*i += 5;
+				result["POST"] = true;
+			}
+			else if (buffer.substr(*i, 7) == " DELETE")
+			{
+				*i += 7;
+				result["DELETE"] = true;
+			}
+		}
+		if (buffer[*i] == 0 || buffer[*i] != '\n' || (result["GET"] == false && result["POST"] == false && result["DELETE"] == false))
+			return (nullptr);
+		res->allowed_methods = result;
+		return (res);
+	}
+	return (nullptr);
+}
+
+static t_locations	*handleR(int *i, std::string buffer, t_locations *res)
+{
+	if (buffer.substr(*i, 5) == "root ")
+	{
+		*i += 5;
+		int j = *i;
+		while (buffer[j] && buffer[j] != '\n' && buffer[j] != ' ' && isprint(buffer[j]))
+			j++;
+		if (j != *i && buffer[j] && buffer[j] == '\n')
+		{
+			res->root_path = buffer.substr(*i, j - *i);
+			*i = j + 1;
+			return (res);
+		}
+		return (nullptr);
+	}
+	else if (buffer.substr(*i, 12) == "redirections" && buffer[*i + 12] == ' ')
+	{
+		*i += 12;
+		std::map<std::string, std::string> result;
+		while (buffer[*i] && buffer[*i] == ' ')
+		{
+			*i += 1;
+			int	j = *i;
+			while (buffer[j] && buffer[j] != '\n' && buffer[j] != ' ' && isprint(buffer[j]))
+				j++;
+			std::string	tmp = buffer.substr(*i, j - *i);
+			if (j != *i && buffer[j] && buffer[j] == ' ' && buffer[j] != '\n')
+			{
+				j++;
+				*i = j;
+				while (buffer[j] && isprint(buffer[j]) && buffer[j] != ' ')
+					j++;
+				if (buffer[j] && (buffer[j] == ' ' || buffer[j] == '\n'))
+				{
+					result[tmp] = buffer.substr(*i, j - *i);
+					*i = j;
+				}
+				else
+					return (nullptr);
+			}
+			else
+				return (nullptr);
+		}
+		if (buffer[*i] && buffer[*i] == '\n')
+		{
+			res->redirections = result;
+			return (res);
+		}
+		return (nullptr);
+	}
+	return (nullptr);
+}
+
+static t_locations	*handleD(int *i, std::string buffer, t_locations *res)
+{
+	if (buffer.substr(*i, 7) == "default" && buffer[*i + 7] == ' ')
+	{
+		*i += 7;
+		std::vector<std::string> indexes;
+		while (buffer[*i] && buffer[*i] != '\n')
+		{
+			*i += 1;
+			int	j = *i;
+			while (buffer[j] && isprint(buffer[j]) && buffer[j] != ' ')
+				j++;
+			if (j != *i && buffer[j] && (buffer[j] == '\n' || buffer[j] == ' '))
+			{
+				indexes.insert(indexes.begin(), buffer.substr(*i, j - *i));
+				*i = j;
+			}
+			else
+				return (nullptr);
+		}
+		if (buffer[*i] && buffer[*i] == '\n')
+		{
+			(*i)++;
+			res->default_path = indexes;
+			return (res);
+		}
+	}
+	return (nullptr);
+}
+
+static t_locations	*initLocation()
+{
+	t_locations *res = new t_locations;
+	if (!res)
+		return (nullptr);
+	res->root_path = "";
+	res->auto_index = false;
+	return (res);
+}
+
+static t_locations	*getLocationParams(int *i, std::string buffer)
+{
+	t_locations *res = initLocation();
+	if (!res)
+		return (nullptr);
+	while (buffer[*i] && buffer.substr(*i, 2) != "\t}")
+	{
+		if (buffer[*i] && buffer.substr(*i, 4) != "\t\t\t\t" && buffer[*i] != '\n')
+			return (nullptr);
+		if (buffer[*i] == '\n')
+		{
+			(*i)++;
+			continue ;
+		}
+		*i += 4;
+		switch (buffer[*i])
+		{
+			case 'a' :
+				if (!(res = handleA(i, buffer, res)))
+					return (nullptr);
+				break ;
+			case 'r' :
+				if (!(res = handleR(i, buffer, res)))
+					return (nullptr);
+				break ;
+			case 'd' :
+				if (!(res = handleD(i, buffer, res)))
+					return (nullptr);
+				break ;
+			default :
+				return (nullptr);
+		}
+	}
+	return (res);
+}
+
+static t_server_scope	*isServerLocation(int *i, std::string buffer, t_server_scope *serverConfig, int *servers, int *locs)
+{
+	if (buffer.substr(*i, 9) == "Location ")
+	{
+		*i += 9;
+		int j = *i;
+		while (buffer[j] && isprint(buffer[j]) && buffer[j] != ' ')
+			j++;
+		if (j != *i && buffer.substr(j, 4) == "\n\t{\n")
+		{
+			std::map<std::string, t_locations> result;
+			if (*locs > 0)
+				result = serverConfig[*servers].locations;
+			std::string location = buffer.substr(*i, j - *i);
+			*i = j + 4;
+			t_locations	*res = nullptr;
+			if (!(res = getLocationParams(i, buffer)))
+			{
+				freeConfig(serverConfig, *servers);
+				return (NULL);
+			}
+			result[location] = *res;
+			if (buffer.substr(*i, 2) == "\t}")
+			{
+				*i += 2;
+				serverConfig[*servers].locations = result;
+				(*locs)++;
+				return (serverConfig);
+			}
+		}
+	}
+	freeConfig(serverConfig, *servers);
+	return (NULL);
 }
 
 static t_server_scope	*getServerConfig(int *i, std::string buffer, t_server_scope *serverConfig, int *servers)
 {
+	int locs = 0;
 	//While inside a 'server' block, calling the appropriate function according to the first character.
 	while (buffer[*i] && buffer[*i] != '}')
 	{
@@ -253,7 +463,6 @@ static t_server_scope	*getServerConfig(int *i, std::string buffer, t_server_scop
 			continue ;
 		}
 		*i += 1;
-		std::cout << buffer[*i] << std::endl;
 		switch (buffer[*i])
 		{
 			case 's' :
@@ -299,7 +508,7 @@ static t_server_scope	*getServerConfig(int *i, std::string buffer, t_server_scop
 				}
 				break ;
 			case 'L' :
-				if (!(serverConfig = isServerLocation(i, buffer, serverConfig, servers)))
+				if (!(serverConfig = isServerLocation(i, buffer, serverConfig, servers, &locs)))
 				{
 					freeConfig(serverConfig, *servers);
 					return (NULL);
@@ -355,7 +564,6 @@ t_server_scope		*confParser(std::string buffer)
 		if (!(serverConfig = parseServer(&i, buffer, serverConfig, &servers)))
 			return (NULL);
 	}
-	delete[] serverConfig;
-	std::cout << buffer << std::endl;
+	//delete[] serverConfig;
 	return (serverConfig);
 }

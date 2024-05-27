@@ -21,11 +21,10 @@ typedef enum e_allowed_methods
 
 typedef struct s_locations
 {
-	std::string				location_path; //route path (on the website)
 	std::string				root_path; //path where files should be searched from
 	std::map<std::string, std::string>	redirections;
 	std::vector<std::string>		default_path; //default path if request is a directory
-	std::vector<std::string>		allowed_methods;
+	std::map<std::string, bool>		allowed_methods;
 	bool					auto_index; //is directory listing allowed?
 }	t_locations;
 
