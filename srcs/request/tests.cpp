@@ -21,8 +21,9 @@ int main()
     "Content-Type: application/json\r\n"
     "Content-Length: 43\r\n"
     "\r\n"
-    "{\"username\": \"john_doe\", \"password\": \"password123\"}";
-    Request test(postRequest);
+    "{\"username\": \"john_doe\", \"password\": \"password123\"}"
+    "\r\n";
+    Request test(getRequest);
 
     return 0;
 }

@@ -38,12 +38,17 @@ enum state //state is current state so the name is what we previsly validated ||
     R_uri_after_slash, //after the / of the root
     R_uri_query, //if ? in the path 
     R_second_space,
-    R_version, //will only accept HTTP/1.1
+    R_version,
+    R_version_major,
+    R_version_dot,
+    R_version_minor,
+    R_version_done, //will only accept HTTP/1.1
 	R_cr,
     R_crlf,
     R_fragment,
 	R_headers,
 	R_body,
+    R_error,
 	R_done
 };
 
@@ -60,6 +65,7 @@ class Request
         std::map<std::string, std::string> _headers;
         std::string _body;
         std::string _query;
+        std::string _error_msg;
         int _error_code;
         int _len;
         int state;

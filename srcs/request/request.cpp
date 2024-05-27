@@ -7,11 +7,6 @@
 
 //SET FUNCTIONS
 
-// int setPort_andCheck(const char *line, int start, int end)
-// {
-// 	return ;
-// }
-
 std::string convert_charptr_string(const char *line, int start, int end)
 {
     char *extract = new char[end - start + 1];
@@ -41,24 +36,31 @@ bool    allowedCharURI(char ch)
 
 Request::Request(std::string& buffer/*, Server& server*/)
 {
-    std::cout << "Parsing request" << std::endl;
+    std::cout << "Parsing request" << std::endl << std::endl;
     // _server = server;
-	_version = "HTTP/1.1";
+	_version = "";
 	_path_to_file = "/";
 	_hostname = "";
 	_body = "";
 	_query = "";
 	_error_code = -1;
+	_error_msg = "";
 	state = R_line;
     setRequest(buffer);
 }
 
 Request::~Request()
 {
+	if (state == R_error)
+	{
+		std::cout << "Error " << _error_code << " " << _error_msg << std::endl;
+		return ;
+	}
 	std::cout << "Printing request params" << std::endl;
 	std::cout << "Method == " << _request_method << std::endl;
 	std::cout << "Path == " << _path_to_file << std::endl;
 	std::cout << "Query == " << _query << std::endl;
+	std::cout << "Version == " << _version << std::endl;
 	for (std::map<std::string, std::string>::const_iterator it = _headers.begin(); it != _headers.end(); ++it)
     {
         std::cout << it->first << ": " << it->second << std::endl;
@@ -74,9 +76,11 @@ void Request::setRequest(std::string& buffer)
 	std::getline(ss, extract_line, '\n');
 	extract_line += '\n';
     parseRequestLine(extract_line.c_str());
+	if (state == R_error)
+		return ;
 	std::streampos pos = ss.tellg();
     pos = setHeader(ss, pos);
-	if (state == R_done)
+	if (state == R_done || state == R_error)
 		return ;
 	setBody(ss, pos);
 }
@@ -84,14 +88,17 @@ void Request::setRequest(std::string& buffer)
 void Request::parseRequestLine(const char *line)
 {
 	int len = strlen(line);
-	
 	int start = 0;
-
-	for (int i = 0; i <=len; i++) //for security I should be goint to the begin of loop / switch after uptating each state because of i
+	if (len > MAX_URI_SIZE)
 	{
-		//std::cout << "hello : i == " << i << " state == " << state << " char == " << line[i] << " ascii value :" << (int)line[i] << std::endl;
-		if (i > MAX_URI_SIZE)
-			return ; //error URI too long
+		_error_msg = "Request-URI Too Large";
+		_error_code = 414;
+		state = R_error;
+		return ; 
+	}
+
+	for (int i = 0; i <=len; i++)
+	{
 		switch (state)
 		{
 			case R_line: //checking for the method not accepting leading WS
@@ -116,7 +123,9 @@ void Request::parseRequestLine(const char *line)
 				}
 				else
 				{
-					std::cout << "Error : method" << std::endl;
+					_error_msg = "bad request : unsuported method";
+					_error_code = 400;
+					state = R_error;
 					return ; //error 400 bad request : method if we want to be picky it could be a 405 : method not available if they enter another existing but unsported method
 				}
 				break ;
@@ -127,7 +136,9 @@ void Request::parseRequestLine(const char *line)
 					state = R_first_space;
 				else
 				{
-					std::cout << "Error : first space" << std::endl;
+					_error_msg = "bad request";
+					_error_code = 400;
+					state = R_error;
 					return ; //error 400 bad request : first space
 				}
 				break ;
@@ -151,7 +162,9 @@ void Request::parseRequestLine(const char *line)
 				}
 				else
 				{
-					std::cout << "Error : path" << std::endl;
+					_error_msg = "Bad request";
+					_error_code = 400;
+					state = R_error;
 					return ; //error 400 bad request
 				}
 				break ;
@@ -159,17 +172,20 @@ void Request::parseRequestLine(const char *line)
 			case R_abs_slashes:
 			{
 				if (line[i] == '[')
-				{
 					state = R_abs_literal_ip;
-				}
 				else
 					state = R_abs_host_start;
 				break ;
 			}
-			case R_abs_literal_ip: //devoir stocker 
+			case R_abs_literal_ip: //devoir stocker
 			{
 				if (!isdigit(line[i]) || line[i] != '.' || line[i] != ']')
+				{
+					_error_msg = "Bad request";
+					_error_code = 400;
+					state = R_error;
 					return ; //error 400 bad request : unsuported litteral ip 
+				}
 				if (line[i] == ']')
 					state = R_abs_host_end;
 				break ;
@@ -180,7 +196,9 @@ void Request::parseRequestLine(const char *line)
 					state = R_second_space;
 				else if (!allowedCharURI(line[i]))
 				{
-					std::cout << "Error : URI char" << std::endl;
+					_error_msg = "Bad request";
+					_error_code = 400;
+					state = R_error;
 					return ; //error bad request
 				}
 				else if (line[i] == ':')
@@ -204,28 +222,28 @@ void Request::parseRequestLine(const char *line)
 				}
 				else
 				{
-					std::cout << "Error : host end" << std::endl;
+					_error_msg = "Bad request";
+					_error_code = 400;
+					state = R_error;
 					return ; //error
 				}
 				break ;
 			}
 			case R_abs_port:
 			{
-				if (line[i] == '/')
+				if (line[i] == '/' && line[i - 1] != ':')
 				{
-					// _port = setPort_andCheck(line, start, i);
 					start = i;
 					state = R_abs_path;
 				}
 				else if (line[i] == ' ')
 				{
-					// _port = setPort_andCheck(line, start, i);
-					// start = 0;
 					state = R_second_space;
 				}
 				else if(!isdigit(line[i]))
 				{
-					std::cout << "Error : port" << std::endl;
+					_error_msg = "Bad request";
+					state = R_error;
 					return ; //error port
 				}
 				break ;
@@ -238,7 +256,7 @@ void Request::parseRequestLine(const char *line)
 					start = i + 1;
 					state = R_uri_query;
 				}
-				if (line[i] == '#')
+				else if (line[i] == '#')
 				{
 					start = i + 1;
 					state = R_fragment ; //manage fragment
@@ -249,49 +267,100 @@ void Request::parseRequestLine(const char *line)
 					start = 0;
 					state = R_second_space;
 				}
+				else if (!allowedCharURI(line[i]))
+				{
+					_error_msg = "Bad request";
+					_error_code = 400;
+					state = R_error;
+					return ;
+				}
 				break ;
 			}
 			case R_second_space:
 			{
-				if (strncmp(&line[i], "HTTP/1.1", 8) != 0)
+				if (strncmp(&line[i], "HTTP/", 5) != 0)
 				{
-					std::cout << "Error : version" << std::endl;
+					_error_msg = "Bad request";
+					_error_code = 400;
 					return ; //error server only supports http 1.1
 				}
 				else
 				{
-					i += 7;
-					state = R_version;
+					i += 4;
+					start = i;
+					state = R_version_major;
 				}
 				break ;
 			}
-			case R_version:
+			case R_version_major:
 			{
-				std::cout << i << std::endl;
-				if (line[i] == '\r')
-					state = R_cr;
+				if (line[i] != '1' && 
+					line[i] != '2' &&
+					line[i] != '3')
+				{
+					_error_code = 505;
+					_error_msg = "HTTP Version not supported";
+					return ;
+				}
+				start = i;
+				state = R_version_dot;
+				break ;
+			}
+			case R_version_minor:
+			{
+				if (!isdigit(line[i]))
+				{
+					_error_code = 400;
+					_error_msg = "Bad request";
+					state = R_error;
+					return ;
+				}
+				state = R_version_done;
+				break ;
+			}
+			case R_version_dot:
+			{
+				if (line[i] == '.')
+				{
+					state = R_version_minor;
+					break ;
+				}
 				else
 				{
-					std::cout << "Error : CR" << std::endl;
-					return ; //error;
+					state = R_version_done;
+				}
+			}
+			case R_version_done:
+			{
+ 				if (line[i] == '\r')
+				{
+					_version = convert_charptr_string(line, start, i);
+					state = R_cr;
+				}
+				else
+				{
+					_error_msg = "Bad request";
+					_error_code = 400;
+					state = R_error;
+					return ;
 				}
 				break ;
 			}
 			case R_cr:
 			{
-				std::cout << "ender" << std::endl;
 				if (line[i] == '\n' )
 					state = R_crlf;
 				else
 				{
-					std::cout << "Error : LF" << std::endl;
-					return ; //error;
+					_error_msg = "Bad request";
+					_error_code = 400;
+					state = R_error;
+					return ;
 				}
 				break ;
 			}
 			case R_crlf:
 			{
-				std::cout << " crlf" << std::endl;
 				if (i == len)
 				{
 					std::cout << "First line parsing succesfull" << std::endl;
@@ -299,7 +368,9 @@ void Request::parseRequestLine(const char *line)
 				}
 				else
 				{
-					std::cout << "Error : CRLF" << std::endl;
+					_error_msg = "Bad request";
+					_error_code = 400;
+					state = R_error;
 					return ; //error
 				}
 			}
@@ -326,18 +397,21 @@ void Request::parseRequestLine(const char *line)
 					break ;
 				}
 				else
+				{
+					_error_msg = "Bad request";
+					_error_code = 400;
+					state = R_error;
 					return ; //error
+				}
 				break ;
 			}
 		}
 	}
-	std::cout << "Error : fatal state == " << state << std::endl;
 	return ;
 }
 
 std::streampos Request::setHeader(std::stringstream& ss, std::streampos startpos)
 {
-    std::cout << "headers" << std::endl;
     ss.seekg(startpos);
     std::string line;
 
@@ -359,6 +433,13 @@ std::streampos Request::setHeader(std::stringstream& ss, std::streampos startpos
             value.erase(value.find_last_not_of(" \t") + 1);
             _headers[key] = value;
         }
+		else
+		{
+			state = R_error;
+			_error_msg = "Bad request : wrong header format";
+			_error_code = 400;
+			return 0;
+		}
     }
 	state = R_done;
 	return 0;
@@ -366,8 +447,6 @@ std::streampos Request::setHeader(std::stringstream& ss, std::streampos startpos
 
 void Request::setBody(std::stringstream& ss, std::streampos startpos)
 {
-    std::cout << "Body" << std::endl;
-
     ss.seekg(startpos);
     std::string bodyContent((std::istreambuf_iterator<char>(ss)), std::istreambuf_iterator<char>());
 
