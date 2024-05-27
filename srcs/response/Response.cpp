@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:28:16 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/05/27 12:18:52 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/05/27 16:19:08 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,11 +38,13 @@ void	Response::handleDirective(std::string path, t_locations loc, std::map<std::
 	{
 		if (getFileType(path, loc, routes, req) == DIR)
 		{
+			if (path[path.length() - 1] != "/")
+				loc.root_path.insert(loc.root_path.length() - 1, "/");
 			if (findIndexFile(path, loc, routes) == true)
 			{
 				attachRootToPath(path, loc.root_path, loc);
 				if (findCGI(path, loc, req) == true && isMethodAllowed(loc, req) == true)
-					runCGI(cgi_path);
+					runCGI(req->_server.cgi_path);
 				else
 					isFile(path, loc, req);
 			}
@@ -52,7 +54,7 @@ void	Response::handleDirective(std::string path, t_locations loc, std::map<std::
 		else if (getFileType(path, loc, routes, req) == FILE)
 		{
 			if (findCGI(path, loc, req) == true && isMethodAllowed(loc, req) == true)
-				runCGI(cgi_path);
+				runCGI(req->_server.cgi_path);
 			else
 				isFile(path, loc, req);
 		}
@@ -65,7 +67,8 @@ bool	Response::attachRootToPath(std::string& path, std::string root, t_locations
 
 	if (loc.root_path.empty() == false)
 	{
-		// if slash derniere lettre alors l'enlever
+		if (loc.root_path[loc.root_path.length() - 1] == "/")
+			loc.root_path.erase(loc.root_path.length - 1,1);
 		path.replace(0, loc.location_path.length(), loc.root_path);
 	}
 	else
@@ -87,7 +90,7 @@ void	Response::getFileType(std::string path, t_locations loc, std::map<std::stri
 		return (UNKNOWN);
 }
 
-bool	Response::findIndexFile(std::string path, t_locations& loc, std::map<std::string, t_locations> routes){
+bool	Response::findIndexFile(std::string& path, t_locations& loc, std::map<std::string, t_locations> routes){
 
 	std::string	index;
 
@@ -99,7 +102,8 @@ bool	Response::findIndexFile(std::string path, t_locations& loc, std::map<std::s
 			index.append(loc.default_path[i]);
 			if (access(index, F_OK) == 0)
 			{
-				loc = routeRequest(loc.default_path[i], routes);
+				path = loc.default_path.insert(0. "/");
+				loc = routeRequest(path, routes);
 				return (true);
 			}
 		}
@@ -314,6 +318,7 @@ void	Response::uploadFileResponse(void){
 
 void	Response::autoIndexResponse(std::string dir_list){
 
+	//ne pas pv revenir derrière le root
 }
 
 void	Response::deleteResponse(void){
@@ -325,7 +330,7 @@ void	Response::deleteResponse(void){
 
 void	Response::errorResponse(std::string error_code, std::string message, std::string path){
 
-	if (!path)
+	if (path.empty() == true)
 		path = "/var/www/html/error";
 	this->_status_code = error_code;
 	this->_status_message = message;

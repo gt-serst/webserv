@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/07 11:04:51 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/05/27 11:41:59 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/05/27 16:36:14 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -167,17 +167,21 @@ void	ServerManager::handleRequest(unsigned int fd, std::string data){
 	t_locations	location;
 
 	_current_request = Request(data);
-	location = _router.routeRequest(_current_request._path_to_file, _current_server._config.locations);
 
-	std::cout << location.location_path << std::endl;
+	if (_current_request == -1)
+	{
+		location = _router.routeRequest(_current_request._path_to_file, _current_server._config.locations);
 
-	_current_response.handleDirective(_current_request._path_to_file, location, _current_server._config.locations, _current_request, _current_server.conf.error_page_paths);
-	if (dewd)
-		handleDirective(location_index);
-	sendResponse(_current_response, fd);
+		std::cout << location.location_path << std::endl;
+
+		_current_response.handleDirective(_current_request._path_to_file, location, _current_server._config.locations, _current_request, _current_server.conf.error_page_paths);
+	}
+	else
+		_current_response.errorResponse(_current_request._error_code, _current_request._error_msg, req->_server.conf.error_page_paths[_current_request._error_code]);
+	sendResponse(fd, _current_response);
 }
 
-void	ServerManager::sendResponse(unsigned int fd, std::string data){
+void	ServerManager::sendResponse(unsigned int fd, std::string response){
 
 	int	rc;
 	int	len;
@@ -209,8 +213,8 @@ void	ServerManager::sendResponse(unsigned int fd, std::string data){
 //     response = std::string("HTTP/1.1 200 OK") + std::string("Content-Type: application/octet-stream\r\nContent-Length: ") + std::to_string(body.length()) + std::string("\r\n\r\n") + body + std::string("\r\n\r\n");
 
 //    len = response.length();
-	len = data.length();
-	rc = send(fd, data.c_str(), len, 0);
+	len = response.length();
+	rc = send(fd, response.c_str(), len, 0);
 	if (rc < 0)
 		perror("Send() failed");
 	FD_CLR(fd, &_current_sockets);
