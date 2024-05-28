@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ServerManager.cpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: geraudtserstevens <geraudtserstevens@st    +#+  +:+       +#+        */
+/*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/07 11:04:51 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/05/27 23:52:53 by geraudtsers      ###   ########.fr       */
+/*   Updated: 2024/05/28 14:14:10 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -180,7 +180,7 @@ void	ServerManager::handleRequest(unsigned int fd, std::string data){
 	}
 	else
 		_current_response.errorResponse(_current_request.getErrorCode(), _current_request.getErrorMsg(), _current_request._server.getConfig().error_page_paths[_current_request.getErrorCode()]);
-	sendResponse(fd, _current_response._response);
+	sendResponse(fd, _current_response.getResponse());
 }
 
 void	ServerManager::sendResponse(unsigned int fd, std::string response){

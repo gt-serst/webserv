@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.hpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: geraudtserstevens <geraudtserstevens@st    +#+  +:+       +#+        */
+/*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:12:17 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/05/27 23:47:12 by geraudtsers      ###   ########.fr       */
+/*   Updated: 2024/05/28 14:13:09 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -46,7 +46,7 @@ class Response{
 		~Response();
 		void		handleDirective(std::string path, t_locations loc, std::map<std::string, t_locations> routes, Request req, std::map<int, std::string> error_paths);
 		void		errorResponse(int error_code, std::string message, std::string path);
-		std::string	_response;
+		std::string	getResponse() const;
 
 	private:
 		bool		attachRootToPath(std::string& path, std::string root);
@@ -70,7 +70,7 @@ class Response{
 		void		autoIndexResponse(std::string dir_list);
 		void		deleteResponse(void);
 		void		generateResponse(void);
-
+		std::string	_response;
 		std::string	_http_version;
 		std::string	_status_code;
 		std::string	_status_message;

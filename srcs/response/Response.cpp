@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: geraudtserstevens <geraudtserstevens@st    +#+  +:+       +#+        */
+/*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:28:16 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/05/27 23:47:18 by geraudtsers      ###   ########.fr       */
+/*   Updated: 2024/05/28 14:13:32 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -363,4 +363,9 @@ void	Response::errorResponse(int error_code, std::string message, std::string pa
 void	Response::generateResponse(void){
 
 	this->_response = this->_http_version + " " + this->_status_code + " " + this->_status_message + "\r\n" + this->_content_type + "\r\n" + this->_content_len + "\r\n" + this->_body + "\r\n\r\n";
+}
+
+std::string	Response::getResponse(void) const{
+
+	return _response;
 }
