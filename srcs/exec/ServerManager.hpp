@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ServerManager.hpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
+/*   By: geraudtserstevens <geraudtserstevens@st    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/07 11:00:48 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/05/27 18:13:01 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/05/27 22:34:54 by geraudtsers      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,7 +38,7 @@ class ServerManager
 		void				handleRequest(unsigned int fd, std::string buffer);
 		void				sendResponse(unsigned int fd, std::string buffer);
 		void				closeServerSocket(void) const;
-		std::vector<Server> _servers;
+		std::vector<Server>	_servers;
 		Server				_current_server;
 		Client				_current_client;
 		Request				_current_request;

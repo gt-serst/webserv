@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ServerManager.cpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
+/*   By: geraudtserstevens <geraudtserstevens@st    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/07 11:04:51 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/05/27 18:03:52 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/05/27 23:52:53 by geraudtsers      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -72,7 +72,7 @@ void	ServerManager::createServerSocket(void){
 
 		_servers[x].server_addr.sin_family = AF_INET;
 		_servers[x].server_addr.sin_addr.s_addr = INADDR_ANY;
-		_servers[x].server_addr.sin_port = htons(_servers[x].config.port);
+		_servers[x].server_addr.sin_port = htons(_servers[x].getConfig().port);
 
 		rc = bind(_servers[x].server_fd, (struct sockaddr *) &_servers[x].server_addr, sizeof(_servers[x].server_addr));
 		if (rc < 0)
@@ -166,16 +166,20 @@ void	ServerManager::handleRequest(unsigned int fd, std::string data){
 
 	_current_request = Request(data, _current_server);
 
-	if (_current_request._error_code == -1)
+	if (_current_request.getErrorCode() == -1)
 	{
-		location = _router.routeRequest(_current_request._path_to_file, _current_server.config.locations);
+		std::string path_to_file = _current_request.getPathToFile();
 
-		std::cout << location.location_path << std::endl;
+		location = _router.routeRequest(path_to_file, _current_server.getConfig().locations);
 
-		_current_response.handleDirective(_current_request._path_to_file, location, _current_server.config.locations, _current_request, _current_server.config.error_page_paths);
+		_current_request.setPathToFile(path_to_file);
+
+		//std::cout << location << std::endl;
+
+		_current_response.handleDirective(_current_request.getPathToFile(), location, _current_server.getConfig().locations, _current_request, _current_server.getConfig().error_page_paths);
 	}
 	else
-		_current_response.errorResponse(_current_request._error_code, _current_request._error_msg, _current_request._server.config.error_page_paths[_current_request._error_code]);
+		_current_response.errorResponse(_current_request.getErrorCode(), _current_request.getErrorMsg(), _current_request._server.getConfig().error_page_paths[_current_request.getErrorCode()]);
 	sendResponse(fd, _current_response._response);
 }
 

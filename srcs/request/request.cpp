@@ -1,4 +1,5 @@
-#include "request.hpp"
+#include "Request.hpp"
+#include "../exec/Server.hpp"
 
 //on devra check si on recoit bien toute la requete en un seul bloc
 //si pas un fera un precheck pour l'envoyer ici en un coup
@@ -9,12 +10,12 @@
 
 std::string convert_charptr_string(const char *line, int start, int end)
 {
-    char *extract = new char[end - start + 1];
-    strncpy(extract, &line[start], end - start);
-    extract[end - start] = '\0';
-    std::string retval(extract);
-    delete[] extract;
-    return retval;
+	char *extract = new char[end - start + 1];
+	strncpy(extract, &line[start], end - start);
+	extract[end - start] = '\0';
+	std::string retval(extract);
+	delete[] extract;
+	return retval;
 }
 
 bool	unreserved_char(char ch)
@@ -26,18 +27,20 @@ bool	unreserved_char(char ch)
 		return false;
 }
 
-bool    allowedCharURI(char ch)
+bool	allowedCharURI(char ch)
 {
-    if ((ch >= '#' && ch <= ';') || (ch >= '?' && ch <= '[') || (ch >= 'a' && ch <= 'z') ||
-       ch == '!' || ch == '=' || ch == ']' || ch == '_' || ch == '~')
-        return (true);
-    return (false);
+	if ((ch >= '#' && ch <= ';') || (ch >= '?' && ch <= '[') || (ch >= 'a' && ch <= 'z') ||
+		ch == '!' || ch == '=' || ch == ']' || ch == '_' || ch == '~')
+		return (true);
+	return (false);
 }
+
+Request::Request(){}
 
 Request::Request(std::string& buffer, Server& server)
 {
-    std::cout << "Parsing request" << std::endl << std::endl;
-    _server = server;
+	std::cout << "Parsing request" << std::endl << std::endl;
+	_server = server;
 	_version = "";
 	_path_to_file = "/";
 	_hostname = "";
@@ -46,7 +49,7 @@ Request::Request(std::string& buffer, Server& server)
 	_error_code = -1;
 	_error_msg = "";
 	state = R_line;
-    setRequest(buffer);
+	setRequest(buffer);
 }
 
 Request::~Request()
@@ -62,24 +65,24 @@ Request::~Request()
 	std::cout << "Query == " << _query << std::endl;
 	std::cout << "Version == " << _version << std::endl;
 	for (std::map<std::string, std::string>::const_iterator it = _headers.begin(); it != _headers.end(); ++it)
-    {
-        std::cout << it->first << ": " << it->second << std::endl;
-    }
-    std::cout << "Request destroyed" << std::endl;
+	{
+		std::cout << it->first << ": " << it->second << std::endl;
+	}
+	std::cout << "Request destroyed" << std::endl;
 }
 
 void Request::setRequest(std::string& buffer)
 {
-    _request = buffer;
+	_request = buffer;
 	std::stringstream ss(_request);
 	std::string extract_line;
 	std::getline(ss, extract_line, '\n');
 	extract_line += '\n';
-    parseRequestLine(extract_line.c_str());
+	parseRequestLine(extract_line.c_str());
 	if (state == R_error)
 		return ;
 	std::streampos pos = ss.tellg();
-    pos = setHeader(ss, pos);
+	pos = setHeader(ss, pos);
 	if (state == R_done || state == R_error)
 		return ;
 	setBody(ss, pos);
@@ -105,19 +108,19 @@ void Request::parseRequestLine(const char *line)
 			{
 				if (strncmp(line, "GET", 3) == 0)
 				{
-					_request_method = GET;
+					_request_method = "GET";
 					i += 2;
 					state = R_method;
 				}
 				else if (strncmp(line, "POST", 4) == 0)
 				{
-					_request_method = POST;
+					_request_method = "POST";
 					i += 3;
 					state = R_method;
 				}
 				else if (strncmp(line, "DELETE", 6) == 0)
 				{
-					_request_method = DELETE;
+					_request_method = "DELETE";
 					i += 5;
 					state = R_method;
 				}
@@ -332,7 +335,7 @@ void Request::parseRequestLine(const char *line)
 			}
 			case R_version_done:
 			{
- 				if (line[i] == '\r')
+				if (line[i] == '\r')
 				{
 					_version = convert_charptr_string(line, start, i);
 					state = R_cr;
@@ -410,29 +413,34 @@ void Request::parseRequestLine(const char *line)
 	return ;
 }
 
+void	Request::setPathToFile(const std::string& path_to_file)
+{
+	_path_to_file = path_to_file;
+}
+
 std::streampos Request::setHeader(std::stringstream& ss, std::streampos startpos)
 {
-    ss.seekg(startpos);
-    std::string line;
+	ss.seekg(startpos);
+	std::string line;
 
-    while (std::getline(ss, line, '\n') && !line.empty())
-    {
+	while (std::getline(ss, line, '\n') && !line.empty())
+	{
 		if (line.compare("\r") == 0)
 		{
 			state = R_headers;
 			return(ss.tellg());
 		}
-        size_t pos = line.find(':');
-        if (pos != std::string::npos)
-        {
-            std::string key = line.substr(0, pos);
-            std::string value = line.substr(pos + 1);
-            key.erase(0, key.find_first_not_of(" \t"));
-            key.erase(key.find_last_not_of(" \t") + 1);
-            value.erase(0, value.find_first_not_of(" \t"));
-            value.erase(value.find_last_not_of(" \t") + 1);
-            _headers[key] = value;
-        }
+		size_t pos = line.find(':');
+		if (pos != std::string::npos)
+		{
+			std::string key = line.substr(0, pos);
+			std::string value = line.substr(pos + 1);
+			key.erase(0, key.find_first_not_of(" \t"));
+			key.erase(key.find_last_not_of(" \t") + 1);
+			value.erase(0, value.find_first_not_of(" \t"));
+			value.erase(value.find_last_not_of(" \t") + 1);
+			_headers[key] = value;
+		}
 		else
 		{
 			state = R_error;
@@ -440,61 +448,76 @@ std::streampos Request::setHeader(std::stringstream& ss, std::streampos startpos
 			_error_code = 400;
 			return 0;
 		}
-    }
+	}
 	state = R_done;
 	return 0;
 }
 
 void Request::setBody(std::stringstream& ss, std::streampos startpos)
 {
-    ss.seekg(startpos);
-    std::string bodyContent((std::istreambuf_iterator<char>(ss)), std::istreambuf_iterator<char>());
+	ss.seekg(startpos);
+	std::string bodyContent((std::istreambuf_iterator<char>(ss)), std::istreambuf_iterator<char>());
 
-    // Check if body ends with CRLF
-    if (bodyContent.size() >= 2 && bodyContent.compare(bodyContent.size() - 2, 2, "\r\n") == 0)
+	// Check if body ends with CRLF
+	if (bodyContent.size() >= 2 && bodyContent.compare(bodyContent.size() - 2, 2, "\r\n") == 0)
 	{
-        _body = bodyContent;
-        state = R_done; //
-    }
+		_body = bodyContent;
+		state = R_done; //
+	}
 	else
 	{
-        std::cerr << "Body does not end with CRLF" << std::endl;
-        //set error and go next
-    }
+		std::cerr << "Body does not end with CRLF" << std::endl;
+		//set error and go next
+	}
 	return ;
 }
 
 //GET FUNCTIONS
 
-t_method Request::getRequestMethod()
+std::string	Request::getRequest() const
 {
-    return _request_method;
+	return _request;
 }
 
-std::string Request::getPathToFile()
+std::string Request::getRequestMethod() const
 {
-    return _path_to_file;
+	return _request_method;
 }
 
-std::string Request::getVersion()
+std::string Request::getPathToFile() const
 {
-    return _version;
+	return _path_to_file;
+}
+
+std::string Request::getVersion() const
+{
+	return _version;
 }
 
 std::string Request::getHeader(const std::string& key) const
 {
-    std::map<std::string, std::string>::const_iterator it = _headers.find(key);
-    if (it != _headers.end())
+	std::map<std::string, std::string>::const_iterator it = _headers.find(key);
+	if (it != _headers.end())
 	{
-        return it->second;
-    }
+		return it->second;
+	}
 	else
 	{
-        return "";
-    }
+		return "";
+	}
 }
 
-std::string Request::getBody()
+std::string Request::getBody() const
 {
 	return _body;
+}
+
+std::string	Request::getErrorMsg() const
+{
+	return _error_msg;
+}
+
+int	Request::getErrorCode() const
+{
+	return _error_code;
 }

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Router.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
+/*   By: geraudtserstevens <geraudtserstevens@st    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 11:15:20 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/05/27 17:57:48 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/05/27 23:49:20 by geraudtsers      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,16 +27,16 @@ t_locations	Router::routeRequest(std::string& path_to_file, std::map<std::string
 
 	tmp = path_to_file;
 	location = recursiveRouteRequest(tmp, routes);
-	if (path_to_file == handleRedirection(path_to_file, location.redirections, routes))
+	if (path_to_file == handleRedirection(path_to_file, location.redirections))
 		return (location);
 	else
 	{
-		std::string redirect_path = handleRedirection(path_to_file, location.redirections, routes);
+		std::string redirect_path = handleRedirection(path_to_file, location.redirections);
 		while (path_to_file != redirect_path)
 		{
 			path_to_file = redirect_path;
 			location = recursiveRouteRequest(path_to_file, routes);
-			redirect_path = handleRedirection(path_to_file, location.redirections, routes);
+			redirect_path = handleRedirection(path_to_file, location.redirections);
 		}
 		return (location);
 	}
@@ -72,7 +72,7 @@ std::string	Router::removeLastPath(std::string tmp){
 	return (tmp);
 }
 
-std::string	Router::handleRedirection(std::string path_to_file, std::map<std::string, std::string> redirections, std::map<std::string, t_locations> routes){
+std::string	Router::handleRedirection(std::string path_to_file, std::map<std::string, std::string> redirections){
 
 	//std::cout << "Searching for redirections" << std::endl;
 	for (std::map<std::string, std::string>::iterator it = redirections.begin(); it != redirections.end(); ++it)

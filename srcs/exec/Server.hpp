@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
+/*   By: geraudtserstevens <geraudtserstevens@st    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/08 09:43:45 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/05/27 18:10:41 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/05/27 22:27:25 by geraudtsers      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -45,10 +45,12 @@ class Server
 		Server();
 		Server(t_server_scope conf);
 		~Server();
+		t_server_scope		getConfig() const;
 		int					server_fd;
 		struct sockaddr_in	server_addr;
 		socklen_t			server_addr_len;
-		t_server_scope		config;
+	private:
+		t_server_scope		_config;
 };
 
 #endif

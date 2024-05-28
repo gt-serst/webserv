@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.hpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
+/*   By: geraudtserstevens <geraudtserstevens@st    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:12:17 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/05/27 17:57:46 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/05/27 23:47:12 by geraudtsers      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,27 +20,26 @@
 # include <sys/types.h>
 # include <dirent.h>
 
+typedef enum e_file
+{
+	E_DIR,
+	E_FILE,
+	E_UNKNOWN
+}	t_file;
+
+typedef enum e_file_type
+{
+	PNG,
+	JPEG,
+	SVG,
+	GIF,
+	PDF,
+	ZIP,
+	MP4,
+	TXT
+}	t_file_type;
 
 class Response{
-
-	typedef enum e_file
-	{
-		DIR,
-		FILE,
-		UNKNOWN
-	}	t_file;
-
-	typedef enum e_file_type
-	{
-		PNG,
-		JPEG,
-		SVG,
-		GIF,
-		PDF,
-		ZIP,
-		MP4,
-		TXT
-	}	t_file_type;
 
 	public:
 		Response();
@@ -50,16 +49,17 @@ class Response{
 		std::string	_response;
 
 	private:
-		bool		attachRootToPath(std::string& path, std::string root, t_locations loc);
-		void		getFileType(std::string path, t_locations loc, std::map<std::string, t_locations> routes, Request req);
-		void		isDir(std::string path, t_locations loc, std::map<std::string, t_locations> routes, Request req);
+		bool		attachRootToPath(std::string& path, std::string root);
+		int			getFileType(std::string path);
+		bool		findIndexFile(std::string& path, t_locations& loc, std::map<std::string, t_locations> routes);
+		void		isDir(std::string path, t_locations loc, Request req);
 		void		isFile(std::string path, t_locations loc, Request req);
 		bool		isMethodAllowed(t_locations loc, Request req);
 		void		runDirMethod(std::string path, t_locations loc, Request req);
-		void		isAutoIndex(::DIR *dr, std::string path, t_locations loc);
+		void		isAutoIndex(::DIR *dr, t_locations loc);
 		void		deleteDir(::DIR *dr, std::string path);
-		void		isCGI(std::string path, t_locations loc, Request req);
-		void		runFileMethod(std::string path, t_locations loc, Request req);
+		bool		findCGI(std::string cgi_path);
+		void		runFileMethod(std::string path, Request req);
 		void		downloadFile(std::string path);
 		void		uploadFile(std::string path, Request req);
 		void		deleteFile(std::string path);

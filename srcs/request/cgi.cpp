@@ -8,5 +8,5 @@ CgiManager::CgiManager()
 
 CgiManager::~CgiManager()
 {
-    
+
 }
