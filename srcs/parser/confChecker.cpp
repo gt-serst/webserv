@@ -37,6 +37,7 @@ std::string	confChecker(int argc, char **argv)
 			stack += buffer;
 			stack += '\n';
 		}
+		stack += '\0';
 		inputFile.close();
 		return (stack);
 	}
