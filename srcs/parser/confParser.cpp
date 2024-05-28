@@ -541,9 +541,9 @@ static t_server_scope	*parseServer(int *i, std::string buffer, t_server_scope *s
 	}
 	*servers += 1;
 	*i += 9;
-	t_server_scope *temp = new t_server_scope[*servers];
-	if (*servers > 1) {
-		for (int j = 1; j < *servers; ++j) {
+	t_server_scope *temp = new t_server_scope[*servers + 1];
+	if (*servers > 0) {
+		for (int j = 0; j < *servers; ++j) {
 			temp[j] = serverConfig[j];
 		}
 		delete[] serverConfig;
@@ -558,7 +558,7 @@ static t_server_scope	*parseServer(int *i, std::string buffer, t_server_scope *s
 t_server_scope		*confParser(std::string buffer, int *servers)
 {
 	t_server_scope	*serverConfig = NULL;
-	for (int i = 0; buffer[i] != 0; i++)
+	for (int i = 0; buffer[i] && buffer[i] != 0; i++)
 	{
 		if (!(serverConfig = parseServer(&i, buffer, serverConfig, servers)))
 			return (NULL);
