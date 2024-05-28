@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:28:16 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/05/28 14:13:32 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/05/28 14:53:50 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -44,22 +44,16 @@ void	Response::handleDirective(std::string path, t_locations loc, std::map<std::
 				loc.root_path.insert(loc.root_path.length() - 1, "/");
 			if (findIndexFile(path, loc, routes) == true)
 			{
-				attachRootToPath(path, loc.root_path);
-				if (findCGI(req._server.getConfig().cgi_path) == true && isMethodAllowed(loc, req) == true)
-					std::cout << "Send CGI path and run it" << std::endl;
-				else
-					isFile(path, loc, req);
+				attachRootToPath(path, loc.root_path); //path du fichier index doit-il encore garder le chemin du répertoire dans lequel il se trouve, pour le moment le path, avant d'être rooté, correspond uniquement au fichier index
+				fileRoutine(path, loc, req);
 			}
+			else if (isMethodAllowed(loc, req) == true)
+				runDirMethod(path, loc, req);
 			else
-				isDir(path, loc, req);
+				perror("405 Method Not Allowed");
 		}
 		else if (getFileType(path) == E_FILE)
-		{
-			if (findCGI(req._server.getConfig().cgi_path) == true && isMethodAllowed(loc, req) == true)
-				std::cout << "Send CGI path and run it" << std::endl;
-			else
-				isFile(path, loc, req);
-		}
+			fileRoutine(path, loc, req);
 		else
 			perror("404 Neither a dir nor a file");
 	}
@@ -115,28 +109,22 @@ bool	Response::findIndexFile(std::string& path, t_locations& loc, std::map<std::
 	return (false);
 }
 
+void	Response::fileRoutine(std::string path, t_locations loc, Request req){
+
+	if (findCGI(req._server.getConfig().cgi_path) == true && isMethodAllowed(loc, req) == true)
+		std::cout << "Send CGI path and run it" << std::endl;
+	else if (isMethodAllowed(loc, req) == true)
+		runFileMethod(path, req);
+	else
+		perror("405 Method Not Allowed");
+}
+
 bool	Response::findCGI(std::string cgi_path){
 
 	if (cgi_path.empty() == false)
 		return (true);
 	else
 		return (false);
-}
-
-void	Response::isDir(std::string path, t_locations loc, Request req) {
-
-	if (isMethodAllowed(loc, req) == true)
-		runDirMethod(path, loc, req);
-	else
-		perror("405 Method failed");
-}
-
-void	Response::isFile(std::string path, t_locations loc, Request req){
-
-	if (isMethodAllowed(loc, req) == true)
-		runFileMethod(path, req);
-	else
-		perror("405 Method failed");
 }
 
 bool	Response::isMethodAllowed(t_locations loc, Request req){
