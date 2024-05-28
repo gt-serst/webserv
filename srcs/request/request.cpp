@@ -250,6 +250,7 @@ void Request::parseRequestLine(const char *line)
 			}
 			case R_abs_path:
 			{
+				//std::cout << line[i] << std::endl;
 				if (line[i] == '?')
 				{
 					_path_to_file = convert_charptr_string(line, start, i);
@@ -269,7 +270,7 @@ void Request::parseRequestLine(const char *line)
 				}
 				else if (!allowedCharURI(line[i]))
 				{
-					_error_msg = "Bad request";
+					_error_msg = std::string("Bad character : '") + line[i] + '\'';
 					_error_code = 400;
 					state = R_error;
 					return ;
@@ -280,9 +281,9 @@ void Request::parseRequestLine(const char *line)
 			{
 				if (strncmp(&line[i], "HTTP/", 5) != 0)
 				{
-					_error_msg = "Bad request";
-					_error_code = 400;
-					return ; //error server only supports http 1.1
+					_error_msg = "Bad request : this server only handles HTTP requests";
+					_error_code = 501;
+					return ; 
 				}
 				else
 				{
