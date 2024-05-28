@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:28:16 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/05/28 14:53:50 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/05/28 15:43:09 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -139,39 +139,46 @@ bool	Response::isMethodAllowed(t_locations loc, Request req){
 
 void	Response::runDirMethod(std::string path, t_locations loc, Request req){
 
-	::DIR	*dr;
+	if (req.getRequestMethod() == "GET")
+		isAutoIndex(path, loc);
+	else if (req.getRequestMethod() == "POST")
+		uploadDir(path);
+	else if (req.getRequestMethod() == "DELETE")
+		deleteDir(path);
+}
+
+void	Response::isAutoIndex(std::string path, t_locations loc){
+
+	std::DIR		*dr;
+	struct dirent	*de;
+	std::string		dir_list;
 
 	if ((dr = opendir(path.c_str())) != NULL)
 	{
-		if (req.getRequestMethod() == "GET")
-			isAutoIndex(dr, loc);
-		else if (req.getRequestMethod() == "DELETE")
-			deleteDir(dr, path);
+		if (loc.auto_index == true)
+		{
+			while ((de = readdir(dr)) != NULL)
+				dir_list.append(de->d_name);
+			autoIndexResponse(dir_list);
+			closedir(dr);
+		}
+		else
+		{
+			closedir(dr);
+			perror("403 Autoindex failed");
+		}
 	}
 	else
 		perror("404 Opendir failed");
 }
 
-void	Response::isAutoIndex(::DIR *dr, t_locations loc){
+void	Response::uploadDir(std::string path){
 
-	struct dirent	*de;
-	std::string		dir_list;
-
-	if (loc.auto_index == true)
-	{
-		while ((de = readdir(dr)) != NULL)
-			dir_list.append(de->d_name);
-		autoIndexResponse(dir_list);
-		closedir(dr);
-	}
-	else
-	{
-		closedir(dr);
-		perror("403 Autoindex failed");
-	}
+	(void)path;
+	uploadDirResponse();
 }
 
-void	Response::deleteDir(::DIR *dr, std::string path){
+void	Response::deleteDir(std::string path){
 
 	if (access(path.c_str(), W_OK) == 0)
 	{
@@ -180,10 +187,7 @@ void	Response::deleteDir(::DIR *dr, std::string path){
 		deleteResponse();
 	}
 	else
-	{
-		closedir(dr);
 		perror("403 Write access failed");
-	}
 }
 
 void	Response::runFileMethod(std::string path, Request req){

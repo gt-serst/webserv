@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:12:17 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/05/28 14:53:17 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/05/28 15:43:28 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -55,8 +55,9 @@ class Response{
 		void		fileRoutine(std::string path, t_locations loc, Request req);
 		bool		isMethodAllowed(t_locations loc, Request req);
 		void		runDirMethod(std::string path, t_locations loc, Request req);
-		void		isAutoIndex(::DIR *dr, t_locations loc);
-		void		deleteDir(::DIR *dr, std::string path);
+		void		isAutoIndex(std::string path, t_locations loc);
+		void		uploadDir(std::string path);
+		void		deleteDir(std::string path);
 		bool		findCGI(std::string cgi_path);
 		void		runFileMethod(std::string path, Request req);
 		void		downloadFile(std::string path);
