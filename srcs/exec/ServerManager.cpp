@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/07 11:04:51 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/05/28 14:14:10 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/05/28 18:25:08 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,7 +38,7 @@ void	ServerManager::launchServer(t_server_scope *servers, int nb_servers){
 
 	int	i;
 
-	i = 1;
+	i = 0;
 	while (i <= nb_servers)
 	{
 		_servers.push_back(Server(servers[i]));
@@ -54,7 +54,8 @@ void	ServerManager::createServerSocket(void){
 	int		rc;
 	int		flags;
 
-	for (int x = 0; x < 2; x++)
+	std::cout << _servers.size() << std::endl;
+	for (size_t x = 0; x < _servers.size(); x++)
 	{
 		_servers[x].server_fd = socket(AF_INET, SOCK_STREAM, 0);
 		if (_servers[x].server_fd < 0)
@@ -72,6 +73,7 @@ void	ServerManager::createServerSocket(void){
 
 		_servers[x].server_addr.sin_family = AF_INET;
 		_servers[x].server_addr.sin_addr.s_addr = INADDR_ANY;
+		std::cout << _servers[x].getConfig().port << std::endl;
 		_servers[x].server_addr.sin_port = htons(_servers[x].getConfig().port);
 
 		rc = bind(_servers[x].server_fd, (struct sockaddr *) &_servers[x].server_addr, sizeof(_servers[x].server_addr));
@@ -125,7 +127,7 @@ void	ServerManager::serverRoutine(void){
 
 void	ServerManager::listenClientConnection(unsigned int fd){
 
-	int		flags;
+	int	flags;
 
 	_current_client.client_fd = accept(fd, (struct sockaddr *) &(_current_client.client_addr), (socklen_t *) &(_current_client.client_addr_len));
 
@@ -166,6 +168,8 @@ void	ServerManager::handleRequest(unsigned int fd, std::string data){
 
 	_current_request = Request(data, _current_server);
 
+	if (_current_request.getPathToFile().compare("/favicon.ico") == 0)
+		return;
 	if (_current_request.getErrorCode() == -1)
 	{
 		std::string path_to_file = _current_request.getPathToFile();
@@ -174,12 +178,11 @@ void	ServerManager::handleRequest(unsigned int fd, std::string data){
 
 		_current_request.setPathToFile(path_to_file);
 
-		//std::cout << location << std::endl;
-
 		_current_response.handleDirective(_current_request.getPathToFile(), location, _current_server.getConfig().locations, _current_request, _current_server.getConfig().error_page_paths);
 	}
 	else
-		_current_response.errorResponse(_current_request.getErrorCode(), _current_request.getErrorMsg(), _current_request._server.getConfig().error_page_paths[_current_request.getErrorCode()]);
+		_current_response.errorResponse(_current_request.getErrorCode(), _current_request.getErrorMsg(), _current_request._server.getConfig().error_page_paths);
+
 	sendResponse(fd, _current_response.getResponse());
 }
 
@@ -216,6 +219,8 @@ void	ServerManager::sendResponse(unsigned int fd, std::string response){
 
 //    len = response.length();
 	len = response.length();
+	std::cout << "Response: " << std::endl << response << std::endl;
+	std::cout << "Response len: " << len << std::endl;
 	rc = send(fd, response.c_str(), len, 0);
 	if (rc < 0)
 		perror("Send() failed");

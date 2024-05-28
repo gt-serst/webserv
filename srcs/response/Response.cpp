@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:28:16 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/05/28 15:43:09 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/05/28 17:52:31 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,7 +30,7 @@ Response::~Response(){}
 void	Response::handleDirective(std::string path, t_locations loc, std::map<std::string, t_locations> routes, Request req, std::map<int, std::string> error_paths){
 
 	this->_http_version = req.getVersion();
-	this->_status_code = "404";
+	this->_status_code = 404;
 	this->_status_message = "Not Found";
 
 	(void)error_paths;
@@ -65,7 +65,9 @@ bool	Response::attachRootToPath(std::string& path, std::string root){
 	{
 		if (root[root.length() - 1] == '/')
 			root.erase(root.length() - 1,1);
-		path.replace(0, root.length(), root);
+		std::cout << "Path: " << path << std::endl;
+		path.insert(0, root);
+		std::cout << "Path rooted: " << path << std::endl;
 	}
 	else
 		return (false);
@@ -79,9 +81,15 @@ int	Response::getFileType(std::string path){
 	if (stat(path.c_str(), &path_stat) != 0)
 		perror("404 Stat failed");
 	if (S_ISDIR(path_stat.st_mode) == true)
+	{
+		std::cout << "Path is a directory" << std::endl;
 		return (E_DIR);
+	}
 	else if (S_ISREG(path_stat.st_mode) == true)
+	{
+		std::cout << "Path is a file" << std::endl;
 		return (E_FILE);
+	}
 	else
 		return (E_UNKNOWN);
 }
@@ -104,7 +112,7 @@ bool	Response::findIndexFile(std::string& path, t_locations& loc, std::map<std::
 				return (true);
 			}
 		}
-		perror("403 Access failed");
+		perror("403 Index failed");
 	}
 	return (false);
 }
@@ -149,7 +157,7 @@ void	Response::runDirMethod(std::string path, t_locations loc, Request req){
 
 void	Response::isAutoIndex(std::string path, t_locations loc){
 
-	std::DIR		*dr;
+	::DIR			*dr;
 	struct dirent	*de;
 	std::string		dir_list;
 
@@ -174,8 +182,12 @@ void	Response::isAutoIndex(std::string path, t_locations loc){
 
 void	Response::uploadDir(std::string path){
 
-	(void)path;
-	uploadDirResponse();
+	if (access(path.c_str(), W_OK) == 0)
+	{
+		uploadDirResponse();
+	}
+	else
+		perror("403 Write access failed");
 }
 
 void	Response::deleteDir(std::string path){
@@ -222,33 +234,53 @@ void	Response::downloadFile(std::string path){
 
 void	Response::uploadFile(std::string path, Request req){
 
+	std::ofstream output(path);
+
+	if (output.is_open())
+	{
+		output << req.getBody();
+		output.close();
+		uploadFileResponse();
+	}
+	else
+		perror("404 File creation failed");
+}
+
+void	Response::deleteFile(std::string path){
+
 	if (access(path.c_str(), W_OK) == 0)
 	{
-		std::ofstream output(path);
-
-		if (output.is_open())
-		{
-			output << req.getBody();
-			output.close();
-			uploadFileResponse();
-		}
-		else
-			perror("500 File creation failed");
+		if (remove(path.c_str()) < 0)
+			perror("404 Delete file failed");
+		deleteResponse();
 	}
 	else
 		perror("403 Write access failed");
 }
 
-void	Response::deleteFile(std::string path){
+void	Response::autoIndexResponse(std::string dir_list){
 
-	if (remove(path.c_str()) < 0)
-		perror("404 Delete file failed");
-	deleteResponse();
+	(void)dir_list;
+	//ne pas pv revenir derrière le root
+}
+
+void	Response::deleteResponse(void){
+
+	this->_status_code = 200;
+	this->_status_message = "OK";
+	generateResponse();
+}
+
+void	Response::uploadDirResponse(void){
+
+	this->_status_code = 201;
+	this->_status_message = "Created";
+	generateResponse();
 }
 
 void	Response::downloadFileResponse(std::string stack){
 
-	this->_status_code = "200";
+	this->_status_code = 200;
 	this->_status_message = "OK";
 	this->_content_type = getContentType(stack);
 	this->_content_len = stack.length();
@@ -263,6 +295,8 @@ std::string	Response::getContentType(std::string stack){
 	std::vector<char>	bytes(8);
 	std::string			octets;
 
+	if (stack.compare(0, 15, "<!DOCTYPE html>") == 0)
+		return ("text/html");
 	ss << stack;
 	ss.read(&bytes[0], bytes.size());
 	for (size_t i = 0; i < bytes.size(); i++)
@@ -293,6 +327,7 @@ std::string	Response::getContentType(std::string stack){
 
 t_file_type	Response::stringToEnum(std::string const& str){
 
+	std::cout << str << std::endl;
 	if (str.compare(0, 20, "89 50 4e 47 d a 1a a") == 0) return (PNG);
 	if (str.compare(0, 5, "ff d8") == 0) return (JPEG);
 	if (str.compare(0, 23, "3c 3f 78 6d 6c 20 76 65") == 0) return (SVG);
@@ -306,28 +341,17 @@ t_file_type	Response::stringToEnum(std::string const& str){
 
 void	Response::uploadFileResponse(void){
 
-	this->_status_code = "201";
+	this->_status_code = 201;
 	this->_status_message = "Created";
 	generateResponse();
 }
 
-void	Response::autoIndexResponse(std::string dir_list){
+void	Response::errorResponse(int error_code, std::string message, std::map<int, std::string> error_paths){
 
-	(void)dir_list;
-	//ne pas pv revenir derrière le root
-}
+	std::string path;
 
-void	Response::deleteResponse(void){
+	path = matchErrorCodeWithPage(error_code, error_paths);
 
-	this->_status_code = "200";
-	this->_status_message = "OK";
-	generateResponse();
-}
-
-void	Response::errorResponse(int error_code, std::string message, std::string path){
-
-	if (path.empty() == true)
-		path = "/var/www/html/error";
 	this->_status_code = error_code;
 	this->_status_message = message;
 	this->_content_type = "text/html";
@@ -349,12 +373,43 @@ void	Response::errorResponse(int error_code, std::string message, std::string pa
 		generateResponse();
 	}
 	else
-		errorResponse(404, "Not Found", "/var/www/html/error");
+	{
+		error_paths.clear();
+		errorResponse(404, "Not Found", error_paths);
+	}
+}
+
+std::string	Response::matchErrorCodeWithPage(int error_code, std::map<int, std::string> error_paths){
+
+	for (std::map<int, std::string>::iterator it = error_paths.begin(); it != error_paths.end(); ++it)
+	{
+		if (it->first == error_code)
+			return (it->second);
+	}
+	if (error_code == 400)
+		return ("/Users/gt-serst/webserv/var/www/html/error400.html");
+	else
+		return ("/Users/gt-serst/webserv/var/www/html/error404.html");
 }
 
 void	Response::generateResponse(void){
 
-	this->_response = this->_http_version + " " + this->_status_code + " " + this->_status_message + "\r\n" + this->_content_type + "\r\n" + this->_content_len + "\r\n" + this->_body + "\r\n\r\n";
+	if (this->_body.empty() == false)
+	{
+		this->_response = std::string("HTTP/1.1") + std::string(" ") +\
+			std::to_string(this->_status_code) + std::string(" ") +\
+			this->_status_message + std::string("\r\n") +\
+			std::string("Content-Type: ") + this->_content_type + std::string("\r\n") +\
+			std::string("Content-Length: ") + std::to_string(this->_content_len) + std::string("\r\n\r\n") +\
+			this->_body + std::string("\r\n\r\n");
+	}
+	else
+	{
+		this->_response = std::string("HTTP/") +\
+			this->_http_version + std::string(" ") +\
+			std::to_string(this->_status_code) + std::string(" ") +\
+			this->_status_message + std::string("\r\n\r\n\r\n\r\n");
+	}
 }
 
 std::string	Response::getResponse(void) const{

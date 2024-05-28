@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:12:17 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/05/28 15:43:28 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/05/28 17:47:28 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -45,7 +45,7 @@ class Response{
 		Response();
 		~Response();
 		void		handleDirective(std::string path, t_locations loc, std::map<std::string, t_locations> routes, Request req, std::map<int, std::string> error_paths);
-		void		errorResponse(int error_code, std::string message, std::string path);
+		void		errorResponse(int error_code, std::string message, std::map<int, std::string> error_paths);
 		std::string	getResponse() const;
 
 	private:
@@ -63,19 +63,21 @@ class Response{
 		void		downloadFile(std::string path);
 		void		uploadFile(std::string path, Request req);
 		void		deleteFile(std::string path);
+		void		autoIndexResponse(std::string dir_list);
+		void		uploadDirResponse(void);
+		void		deleteResponse(void);
 		void		downloadFileResponse(std::string stack);
 		std::string	getContentType(std::string stack);
 		t_file_type	stringToEnum(std::string const& str);
 		void		uploadFileResponse(void);
-		void		autoIndexResponse(std::string dir_list);
-		void		deleteResponse(void);
 		void		generateResponse(void);
+		std::string	matchErrorCodeWithPage(int error_code, std::map<int, std::string> error_paths);
 		std::string	_response;
 		std::string	_http_version;
-		std::string	_status_code;
+		int			_status_code;
 		std::string	_status_message;
 		std::string	_content_type;
-		std::string	_content_len;
+		int			_content_len;
 		std::string	_body;
 };
 
