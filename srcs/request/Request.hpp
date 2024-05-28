@@ -52,7 +52,7 @@ class Request
 	private:
 		std::string _request;
 		std::string _request_method;
-		std::string _hostname; //?
+		std::string _hostname;
 		std::string _path_to_file;
 		std::string _version;
 		std::map<std::string, std::string> _headers;
@@ -60,13 +60,15 @@ class Request
 		std::string _query;
 		std::string _error_msg;
 		int _error_code;
+		int	_port;
 		//int _len;
 		int state;
 
-		void parseRequestLine(const char *line);
+		void parseRequestLine(char *line);
 		std::streampos setHeader(std::stringstream& ss, std::streampos startpos);
 		void setBody(std::stringstream& ss, std::streampos startpos);
 		// void setLen(std::string _request);
+		void	standardise();
 
 	public:
 		Request();
@@ -82,7 +84,9 @@ class Request
 		std::string	getHeader(const std::string& key) const;
 		std::string	getBody() const;
 		std::string	getErrorMsg() const;
+		std::string getHost() const;
 		int			getErrorCode() const;
+		int			getPort() const;
 		Server _server;
 		// int getLen();
 };

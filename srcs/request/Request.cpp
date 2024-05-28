@@ -8,6 +8,36 @@
 
 //SET FUNCTIONS
 
+void	Request::standardise(void)
+{
+
+}
+
+int hexDigitToInt(char ch) 
+{
+    if (ch >= '0' && ch <= '9') return ch - '0';
+    if (ch >= 'a' && ch <= 'f') return ch - 'a' + 10;
+    if (ch >= 'A' && ch <= 'F') return ch - 'A' + 10;
+    return -1;
+}
+
+int	convert_hexa(char **line, int *i, int *len)
+{
+	if ((*i + 2) >= *len) return 1;
+
+	if (isalnum(*line[*i + 1]) && isalnum(*line[*i + 2]))
+	{
+		int high = hexDigitToInt((*line)[*i + 1]);
+        int low = hexDigitToInt((*line)[*i + 2]);
+		if (high == -1 || low == -1) return 1;
+		char convertedChar = (high << 4) | low;
+		memmove(*line + *i + 1, *line + *i + 3, *len - *i - 2);
+		(*line)[*i] = convertedChar;
+		*len -= 2;
+	}
+	return 0;
+}
+
 std::string convert_charptr_string(const char *line, int start, int end)
 {
 	char *extract = new char[end - start + 1];
@@ -50,6 +80,7 @@ Request::Request(std::string& buffer, Server& server)
 	_error_msg = "";
 	state = R_line;
 	setRequest(buffer);
+	standardise();
 }
 
 Request::~Request()
@@ -78,7 +109,10 @@ void Request::setRequest(std::string& buffer)
 	std::string extract_line;
 	std::getline(ss, extract_line, '\n');
 	extract_line += '\n';
-	parseRequestLine(extract_line.c_str());
+	char *toparse = new char[extract_line.size() + 1];
+	std::strcpy(toparse, extract_line.c_str());
+	parseRequestLine(toparse);
+	delete[] toparse;
 	if (state == R_error)
 		return ;
 	std::streampos pos = ss.tellg();
@@ -88,7 +122,7 @@ void Request::setRequest(std::string& buffer)
 	setBody(ss, pos);
 }
 
-void Request::parseRequestLine(const char *line)
+void Request::parseRequestLine(char *line)
 {
 	int len = strlen(line);
 	int start = 0;
@@ -102,6 +136,15 @@ void Request::parseRequestLine(const char *line)
 
 	for (int i = 0; i <=len; i++)
 	{
+		// if (line[i] == '%') //this should be elsewhere
+		// {
+		// 	if (convert_hexa(&line, &i, &len))
+		// 	{
+		// 		state = R_error;
+		// 		return ;
+		// 	}
+		// }
+		line[i] = line[i] | 0x20;
 		switch (state)
 		{
 			case R_line: //checking for the method not accepting leading WS
@@ -174,29 +217,45 @@ void Request::parseRequestLine(const char *line)
 			}
 			case R_abs_slashes:
 			{
-				if (line[i] == '[')
+				if (isdigit(line[i]))
+				{
+					start = i;
 					state = R_abs_literal_ip;
+				}
 				else
+				{
 					state = R_abs_host_start;
+					start = i;
+				}
 				break ;
 			}
 			case R_abs_literal_ip: //devoir stocker
 			{
-				if (!isdigit(line[i]) || line[i] != '.' || line[i] != ']')
+				if (line[i] == ':')
+				{
+					state = R_abs_port;
+					start = i;
+				}
+				else if ()
+				{
+
+				}
+				else if (!isdigit(line[i]) || line[i] != '.')
 				{
 					_error_msg = "Bad request";
 					_error_code = 400;
 					state = R_error;
 					return ; //error 400 bad request : unsuported litteral ip
 				}
-				if (line[i] == ']')
-					state = R_abs_host_end;
 				break ;
 			}
 			case R_abs_host_start:
 			{
 				if (line[i] == ' ')
+				{
+					_hostname = convert_charptr_string(line, start, i);
 					state = R_second_space;
+				}
 				else if (!allowedCharURI(line[i]))
 				{
 					_error_msg = "Bad request";
@@ -206,7 +265,8 @@ void Request::parseRequestLine(const char *line)
 				}
 				else if (line[i] == ':')
 				{
-					// start = i;
+					_hostname = convert_charptr_string(line, start, i);
+					start = i + 1;
 					state = R_abs_port;
 				}
 				break ;
@@ -215,7 +275,7 @@ void Request::parseRequestLine(const char *line)
 			{
 				if (line[i] == ':')
 				{
-					// start = i;
+					start = i + 1;
 					state = R_abs_port;
 				}
 				else if (line[i] == '/')
@@ -236,11 +296,13 @@ void Request::parseRequestLine(const char *line)
 			{
 				if (line[i] == '/' && line[i - 1] != ':')
 				{
+					_port = std::stoi(convert_charptr_string(line, start, i));
 					start = i;
 					state = R_abs_path;
 				}
 				else if (line[i] == ' ')
 				{
+					_port = std::stoi(convert_charptr_string(line, start, i));
 					state = R_second_space;
 				}
 				else if(!isdigit(line[i]))
@@ -392,10 +454,6 @@ void Request::parseRequestLine(const char *line)
 					start = i + 1;
 					state = R_fragment;
 				}
-				// else if (line[i] == '%')
-				// {
-				// 	manage_hex_conv(&line, i);
-				// }
 				else if (unreserved_char(line[i]) || line[i] == '&')
 				{
 					break ;
@@ -521,4 +579,14 @@ std::string	Request::getErrorMsg() const
 int	Request::getErrorCode() const
 {
 	return _error_code;
+}
+
+int Request::getPort() const
+{
+	return _port;
+}
+
+std::string Request::getHost() const
+{
+	return _hostname;
 }
