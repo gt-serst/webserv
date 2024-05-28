@@ -59,6 +59,7 @@ class Request
 		std::string _body;
 		std::string _query;
 		std::string _error_msg;
+		std::string _litteral_ip;
 		int _error_code;
 		int	_port;
 		//int _len;

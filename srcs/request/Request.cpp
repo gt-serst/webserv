@@ -8,9 +8,32 @@
 
 //SET FUNCTIONS
 
-void	Request::standardise(void)
-{
+// void	Request::standardise(void)
+// {
 
+// }
+
+int ip_checker(std::string& ip)
+{
+	int valid = 0;
+	int test = 0;
+	size_t len = ip.length();
+	size_t pos;
+	size_t tmp = 0;
+	while ((pos = ip.find(".", tmp)) != std::string::npos && pos + 1 <= len)
+	{
+		if (valid == 3)
+			test = std::stoi(ip.substr(pos, len - 1));
+		else
+			test = std::stoi(ip.substr(tmp, len - pos));
+		if (test > 255 || test < 0)
+			break ;
+		tmp = pos + 1;
+		valid++;
+	}
+	if (valid == 4)
+		return 0;
+	return 1;
 }
 
 int hexDigitToInt(char ch) 
@@ -74,13 +97,14 @@ Request::Request(std::string& buffer, Server& server)
 	_version = "";
 	_path_to_file = "/";
 	_hostname = "";
+	_litteral_ip = "";
 	_body = "";
 	_query = "";
 	_error_code = -1;
 	_error_msg = "";
 	state = R_line;
 	setRequest(buffer);
-	standardise();
+	//standardise();
 }
 
 Request::~Request()
@@ -172,7 +196,7 @@ void Request::parseRequestLine(char *line)
 					_error_msg = "bad request : unsuported method";
 					_error_code = 400;
 					state = R_error;
-					return ; //error 400 bad request : method if we want to be picky it could be a 405 : method not available if they enter another existing but unsported method
+					return ;
 				}
 				break ;
 			}
@@ -182,21 +206,21 @@ void Request::parseRequestLine(char *line)
 					state = R_first_space;
 				else
 				{
-					_error_msg = "bad request";
+					_error_msg = "Bad request : first space";
 					_error_code = 400;
 					state = R_error;
 					return ; //error 400 bad request : first space
 				}
 				break ;
 			}
-			case R_first_space: //checking if we have absolute or relative path
+			case R_first_space:
 			{
 				if (line[i] == '/')
 				{
 					start = i;
 					state = R_abs_path;
 				}
-				else if (strncmp(&line[i], "http://", 7)) //using strncmp by passing the adress of the first char &line[i]
+				else if (strncmp(&line[i], "http://", 7))
 				{
 					i += 6;
 					state = R_abs_slashes;
@@ -211,7 +235,7 @@ void Request::parseRequestLine(char *line)
 					_error_msg = "Bad request";
 					_error_code = 400;
 					state = R_error;
-					return ; //error 400 bad request
+					return ;
 				}
 				break ;
 			}
@@ -222,10 +246,17 @@ void Request::parseRequestLine(char *line)
 					start = i;
 					state = R_abs_literal_ip;
 				}
-				else
+				else if (isalpha(line[i]) || line[i] == '_' || line[i] == '-')
 				{
 					state = R_abs_host_start;
 					start = i;
+				}
+				else
+				{
+					state = R_error;
+					_error_code = 400;
+					_error_msg = "Bad request : hostname not valid";
+					return ;
 				}
 				break ;
 			}
@@ -233,12 +264,29 @@ void Request::parseRequestLine(char *line)
 			{
 				if (line[i] == ':')
 				{
+					_litteral_ip = convert_charptr_string(line, start, i);
+					if (ip_checker(_litteral_ip))
+					{
+						state = R_error;
+						_error_code = 400;
+						_error_msg = "Bad IP adress, IPv6 is not supported";
+						return ;
+					}
 					state = R_abs_port;
 					start = i;
 				}
-				else if ()
+				else if (line[i] == '/')
 				{
-
+					_litteral_ip = convert_charptr_string(line, start, i);
+					if (ip_checker(_litteral_ip))
+					{
+						state = R_error;
+						_error_code = 400;
+						_error_msg = "Bad IP adress, IPv6 is not supported";
+						return ;
+					}
+					start = i;
+					state = R_abs_path;
 				}
 				else if (!isdigit(line[i]) || line[i] != '.')
 				{
@@ -315,14 +363,13 @@ void Request::parseRequestLine(char *line)
 			}
 			case R_abs_path:
 			{
-				//std::cout << line[i] << std::endl;
 				if (line[i] == '?')
 				{
 					_path_to_file = convert_charptr_string(line, start, i);
 					start = i + 1;
 					state = R_uri_query;
 				}
-				else if (line[i] == '#')
+				else if (line[i] == '#')// on verra si c'est utile
 				{
 					start = i + 1;
 					state = R_fragment ; //manage fragment
@@ -392,9 +439,7 @@ void Request::parseRequestLine(char *line)
 					break ;
 				}
 				else
-				{
 					state = R_version_done;
-				}
 			}
 			case R_version_done:
 			{
