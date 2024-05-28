@@ -12,7 +12,7 @@
 
 PARSER		=	srcs/parser/confChecker.cpp\
 				srcs/parser/confParser.cpp\
-				srcs/parser/webserv.cpp
+				srcs/webserv.cpp
 
 EXECUTION	=	srcs/exec/ServerManager.cpp\
 				srcs/exec/Server.cpp\

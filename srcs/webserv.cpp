@@ -1,5 +1,5 @@
-#include "confParser.hpp"
-#include "../exec/ServerManager.hpp"
+#include "parser/confParser.hpp"
+#include "exec/ServerManager.hpp"
 
 int	webserv(int argc, char **argv)
 {
