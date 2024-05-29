@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/07 11:04:51 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/05/29 13:20:52 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/05/29 15:40:33 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,38 +21,46 @@
 #include <iostream>
 #include <stdio.h>
 
-ServerManager::ServerManager(){}
+ServerManager::ServerManager(void){}
 
-ServerManager::~ServerManager(){}
+ServerManager::~ServerManager(void){
+
+	_servers.clear();
+	_sockets.clear();
+	_ready.clear();
+}
 
 void	ServerManager::launchServer(t_server_scope *servers, int nb_servers){
 
-	for (size_t i = 0; i < nb_servers; i++)
-	{
-		_servers.push_back(Server(servers[i]));
-		_servers[i].createServerSocket();
-	}
-	setUp();
+	initServer(servers, nb_servers);
 	serverRoutine();
-	for (size_t i = 0; i < _servers.size(); i++)
-		_servers[i].closeServerSocket();
+	clear();
 }
 
-void	ServerManager::setUp(){
+void	ServerManager::initServer(t_server_scope *servers, int nb_servers){
 
-	
+	FD_ZERO(&_fd_set);
+	for (size_t i = 0, i < nb_servers; i++)
+	{
+		int		fd;
+		Server	server(servers[i]);
+
+		server.createServerSocket();
+		fd = server.getFd();
+		FD_SET(fd, &_fd_set);
+		_servers.insert(std::make_pair(fd, server));
+	}
 }
 
 void	ServerManager::serverRoutine(void){
 
-	int				rc;
-	fd_set			ready_sockets;
-	fd_set			current_sockets;
-	struct timeval	timeout;
-
 	while (1)
 	{
 		std::cout << "New loop" << std::endl;
+		int				rc;
+		fd_set			ready_sockets;
+		fd_set			current_sockets;
+		struct timeval	timeout;
 
 		timeout.tv_sec  = 1;
 		timeout.tv_usec = 0;
@@ -68,8 +76,17 @@ void	ServerManager::serverRoutine(void){
 			{
 				if (FD_ISSET(*it, &writing_set))
 				{
-					_sockets[*it]->sendResponse(*it);
-					_ready.erase(it);
+					rc = _sockets[*it]->sendResponse(*it);
+					if (rc == 0)
+						_ready.erase(it);
+					else if (rc == -1)
+					{
+						FD_CLR(*it, &_fd_set);
+						FD_CLR(*it, &reading_set);
+						_sockets.erase(*it);
+						_ready.erase(it);
+					}
+					break;
 				}
 			}
 			for (std::map<int, Server>::iterator it = _sockets.begin(); it < _sockets.end(); ++it)
@@ -82,6 +99,13 @@ void	ServerManager::serverRoutine(void){
 						it->second.handleRequest(it->first);
 						_ready.push_back(it->first);
 					}
+					else if (rc == -1)
+					{
+						FD_CLR(*it, &_fd_set);
+						FD_CLR(*it, &reading_set);
+						_sockets.erase(it->first);
+					}
+					break;
 				}
 			}
 			for (std::map<int, Server>::iterator it = _servers.begin(); it < _servers.end(); ++it)
@@ -92,9 +116,10 @@ void	ServerManager::serverRoutine(void){
 
 					if (client_fd != -1)
 					{
-						FD_SET(client_fd, &writing_set);
+						FD_SET(client_fd, &_fd_set);
 						_sockets.insert(std::make_pair(client_fd, &(it->second)));
 					}
+					break;
 				}
 			}
 		}
@@ -103,4 +128,10 @@ void	ServerManager::serverRoutine(void){
 
 		std::cout << "End loop" << std::endl;
 	}
+}
+
+void	ServerManager::clear(void){
+
+	for (std::map::<int, Server>::iterator it = _servers.begin(); it < _servers.end(); ++it)
+		it->second.closeServerSocket();
 }

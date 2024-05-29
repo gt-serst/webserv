@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/08 09:59:24 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/05/29 13:07:44 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/05/29 15:37:25 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,13 +29,14 @@
 
 #define BUFFER_SIZE 1024
 
-Server::Server(){}
-
 Server::Server(t_server_scope config) : _config(config){}
 
-Server::~Server(){}
+Server::~Server(void){
 
-void	Server::createServerSocket(void){
+	this->_requests.clear();
+}
+
+int	Server::createServerSocket(void){
 
 	int					rc;
 	int					flags;
@@ -69,6 +70,7 @@ void	Server::createServerSocket(void){
 	rc = listen(this->_fd, connection_backlog);
 	if (rc < 0)
 		perror("Listen() failed");
+	return (this->_fd);
 }
 
 int	Server::listenClientConnection(void){
@@ -104,8 +106,10 @@ int	Server::readClientSocket(int client_fd){
 	}
 
 	if (rc < 0 && errno != EWOULDBLOCK)
+	{
+		this->closeClientSocket(client_fd);
 		perror("Recv failed");
-
+	}
 	std::cout << stack << std::endl;
 	_requests.insert(std::make_pair(client_fd, stack));
 	return (0);
@@ -117,7 +121,7 @@ void	Server::handleRequest(int client_fd){
 	Router		router;
 	Response	response;
 
-	Request request = Request(_request[client_fd]);
+	Request request = Request(_requests[client_fd], *this);
 
 	if (request.getPathToFile().compare("/favicon.ico") == 0)
 		return;
@@ -137,7 +141,7 @@ void	Server::handleRequest(int client_fd){
 	_requests.insert(std::make_pair(client_fd, response.getResponse()));
 }
 
-void	Server::sendResponse(int client_fd){
+int	Server::sendResponse(int client_fd){
 
 	int	rc;
 	int	len;
@@ -146,15 +150,27 @@ void	Server::sendResponse(int client_fd){
 	std::cout << "Response: " << std::endl << response << std::endl;
 	std::cout << "Response len: " << len << std::endl;
 	rc = send(client_fd, _requests[client_fd].c_str(), len, 0);
-	if (rc < 0)
+	if (rc == -1)
+	{
+		this->closeClientSocket(client_fd);
 		perror("Send() failed");
-	FD_CLR(fd, &_current_sockets);
-	close(fd);
+		return (-1);
+	}
+	else
+		return (0);
 }
 
-void	Server::closeServerSocket(void) const{
+void	Server::closeServerSocket(void){
 
-	close(this->_fd);
+	if (this->_fd > 0)
+		close(this->_fd);
+}
+
+void	Server::closeClientSocket(int client_fd){
+
+	if (client_fd > 0)
+		close(client_fd);
+	_requests.erase(client_fd);
 }
 
 int	Server::getFd(void) const{

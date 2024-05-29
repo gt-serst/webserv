@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/07 11:00:48 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/05/29 13:07:35 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/05/29 15:39:40 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,6 +17,7 @@
 # include "../parser/confParser.hpp"
 # include <map>
 # include <vector>
+# include <sys/select.h>
 
 class ServerManager
 {
@@ -26,10 +27,13 @@ class ServerManager
 		void					launchServer(t_server_scope *servers, int nb_servers);
 
 	private:
+		void					initServer(t_server_scope *servers, int nb_servers);
 		void					serverRoutine(void);
+		void					clear(void);
 		std::map<int, Server>	_servers;
 		std::map<int, Server>	_sockets;
 		std::vector<int>		_ready;
+		fd_set					_fd_set;
 };
 
 #endif
