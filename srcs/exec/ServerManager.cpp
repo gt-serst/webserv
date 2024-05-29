@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/07 11:04:51 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/05/29 15:40:33 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/05/29 15:54:31 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,7 +40,7 @@ void	ServerManager::launchServer(t_server_scope *servers, int nb_servers){
 void	ServerManager::initServer(t_server_scope *servers, int nb_servers){
 
 	FD_ZERO(&_fd_set);
-	for (size_t i = 0, i < nb_servers; i++)
+	for (size_t i = 0; i < nb_servers; i++)
 	{
 		int		fd;
 		Server	server(servers[i]);
@@ -58,21 +58,21 @@ void	ServerManager::serverRoutine(void){
 	{
 		std::cout << "New loop" << std::endl;
 		int				rc;
-		fd_set			ready_sockets;
-		fd_set			current_sockets;
+		fd_set			reading_set;
+		fd_set			writing_set;
 		struct timeval	timeout;
 
 		timeout.tv_sec  = 1;
 		timeout.tv_usec = 0;
-		ft_memcpy(&reading_set, &fd_set, sizeof(_fd_set));
+		ft_memcpy(&reading_set, &_fd_set, sizeof(_fd_set));
 		FD_ZERO(&writing_set);
-		for (std::vector<int>::iterator it = _ready.begin; it < _ready.end(); ++it)
+		for (std::vector<int>::iterator it = _ready.begin(); it < _ready.end(); ++it)
 			FD_SET(*it, &writing_set);
 
 		rc = select(FD_SETSIZE, &reading_set, &writing_set, NULL, &timeout);
 		if (rc > 0)
 		{
-			for (std::vector<int>::iterator it = _ready.begin; it < _ready.end(); ++it)
+			for (std::vector<int>::iterator it = _ready.begin(); it < _ready.end(); ++it)
 			{
 				if (FD_ISSET(*it, &writing_set))
 				{
@@ -117,7 +117,7 @@ void	ServerManager::serverRoutine(void){
 					if (client_fd != -1)
 					{
 						FD_SET(client_fd, &_fd_set);
-						_sockets.insert(std::make_pair(client_fd, &(it->second)));
+						_sockets.insert(std::make_pair(client_fd, it->second));
 					}
 					break;
 				}
@@ -132,6 +132,6 @@ void	ServerManager::serverRoutine(void){
 
 void	ServerManager::clear(void){
 
-	for (std::map::<int, Server>::iterator it = _servers.begin(); it < _servers.end(); ++it)
+	for (std::map<int, Server>::iterator it = _servers.begin(); it < _servers.end(); ++it)
 		it->second.closeServerSocket();
 }

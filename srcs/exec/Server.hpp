@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/08 09:43:45 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/05/29 15:36:07 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/05/29 15:51:39 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,9 +20,9 @@
 class Server
 {
 	public:
-		Server();
+		Server(void);
 		Server(t_server_scope config);
-		~Server();
+		~Server(void);
 		int							createServerSocket(Server server);
 		int							listenClientConnection(void);
 		int							readClientSocket(int client_fd);

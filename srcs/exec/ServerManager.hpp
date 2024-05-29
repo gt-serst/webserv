@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/07 11:00:48 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/05/29 15:39:40 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/05/29 15:51:50 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,8 +22,8 @@
 class ServerManager
 {
 	public:
-		ServerManager();
-		~ServerManager();
+		ServerManager(void);
+		~ServerManager(void);
 		void					launchServer(t_server_scope *servers, int nb_servers);
 
 	private:
