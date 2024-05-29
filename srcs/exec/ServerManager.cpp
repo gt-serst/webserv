@@ -3,16 +3,17 @@
 /*                                                        :::      ::::::::   */
 /*   ServerManager.cpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
+/*   By: geraudtserstevens <geraudtserstevens@st    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/07 11:04:51 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/05/29 15:54:31 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/05/29 16:29:30 by geraudtsers      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "ServerManager.hpp"
 #include "Server.hpp"
 #include "../parser/confParser.hpp"
+#include <cstring>
 #include <map>
 #include <vector>
 #include <sys/select.h>
@@ -40,7 +41,7 @@ void	ServerManager::launchServer(t_server_scope *servers, int nb_servers){
 void	ServerManager::initServer(t_server_scope *servers, int nb_servers){
 
 	FD_ZERO(&_fd_set);
-	for (size_t i = 0; i < nb_servers; i++)
+	for (int i = 0; i < nb_servers; i++)
 	{
 		int		fd;
 		Server	server(servers[i]);
@@ -62,21 +63,26 @@ void	ServerManager::serverRoutine(void){
 		fd_set			writing_set;
 		struct timeval	timeout;
 
-		timeout.tv_sec  = 1;
-		timeout.tv_usec = 0;
-		ft_memcpy(&reading_set, &_fd_set, sizeof(_fd_set));
-		FD_ZERO(&writing_set);
-		for (std::vector<int>::iterator it = _ready.begin(); it < _ready.end(); ++it)
-			FD_SET(*it, &writing_set);
+		rc = 0;
+		while (rc == 0)
+		{
+			timeout.tv_sec  = 1;
+			timeout.tv_usec = 0;
+			std::memcpy(&reading_set, &_fd_set, sizeof(_fd_set));
+			FD_ZERO(&writing_set);
+			for (std::vector<int>::iterator it = _ready.begin(); it < _ready.end(); ++it)
+				FD_SET(*it, &writing_set);
 
-		rc = select(FD_SETSIZE, &reading_set, &writing_set, NULL, &timeout);
+			rc = select(FD_SETSIZE, &reading_set, &writing_set, NULL, &timeout);
+			std::cout << rc << std::endl;
+		}
 		if (rc > 0)
 		{
-			for (std::vector<int>::iterator it = _ready.begin(); it < _ready.end(); ++it)
+			for (std::vector<int>::iterator it = _ready.begin(); it != _ready.end(); ++it)
 			{
 				if (FD_ISSET(*it, &writing_set))
 				{
-					rc = _sockets[*it]->sendResponse(*it);
+					rc = _sockets[*it].sendResponse(*it);
 					if (rc == 0)
 						_ready.erase(it);
 					else if (rc == -1)
@@ -89,7 +95,7 @@ void	ServerManager::serverRoutine(void){
 					break;
 				}
 			}
-			for (std::map<int, Server>::iterator it = _sockets.begin(); it < _sockets.end(); ++it)
+			for (std::map<int, Server>::iterator it = _sockets.begin(); it != _sockets.end(); ++it)
 			{
 				if (FD_ISSET(it->first, &reading_set))
 				{
@@ -101,14 +107,14 @@ void	ServerManager::serverRoutine(void){
 					}
 					else if (rc == -1)
 					{
-						FD_CLR(*it, &_fd_set);
-						FD_CLR(*it, &reading_set);
+						FD_CLR(it->first, &_fd_set);
+						FD_CLR(it->first, &reading_set);
 						_sockets.erase(it->first);
 					}
 					break;
 				}
 			}
-			for (std::map<int, Server>::iterator it = _servers.begin(); it < _servers.end(); ++it)
+			for (std::map<int, Server>::iterator it = _servers.begin(); it != _servers.end(); ++it)
 			{
 				if (FD_ISSET(it->first, &reading_set))
 				{
@@ -123,8 +129,18 @@ void	ServerManager::serverRoutine(void){
 				}
 			}
 		}
+		/*else
+			perror("Select() failed");*/
 		else
-			perror("Select() failed");
+		{
+			for (std::map<int, Server>::iterator it = _sockets.begin() ; it != _sockets.end() ; it++)
+				it->second.closeClientSocket(it->first);
+			_sockets.clear();
+			_ready.clear();
+			FD_ZERO(&_fd_set);
+			for (std::map<int, Server>::iterator it = _servers.begin() ; it != _servers.end() ; it++)
+				FD_SET(it->first, &_fd_set);
+		}
 
 		std::cout << "End loop" << std::endl;
 	}
@@ -132,6 +148,6 @@ void	ServerManager::serverRoutine(void){
 
 void	ServerManager::clear(void){
 
-	for (std::map<int, Server>::iterator it = _servers.begin(); it < _servers.end(); ++it)
+	for (std::map<int, Server>::iterator it = _servers.begin(); it != _servers.end(); ++it)
 		it->second.closeServerSocket();
 }

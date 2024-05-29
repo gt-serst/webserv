@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
+/*   By: geraudtserstevens <geraudtserstevens@st    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/08 09:43:45 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/05/29 15:51:39 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/05/29 16:14:51 by geraudtsers      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,11 +23,11 @@ class Server
 		Server(void);
 		Server(t_server_scope config);
 		~Server(void);
-		int							createServerSocket(Server server);
+		int							createServerSocket(void);
 		int							listenClientConnection(void);
 		int							readClientSocket(int client_fd);
 		void						handleRequest(int client_fd);
-		void						sendResponse(int client_fd);
+		int						sendResponse(int client_fd);
 		void						closeServerSocket(void);
 		void						closeClientSocket(int client_fd);
 		int							getFd(void) const;

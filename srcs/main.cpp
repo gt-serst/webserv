@@ -3,16 +3,15 @@
 /*                                                        :::      ::::::::   */
 /*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
+/*   By: geraudtserstevens <geraudtserstevens@st    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/08 10:35:22 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/05/27 17:55:25 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/05/29 16:19:01 by geraudtsers      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "parser/confParser.hpp"
 #include "exec/ServerManager.hpp"
-#include "exec/Client.hpp"
 #include "exec/Server.hpp"
 #include "exec/ServerManager.hpp"
 #include "request/Request.hpp"

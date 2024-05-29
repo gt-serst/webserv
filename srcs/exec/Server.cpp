@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
+/*   By: geraudtserstevens <geraudtserstevens@st    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/08 09:59:24 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/05/29 15:51:22 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/05/29 16:18:50 by geraudtsers      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,7 +43,6 @@ int	Server::createServerSocket(void){
 	int					rc;
 	int					flags;
 	struct sockaddr_in	server_addr;
-	socklen_t			server_addr_len;
 
 	this->_fd = socket(AF_INET, SOCK_STREAM, 0);
 	if (this->_fd < 0)
@@ -61,7 +60,7 @@ int	Server::createServerSocket(void){
 
 	server_addr.sin_family = AF_INET;
 	server_addr.sin_addr.s_addr = INADDR_ANY;
-	std::cout << this->config.port << std::endl;
+	std::cout << this->_config.port << std::endl;
 	server_addr.sin_port = htons(this->_config.port);
 
 	rc = bind(this->_fd, (struct sockaddr *) &server_addr, sizeof(server_addr));
@@ -138,7 +137,7 @@ void	Server::handleRequest(int client_fd){
 		response.handleDirective(request.getPathToFile(), location, this->_config.locations, request, this->_config.error_page_paths);
 	}
 	else
-		response.errorResponse(request.getErrorCode(), request.getErrorMsg(), request.this->_config.error_page_paths);
+		response.errorResponse(request.getErrorCode(), request.getErrorMsg(), getConfig().error_page_paths);
 
 	_requests.insert(std::make_pair(client_fd, response.getResponse()));
 }
@@ -149,8 +148,8 @@ int	Server::sendResponse(int client_fd){
 	int	len;
 
 	len = _requests[client_fd].length();
-	std::cout << "Response: " << std::endl << response << std::endl;
-	std::cout << "Response len: " << len << std::endl;
+	std::cout << "Response:" << std::endl;
+	std::cout << _requests[client_fd] << std::endl;
 	rc = send(client_fd, _requests[client_fd].c_str(), len, 0);
 	if (rc == -1)
 	{
