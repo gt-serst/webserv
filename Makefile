@@ -6,7 +6,7 @@
 #    By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/05/21 15:52:59 by gt-serst          #+#    #+#              #
-#    Updated: 2024/05/28 15:52:24 by gt-serst         ###   ########.fr        #
+#    Updated: 2024/05/29 13:08:16 by gt-serst         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -16,7 +16,6 @@ PARSER		=	srcs/parser/confChecker.cpp\
 
 EXECUTION	=	srcs/exec/ServerManager.cpp\
 				srcs/exec/Server.cpp\
-				srcs/exec/Client.cpp
 
 REQUEST		=	srcs/request/Request.cpp
 
