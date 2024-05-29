@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ServerManager.hpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: geraudtserstevens <geraudtserstevens@st    +#+  +:+       +#+        */
+/*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/07 11:00:48 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/05/27 22:34:54 by geraudtsers      ###   ########.fr       */
+/*   Updated: 2024/05/28 18:19:07 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
