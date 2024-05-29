@@ -12,7 +12,6 @@
 #include <limits.h>
 #define MAX_URI_SIZE 200
 #define MAX_REQUEST_SIZE
-#define MAX_BODY 1000000
 
 enum state //state is current state so the name is what we previsly validated || when we encounter any (% hex hex) char we should translate hexa to ascii
 {
@@ -52,12 +51,12 @@ class Request
 	private:
 		std::string _request;
 		std::string _request_method;
-		std::string _hostname;
-		std::string _path_to_file;
+		std::string _hostname;//std
+		std::string _path_to_file;//std
 		std::string _version;
 		std::map<std::string, std::string> _headers;
 		std::string _body;
-		std::string _query;
+		std::string _query;//std
 		std::string _error_msg;
 		std::string _litteral_ip;
 		int _error_code;
@@ -69,7 +68,7 @@ class Request
 		std::streampos setHeader(std::stringstream& ss, std::streampos startpos);
 		void setBody(std::stringstream& ss, std::streampos startpos);
 		// void setLen(std::string _request);
-		void	standardise();
+		std::string	standardise(std::string str);
 
 	public:
 		Request();

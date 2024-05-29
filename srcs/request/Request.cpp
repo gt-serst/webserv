@@ -8,37 +8,6 @@
 
 //SET FUNCTIONS
 
-// void	Request::standardise(void)
-// {
-
-// }
-
-int ip_checker(std::string& ip)
-{
-	int valid = 0;
-	int test = 0;
-	size_t len = ip.length();
-	size_t pos;
-	size_t tmp = 0;
-	while ((pos = ip.find(".", tmp)) != std::string::npos && pos + 1 <= len)
-	{
-		test = std::stoi(ip.substr(tmp, len - pos));
-		if (test > 255 || test < 0)
-			break ;
-		tmp = pos + 1;
-		valid++;
-	}
-	if (valid == 3)
-	{
-		test = std::stoi(ip.substr(pos, len - 1));
-		if (test <= 255 && test >= 0)
-			valid++;
-	}
-	if (valid == 4)
-		return 0;
-	return 1;
-}
-
 int hexDigitToInt(char ch) 
 {
     if (ch >= '0' && ch <= '9') return ch - '0';
@@ -47,21 +16,70 @@ int hexDigitToInt(char ch)
     return -1;
 }
 
-int	convert_hexa(char **line, int *i, int *len)
+int convert_hexa(std::string &str, size_t &i, size_t &len)
 {
-	if ((*i + 2) >= *len) return 1;
+    if ((i + 2) >= len) return 1;
 
-	if (isalnum(*line[*i + 1]) && isalnum(*line[*i + 2]))
+    if (std::isalnum(str[i + 1]) && std::isalnum(str[i + 2]))
 	{
-		int high = hexDigitToInt((*line)[*i + 1]);
-        int low = hexDigitToInt((*line)[*i + 2]);
-		if (high == -1 || low == -1) return 1;
-		char convertedChar = (high << 4) | low;
-		memmove(*line + *i + 1, *line + *i + 3, *len - *i - 2);
-		(*line)[*i] = convertedChar;
-		*len -= 2;
+        int high = hexDigitToInt(str[i + 1]);
+        int low = hexDigitToInt(str[i + 2]);
+        if (high == -1 || low == -1) return 1;
+        char convertedChar = (high << 4) | low;
+        str.replace(i, 3, 1, convertedChar);
+        len -= 2;
+    }
+    return 0;
+}
+
+std::string toLowerCase(const std::string& str)
+{
+    std::string result = str;
+    for (size_t i = 0; i < result.length(); ++i)
+        result[i] = std::tolower(result[i]);
+    return result;
+}
+
+std::string	Request::standardise(std::string str)
+{
+	size_t len = str.length();
+	for (size_t i = 0; i < len; i++)
+	{
+ 		if (str[i] == '%')
+			if (convert_hexa(str, i, len) != 0)
+			{
+				state = R_error;
+				_error_code = 400;
+				_error_msg = "Bad request hexa";
+				return str;
+			}
 	}
-	return 0;
+	return toLowerCase(str); //should lowercase the string
+}
+
+int ip_checker(std::string& ip)
+{
+    int valid = 0;
+    int test = 0;
+    size_t len = ip.length();
+    size_t pos;
+    size_t tmp = 0;
+    
+    while ((pos = ip.find(".", tmp)) != std::string::npos)
+	{
+        test = std::stoi(ip.substr(tmp, pos - tmp));
+        if (test > 255 || test < 0)
+            return 1;
+        tmp = pos + 1;
+        valid++;
+    }
+    if (valid == 3)
+	{
+        test = std::stoi(ip.substr(tmp, len - tmp));
+        if (test <= 255 && test >= 0)
+            valid++;
+    }
+    return (valid == 4) ? 0 : 1;
 }
 
 std::string convert_charptr_string(const char *line, int start, int end)
@@ -107,7 +125,14 @@ Request::Request(std::string& buffer, Server& server)
 	_error_msg = "";
 	state = R_line;
 	setRequest(buffer);
-	//standardise();
+	if (state != R_error)
+		_hostname = standardise(_hostname);
+	if (state != R_error)
+		_path_to_file = standardise(_path_to_file);
+	if (state != R_error)
+		_query = standardise(_query); //this function should first do the hexa transform then tolower the string
+	if (state != R_error)
+		validity_checks();
 }
 
 Request::~Request()
@@ -115,18 +140,19 @@ Request::~Request()
 	if (state == R_error)
 	{
 		std::cout << "Error " << _error_code << " " << _error_msg << std::endl;
-		return ;
 	}
-	/*std::cout << "Printing request params" << std::endl;
+	std::cout << "Printing request params" << std::endl;
 	std::cout << "Method == " << _request_method << std::endl;
 	std::cout << "Path == " << _path_to_file << std::endl;
 	std::cout << "Query == " << _query << std::endl;
 	std::cout << "Version == " << _version << std::endl;
+	std::cout << "IP == " << _litteral_ip << std::endl;
+	std::cout << "Hostname == " << _hostname << std::endl;
 	for (std::map<std::string, std::string>::const_iterator it = _headers.begin(); it != _headers.end(); ++it)
 	{
 		std::cout << it->first << ": " << it->second << std::endl;
 	}
-	std::cout << "Request destroyed" << std::endl;*/
+	std::cout << "Request destroyed" << std::endl;
 }
 
 void Request::setRequest(std::string& buffer)
@@ -163,15 +189,6 @@ void Request::parseRequestLine(char *line)
 
 	for (int i = 0; i <=len; i++)
 	{
-		// if (line[i] == '%') //this should be elsewhere
-		// {
-		// 	if (convert_hexa(&line, &i, &len))
-		// 	{
-		// 		state = R_error;
-		// 		return ;
-		// 	}
-		// }
-		line[i] = line[i] | 0x20;
 		switch (state)
 		{
 			case R_line: //checking for the method not accepting leading WS
@@ -235,7 +252,7 @@ void Request::parseRequestLine(char *line)
 				}
 				else
 				{
-					_error_msg = "Bad request";
+					_error_msg = "Bad request scheme";
 					_error_code = 400;
 					state = R_error;
 					return ;
@@ -246,13 +263,13 @@ void Request::parseRequestLine(char *line)
 			{
 				if (isdigit(line[i]))
 				{
-					start = i;
+					start = i - 1;
 					state = R_abs_literal_ip;
 				}
 				else if (isalpha(line[i]) || line[i] == '_' || line[i] == '-')
 				{
 					state = R_abs_host_start;
-					start = i;
+					start = i - 1;
 				}
 				else
 				{
@@ -291,9 +308,10 @@ void Request::parseRequestLine(char *line)
 					start = i;
 					state = R_abs_path;
 				}
-				else if (!isdigit(line[i]) || line[i] != '.')
+				else if (!isdigit(line[i]) && line[i] != '.')
 				{
-					_error_msg = "Bad request";
+					std::cout << line[i] << std::endl;
+					_error_msg = "Bad request wrong ip";
 					_error_code = 400;
 					state = R_error;
 					return ; //error 400 bad request : unsuported litteral ip
@@ -309,10 +327,16 @@ void Request::parseRequestLine(char *line)
 				}
 				else if (!allowedCharURI(line[i]))
 				{
-					_error_msg = "Bad request";
+					_error_msg = "Bad request host";
 					_error_code = 400;
 					state = R_error;
 					return ; //error bad request
+				}
+				else if (line[i] == '/')
+				{
+					_hostname = convert_charptr_string(line, start, i);
+					start = i;
+					state = R_abs_path;
 				}
 				else if (line[i] == ':')
 				{
@@ -329,14 +353,9 @@ void Request::parseRequestLine(char *line)
 					start = i + 1;
 					state = R_abs_port;
 				}
-				else if (line[i] == '/')
-				{
-					start = i;
-					state = R_abs_path;
-				}
 				else
 				{
-					_error_msg = "Bad request";
+					_error_msg = "Bad request host";
 					_error_code = 400;
 					state = R_error;
 					return ; //error
@@ -358,7 +377,7 @@ void Request::parseRequestLine(char *line)
 				}
 				else if(!isdigit(line[i]))
 				{
-					_error_msg = "Bad request";
+					_error_msg = "Bad request : port format";
 					state = R_error;
 					return ; //error port
 				}
@@ -393,7 +412,7 @@ void Request::parseRequestLine(char *line)
 				break ;
 			}
 			case R_second_space:
-			{
+			{		
 				if (strncmp(&line[i], "HTTP/", 5) != 0)
 				{
 					_error_msg = "Bad request : this server only handles HTTP requests";
@@ -427,7 +446,7 @@ void Request::parseRequestLine(char *line)
 				if (!isdigit(line[i]))
 				{
 					_error_code = 400;
-					_error_msg = "Bad request";
+					_error_msg = "Bad request : version";
 					state = R_error;
 					return ;
 				}
@@ -453,7 +472,7 @@ void Request::parseRequestLine(char *line)
 				}
 				else
 				{
-					_error_msg = "Bad request";
+					_error_msg = "Bad request : CR";
 					_error_code = 400;
 					state = R_error;
 					return ;
@@ -466,7 +485,7 @@ void Request::parseRequestLine(char *line)
 					state = R_crlf;
 				else
 				{
-					_error_msg = "Bad request";
+					_error_msg = "Bad request : LF";
 					_error_code = 400;
 					state = R_error;
 					return ;
@@ -482,7 +501,7 @@ void Request::parseRequestLine(char *line)
 				}
 				else
 				{
-					_error_msg = "Bad request";
+					_error_msg = "Bad request : fatal";
 					_error_code = 400;
 					state = R_error;
 					return ; //error
@@ -508,7 +527,7 @@ void Request::parseRequestLine(char *line)
 				}
 				else
 				{
-					_error_msg = "Bad request";
+					_error_msg = "Bad request : query format";
 					_error_code = 400;
 					state = R_error;
 					return ; //error
@@ -530,7 +549,7 @@ std::streampos Request::setHeader(std::stringstream& ss, std::streampos startpos
 	ss.seekg(startpos);
 	std::string line;
 
-	while (std::getline(ss, line, '\n') && !line.empty())
+	while (std::getline(ss, line, '\n'))
 	{
 		if (line.compare("\r") == 0)
 		{
