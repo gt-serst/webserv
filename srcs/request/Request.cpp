@@ -22,13 +22,17 @@ int ip_checker(std::string& ip)
 	size_t tmp = 0;
 	while ((pos = ip.find(".", tmp)) != std::string::npos && pos + 1 <= len)
 	{
-		if (valid == 3)
-			test = std::stoi(ip.substr(pos, len - 1));
-		else
-			test = std::stoi(ip.substr(tmp, len - pos));
+		test = std::stoi(ip.substr(tmp, len - pos));
 		if (test > 255 || test < 0)
 			break ;
 		tmp = pos + 1;
+		valid++;
+	}
+	if (valid == 3)
+	{
+		test = std::stoi(ip.substr(pos, len - 1));
+		if (test > 255 || test < 0)
+			break ;
 		valid++;
 	}
 	if (valid == 4)
