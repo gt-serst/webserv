@@ -31,9 +31,8 @@ int ip_checker(std::string& ip)
 	if (valid == 3)
 	{
 		test = std::stoi(ip.substr(pos, len - 1));
-		if (test > 255 || test < 0)
-			break ;
-		valid++;
+		if (test <= 255 && test >= 0)
+			valid++;
 	}
 	if (valid == 4)
 		return 0;
