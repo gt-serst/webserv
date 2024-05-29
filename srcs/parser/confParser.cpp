@@ -3,6 +3,16 @@
 static void		freeConfig(t_server_scope *serverConfig, int servers)
 {
 	(void)servers;
+	/*for (unsigned int i = 0; i <= *servers; i++)
+	{
+		std::map<std::string, t_locations>::iterator it = serverConfig[*servers].locations;
+		while (it != serverConfig[*servers].locations.end())
+		{
+			if (it->second.root_path.empty() == 0)
+				delete it->second.root_path;
+			++it;
+		}
+	}*/
 	delete[] serverConfig;
 }
 
@@ -565,6 +575,7 @@ static t_server_scope	*checkConfig(t_server_scope *serverConfig, int *servers)
 		std::map<std::string, t_locations>::iterator it = serverConfig[i].locations.begin();
 		if (it == serverConfig[i].locations.end() || !serverConfig[i].port || serverConfig[i].upload_path.empty() == 1 || serverConfig[i].server_name[0].empty() == 1)
 		{
+			std::cerr << "ERROR : configuration file lacks mandatory informations" << std::endl;
 			freeConfig(serverConfig, *servers);
 			return (NULL);
 		}
