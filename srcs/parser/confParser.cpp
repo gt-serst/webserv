@@ -538,7 +538,7 @@ static t_server_scope	*getServerConfig(int *i, std::string buffer, t_server_scop
 		freeConfig(serverConfig, *servers);
 		return (NULL);
 	}
-	*i += 2;
+	*i += 1;
 	return (serverConfig);
 }
 
@@ -604,6 +604,8 @@ t_server_scope		*confParser(std::string buffer, int *servers)
 	t_server_scope	*serverConfig = NULL;
 	for (int i = 0; buffer[i] && buffer[i] != 0; i++)
 	{
+		while (buffer[i] && buffer[i] == '\n')
+			i++;
 		if (!(serverConfig = parseServer(&i, buffer, serverConfig, servers)))
 			return (NULL);
 	}
