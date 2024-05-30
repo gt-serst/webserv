@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Router.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
+/*   By: geraudtserstevens <geraudtserstevens@st    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 11:15:20 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/05/28 18:06:18 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/05/30 23:10:12 by geraudtsers      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,9 +16,9 @@
 #include <string>
 #include <map>
 
-Router::Router(){}
+Router::Router(void){}
 
-Router::~Router(){}
+Router::~Router(void){}
 
 t_locations	Router::routeRequest(std::string& path_to_file, std::map<std::string, t_locations> routes){
 

@@ -6,7 +6,7 @@
 /*   By: geraudtserstevens <geraudtserstevens@st    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 11:21:28 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/05/27 23:48:59 by geraudtsers      ###   ########.fr       */
+/*   Updated: 2024/05/30 23:10:18 by geraudtsers      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,8 +21,8 @@
 class Router{
 
 	public:
-		Router();
-		~Router();
+		Router(void);
+		~Router(void);
 		t_locations	routeRequest(std::string& path_to_file, std::map<std::string, t_locations> routes);
 
 	private:

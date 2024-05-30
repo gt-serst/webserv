@@ -6,7 +6,7 @@
 /*   By: geraudtserstevens <geraudtserstevens@st    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:28:16 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/05/30 15:26:30 by geraudtsers      ###   ########.fr       */
+/*   Updated: 2024/05/30 23:13:06 by geraudtsers      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,17 +23,14 @@
 #include <dirent.h>
 #include <sstream>
 
-Response::Response(){}
+Response::Response(void){}
 
-Response::~Response(){}
+Response::~Response(void){}
 
 void	Response::handleDirective(std::string path, t_locations loc, std::map<std::string, t_locations> routes, Request req, std::map<int, std::string> error_paths){
 
-	this->_http_version = req.getVersion();
-	this->_status_code = 404;
-	this->_status_message = "Not Found";
-
 	(void)error_paths;
+	this->_http_version = req.getVersion();
 	if (attachRootToPath(path, loc.root_path) == false)
 		perror("404 Root failed");
 	else
@@ -112,7 +109,6 @@ bool	Response::findIndexFile(std::string& path, t_locations& loc, std::map<std::
 				return (true);
 			}
 		}
-		perror("403 Index failed");
 	}
 	return (false);
 }
@@ -166,7 +162,10 @@ void	Response::isAutoIndex(std::string path, t_locations loc){
 		if (loc.auto_index == true)
 		{
 			while ((de = readdir(dr)) != NULL)
+			{
 				dir_list.append(de->d_name);
+				dir_list += '\n';
+			}
 			autoIndexResponse(dir_list);
 			closedir(dr);
 		}
@@ -260,7 +259,8 @@ void	Response::deleteFile(std::string path){
 
 void	Response::autoIndexResponse(std::string dir_list){
 
-	(void)dir_list;
+	std::cout << dir_list << std::endl;
+
 	//ne pas pv revenir derrière le root
 }
 
@@ -397,7 +397,8 @@ void	Response::generateResponse(void){
 
 	if (this->_body.empty() == false)
 	{
-		this->_response = std::string("HTTP/1.1") + std::string(" ") +\
+		this->_response = std::string("HTTP/") +\
+			this->_http_version + std::string(" ") +\
 			std::to_string(this->_status_code) + std::string(" ") +\
 			this->_status_message + std::string("\r\n") +\
 			std::string("Content-Type: ") + this->_content_type + std::string("\r\n") +\
