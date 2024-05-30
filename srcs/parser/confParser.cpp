@@ -3,6 +3,16 @@
 static void		freeConfig(t_server_scope *serverConfig, int servers)
 {
 	(void)servers;
+	/*for (unsigned int i = 0; i <= *servers; i++)
+	{
+		std::map<std::string, t_locations>::iterator it = serverConfig[*servers].locations;
+		while (it != serverConfig[*servers].locations.end())
+		{
+			if (it->second.root_path.empty() == 0)
+				delete it->second.root_path;
+			++it;
+		}
+	}*/
 	delete[] serverConfig;
 }
 
@@ -433,6 +443,7 @@ static t_server_scope	*isServerLocation(int *i, std::string buffer, t_server_sco
 				return (NULL);
 			}
 			result[location] = *res;
+			delete res;
 			if (buffer.substr(*i, 2) == "\t}")
 			{
 				*i += 2;
@@ -527,7 +538,7 @@ static t_server_scope	*getServerConfig(int *i, std::string buffer, t_server_scop
 		freeConfig(serverConfig, *servers);
 		return (NULL);
 	}
-	*i += 2;
+	*i += 1;
 	return (serverConfig);
 }
 
@@ -555,14 +566,51 @@ static t_server_scope	*parseServer(int *i, std::string buffer, t_server_scope *s
 	return (serverConfig);
 }
 
+static t_server_scope	*checkConfig(t_server_scope *serverConfig, int *servers)
+{
+	//Loop over every server, loop over every location to check and set defaults values
+	//Atleast a port, server_name and 1 location.
+	for (int i = 0; i <= *servers; i++)
+	{
+		std::map<std::string, t_locations>::iterator it = serverConfig[i].locations.begin();
+		if (it == serverConfig[i].locations.end() || !serverConfig[i].port || serverConfig[i].upload_path.empty() == 1 || serverConfig[i].server_name[0].empty() == 1)
+		{
+			std::cerr << "ERROR : configuration file lacks mandatory informations" << std::endl;
+			freeConfig(serverConfig, *servers);
+			return (NULL);
+		}
+		if (!serverConfig[i].max_body_size)
+			serverConfig[i].max_body_size = 1024;
+		while (it != serverConfig[i].locations.end())
+		{
+			if (it->second.root_path.empty() == 1)
+				it->second.root_path = "./var/www/html/";
+			if (it->second.allowed_methods.begin() == it->second.allowed_methods.end())
+			{
+				std::map<std::string, bool> res;
+				res["GET"] = false;
+				res["POST"] = false;
+				res["DELETE"] = false;
+				it->second.allowed_methods = res;
+			}
+			++it;
+		}
+	}
+	return (serverConfig);
+}
+
 t_server_scope		*confParser(std::string buffer, int *servers)
 {
 	t_server_scope	*serverConfig = NULL;
 	for (int i = 0; buffer[i] && buffer[i] != 0; i++)
 	{
+		while (buffer[i] && buffer[i] == '\n')
+			i++;
 		if (!(serverConfig = parseServer(&i, buffer, serverConfig, servers)))
 			return (NULL);
 	}
-	//delete[] serverConfig;
+	//Minimal config checker
+	if (!(serverConfig = checkConfig(serverConfig, servers)))
+		return (NULL);
 	return (serverConfig);
 }
