@@ -20,6 +20,6 @@ int	webserv(int argc, char **argv)
 		std::cout << "Locations /lol default path " << i << " : |" << servers[0].locations["/lol"].default_path[i] << "|" << std::endl;*/
 	ServerManager	sm;
 
-	sm.launchServer(servers, serverCount);
+	sm.launchServer(servers, serverCount + 1);
 	return (0);
 }

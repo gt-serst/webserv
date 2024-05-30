@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
+/*   By: geraudtserstevens <geraudtserstevens@st    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:28:16 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/05/28 17:52:31 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/05/30 15:26:30 by geraudtsers      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -352,6 +352,7 @@ void	Response::errorResponse(int error_code, std::string message, std::map<int, 
 
 	path = matchErrorCodeWithPage(error_code, error_paths);
 
+	std::cout << path << std::endl;
 	this->_status_code = error_code;
 	this->_status_message = message;
 	this->_content_type = "text/html";
@@ -387,9 +388,9 @@ std::string	Response::matchErrorCodeWithPage(int error_code, std::map<int, std::
 			return (it->second);
 	}
 	if (error_code == 400)
-		return ("/Users/gt-serst/webserv/var/www/html/error400.html");
+		return ("var/www/html/error400.html");
 	else
-		return ("/Users/gt-serst/webserv/var/www/html/error404.html");
+		return ("var/www/html/error404.html");
 }
 
 void	Response::generateResponse(void){

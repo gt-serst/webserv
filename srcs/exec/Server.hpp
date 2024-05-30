@@ -6,7 +6,7 @@
 /*   By: geraudtserstevens <geraudtserstevens@st    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/08 09:43:45 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/05/29 16:14:51 by geraudtsers      ###   ########.fr       */
+/*   Updated: 2024/05/30 15:42:26 by geraudtsers      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,8 +26,8 @@ class Server
 		int							createServerSocket(void);
 		int							listenClientConnection(void);
 		int							readClientSocket(int client_fd);
-		void						handleRequest(int client_fd);
-		int						sendResponse(int client_fd);
+		int							handleRequest(int client_fd);
+		int							sendResponse(int client_fd);
 		void						closeServerSocket(void);
 		void						closeClientSocket(int client_fd);
 		int							getFd(void) const;

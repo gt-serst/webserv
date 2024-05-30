@@ -6,7 +6,7 @@
 /*   By: geraudtserstevens <geraudtserstevens@st    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/07 11:04:51 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/05/29 16:29:30 by geraudtsers      ###   ########.fr       */
+/*   Updated: 2024/05/30 15:56:32 by geraudtsers      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,6 +18,7 @@
 #include <vector>
 #include <sys/select.h>
 #include <sys/time.h>
+#include <unistd.h>
 
 #include <iostream>
 #include <stdio.h>
@@ -33,6 +34,7 @@ ServerManager::~ServerManager(void){
 
 void	ServerManager::launchServer(t_server_scope *servers, int nb_servers){
 
+	std::cout << nb_servers << std::endl;
 	initServer(servers, nb_servers);
 	serverRoutine();
 	clear();
@@ -43,6 +45,7 @@ void	ServerManager::initServer(t_server_scope *servers, int nb_servers){
 	FD_ZERO(&_fd_set);
 	for (int i = 0; i < nb_servers; i++)
 	{
+		std::cout << "New server" << std::endl;
 		int		fd;
 		Server	server(servers[i]);
 
@@ -57,7 +60,7 @@ void	ServerManager::serverRoutine(void){
 
 	while (1)
 	{
-		std::cout << "New loop" << std::endl;
+		//std::cout << "New loop" << std::endl;
 		int				rc;
 		fd_set			reading_set;
 		fd_set			writing_set;
@@ -74,7 +77,7 @@ void	ServerManager::serverRoutine(void){
 				FD_SET(*it, &writing_set);
 
 			rc = select(FD_SETSIZE, &reading_set, &writing_set, NULL, &timeout);
-			std::cout << rc << std::endl;
+			//std::cout << rc << std::endl;
 		}
 		if (rc > 0)
 		{
@@ -84,7 +87,10 @@ void	ServerManager::serverRoutine(void){
 				{
 					rc = _sockets[*it].sendResponse(*it);
 					if (rc == 0)
+					{
+						_sockets.erase(*it);
 						_ready.erase(it);
+					}
 					else if (rc == -1)
 					{
 						FD_CLR(*it, &_fd_set);
@@ -102,8 +108,9 @@ void	ServerManager::serverRoutine(void){
 					rc = it->second.readClientSocket(it->first);
 					if (rc == 0)
 					{
-						it->second.handleRequest(it->first);
-						_ready.push_back(it->first);
+						rc = it->second.handleRequest(it->first);
+						if (rc == 0)
+							_ready.push_back(it->first);
 					}
 					else if (rc == -1)
 					{
@@ -142,7 +149,7 @@ void	ServerManager::serverRoutine(void){
 				FD_SET(it->first, &_fd_set);
 		}
 
-		std::cout << "End loop" << std::endl;
+		//std::cout << "End loop" << std::endl;
 	}
 }
 
