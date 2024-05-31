@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:12:17 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/05/31 12:46:58 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/05/31 14:52:59 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -55,8 +55,8 @@ class Response{
 		bool		findIndexFile(std::string& path, t_locations& loc, std::map<std::string, t_locations> routes);
 		void		fileRoutine(std::string path, t_locations loc, std::string upload_path, Request req);
 		bool		isMethodAllowed(t_locations loc, Request req);
-		void		runDirMethod(std::string path, t_locations loc, std::vector<std::string> server_name, std::string upload_path, Request req);
-		void		isAutoIndex(std::string path, t_locations loc, std::vector<std::string> server_name);
+		void		runDirMethod(std::string path, t_locations loc, std::string upload_path, Request req);
+		void		isAutoIndex(std::string path, t_locations loc, Request req);
 		void		uploadDir(std::string path, std::string upload_path);
 		void		deleteDir(std::string path);
 		bool		findCGI(std::string cgi_path);
@@ -64,8 +64,9 @@ class Response{
 		void		downloadFile(std::string path);
 		void		uploadFile(std::string path, std::string upload_path, Request req);
 		void		deleteFile(std::string path);
-		void		autoIndexResponse(std::string path, std::string dir_list, std::vector<std::string> server_name);
-		std::string	getCharCount(std::string file);
+		void		autoIndexResponse(std::string path, std::string dir_list, Request req);
+		std::string	getCharCount(struct stat file_info);
+		void		insertHtmlIndexLine(std::string redirect_url, std::string txt_button, std::string creation_date, std::string char_count);
 		void		uploadDirResponse(void);
 		void		deleteResponse(void);
 		void		downloadFileResponse(std::string stack);

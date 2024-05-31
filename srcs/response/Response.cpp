@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:28:16 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/05/31 13:01:46 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/05/31 15:19:47 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -45,7 +45,7 @@ void	Response::handleDirective(std::string path, t_locations loc, Request req, S
 	{
 		if (getFileType(path) == E_DIR)
 		{
-			if (path[path.length() - 1] != '/')
+			if (path.find_last_of("/") != path.length() - 1)
 				loc.root_path.insert(loc.root_path.length() - 1, "/");
 			if (findIndexFile(path, loc, serv.getConfig().locations) == true)
 			{
@@ -53,7 +53,7 @@ void	Response::handleDirective(std::string path, t_locations loc, Request req, S
 				fileRoutine(path, loc, serv.getConfig().upload_path, req);
 			}
 			else if (isMethodAllowed(loc, req) == true)
-				runDirMethod(path, loc, serv.getConfig().server_name, serv.getConfig().upload_path, req);
+				runDirMethod(path, loc, serv.getConfig().upload_path, req);
 			else
 				perror("405 Method Not Allowed");
 		}
@@ -83,7 +83,6 @@ int	Response::getFileType(std::string path){
 
 	struct stat path_stat;
 
-	std::cout << path << std::endl;
 	if (stat(path.c_str(), &path_stat) != 0)
 		perror("404 Stat failed");
 	if (S_ISDIR(path_stat.st_mode) == true)
@@ -150,17 +149,17 @@ bool	Response::isMethodAllowed(t_locations loc, Request req){
 	return (false);
 }
 
-void	Response::runDirMethod(std::string path, t_locations loc, std::vector<std::string> server_name, std::string upload_path, Request req){
+void	Response::runDirMethod(std::string path, t_locations loc, std::string upload_path, Request req){
 
 	if (req.getRequestMethod() == "GET")
-		isAutoIndex(path, loc, server_name);
+		isAutoIndex(path, loc, req);
 	else if (req.getRequestMethod() == "POST")
 		uploadDir(path, upload_path);
 	else if (req.getRequestMethod() == "DELETE")
 		deleteDir(path);
 }
 
-void	Response::isAutoIndex(std::string path, t_locations loc, std::vector<std::string> server_name){
+void	Response::isAutoIndex(std::string path, t_locations loc, Request req){
 
 	::DIR			*dr;
 	struct dirent	*de;
@@ -175,7 +174,7 @@ void	Response::isAutoIndex(std::string path, t_locations loc, std::vector<std::s
 				dir_list.append(de->d_name);
 				dir_list += '\n';
 			}
-			autoIndexResponse(path, dir_list, server_name);
+			autoIndexResponse(path, dir_list, req);
 			closedir(dr);
 		}
 		else
@@ -268,107 +267,92 @@ void	Response::deleteFile(std::string path){
 		perror("403 Write access failed");
 }
 
-void	Response::autoIndexResponse(std::string path, std::string dir_list, std::vector<std::string> server_name){
+void Response::autoIndexResponse(std::string path, std::string dir_list, Request req) {
 
-	size_t	j;
+	size_t j = 0;
 	std::vector<std::string> vec_dir_list;
 
-	j = 0;
-	for (size_t i = 0; i < dir_list.length(); i++)
-	{
-		if (dir_list[i] == '\n')
-		{
-			vec_dir_list.push_back(dir_list.substr(j + 1, i - j));
-			j = i;
+	for (size_t i = 0; i < dir_list.length(); i++) {
+		if (dir_list[i] == '\n') {
+			vec_dir_list.push_back(dir_list.substr(j, i - j));
+			j = i + 1;
 		}
 	}
 	vec_dir_list.erase(vec_dir_list.begin());
-	for (std::vector<std::string>::iterator it = vec_dir_list.begin(); it != vec_dir_list.end(); ++it)
-	{
-		struct stat file_info;
-		std::string all_path = path + *it;
-		std::cout << all_path << std::endl;
-		if (stat(all_path.c_str(), &file_info) != 0)
-			perror("Stat failed");
-		char buffer[80];
-		struct tm* time_info;
-
-		time_info = localtime(&file_info.st_mtime);
-		strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", time_info);
-		std::cout << *it << std::endl;
-		std::string redirect_url = server_name[0] + path + *it;
-		std::string txt_button = *it;
-		std::string creation_date = buffer;
-		std::cout << creation_date << std::endl;
-		std::string char_count = getCharCount(*it);
-		std::cout << char_count << std::endl;
-	}
 
 	this->_body = "<!DOCTYPE html>\n"
-"<html>\n"
-"<head>\n"
-"    <title>Button with Date and Character Count</title>\n"
-"    <style>\n"
-"        .container {\n"
-"            display: flex;\n"
-"            justify-content: space-between;\n"
-"            align-items: center;\n"
-"            padding: 10px;\n"
-"            background-color: #f0f0f0;\n"
-"        }\n"
-"        .button {\n"
-"            display: inline-block;\n"
-"            padding: 10px 20px;\n"
-"            font-size: 16px;\n"
-"            cursor: pointer;\n"
-"            text-align: center;\n"
-"            text-decoration: none;\n"
-"            outline: none;\n"
-"            color: #fff;\n"
-"            background-color: #4CAF50;\n"
-"            border: none;\n"
-"            border-radius: 15px;\n"
-"            box-shadow: 0 4px #999;\n"
-"        }\n"
-"        .button:hover {\n"
-"            background-color: #3e8e41;\n"
-"        }\n"
-"        .button:active {\n"
-"            background-color: #3e8e41;\n"
-"            box-shadow: 0 5px #666;\n"
-"            transform: translateY(4px);\n"
-"        }\n"
-"        .date, .char-count {\n"
-"            flex: 1;\n"
-"            text-align: center;\n"
-"        }\n"
-"        .char-count {\n"
-"            text-align: right;\n"
-"        }\n"
-"    </style>\n"
-"</head>\n"
-"<body>\n"
-"    <div class=\"container\">\n"
-"        <a href=\"https://www.example.com\" class=\"button\">Go to Example.com</a>\n"
-"        <div class=\"date\">Created on: 2024-05-30</div>\n"
-"        <div class=\"char-count\">Character count: 1234</div>\n"
-"    </div>\n"
-"</body>\n"
-"</html>\n";
+				  "<html>\n"
+				  "<head>\n"
+				  "<title>Index of" + req.getPathToFile() + "</title>\n"
+				  "<style>\n"
+				  ".file-info {\n"
+				  "    width: 100%;\n"
+				  "    border: 1px solid black;\n"
+				  "    padding: 10px;\n"
+				  "    margin-bottom: 10px;\n"
+				  "    overflow: auto;\n"
+				  "}\n"
+				  ".file-info button {\n"
+				  "    float: left;\n"
+				  "    margin-right: 10px;\n"
+				  "}\n"
+				  ".file-info::after {\n"
+				  "    content: \"\";\n"
+				  "    display: table;\n"
+				  "    clear: both;\n"
+				  "}\n"
+				  "</style>\n"
+				  "</head>\n"
+				  "<body>\n"
+				  "<h1>Index of" + req.getPathToFile() + "</h1>\n";
+
+	for (std::vector<std::string>::iterator it = vec_dir_list.begin(); it != vec_dir_list.end(); ++it) {
+		struct stat file_info;
+		std::string all_path = path + "/" + *it;
+		if (stat(all_path.c_str(), &file_info) != 0) {
+			perror("Stat failed");
+			continue;
+		}
+
+		char buffer[80];
+		std::string unrooted_path;
+		struct tm* time_info = localtime(&file_info.st_ctime);
+		strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", time_info);
+
+		unrooted_path = req.getPathToFile();
+		if (unrooted_path.find_last_of("/") != unrooted_path.length() - 1)
+			unrooted_path.insert(unrooted_path.length(), "/");
+
+		std::string redirect_url = unrooted_path + *it;
+		std::string txt_button = *it;
+		std::string creation_date = buffer;
+		std::string char_count = getCharCount(file_info);
+
+		insertHtmlIndexLine(redirect_url, txt_button, creation_date, char_count);
+	}
+
+	this->_body += "</body>\n</html>";
 	this->_status_code = 200;
 	this->_status_message = "OK";
 	this->_content_type = "text/html";
 	this->_content_len = this->_body.length();
 	generateResponse();
-	//ne pas pv revenir derrière le root
 }
 
-std::string	Response::getCharCount(std::string file){
+void Response::insertHtmlIndexLine(std::string redirect_url, std::string txt_button, std::string creation_date, std::string char_count) {
+	this->_body += "<div class=\"file-info\">\n"
+				   "    <button onclick=\"window.location.href='" + redirect_url + "'\">" + txt_button + "</button>\n"
+				   "    <div class=\"creation-date\">" + creation_date + "</div>\n"
+				   "    <div class=\"char-count\">" + char_count + "</div>\n"
+				   "</div>\n";
+}
 
-	int	count;
-
-	count = sizeof(file) * file.length();
-	return (std::to_string(count));
+std::string Response::getCharCount(struct stat file_info) {
+	if (S_ISDIR(file_info.st_mode))
+		return ("-");
+	else if (S_ISREG(file_info.st_mode))
+		return (std::to_string(file_info.st_size));
+	return ("Unknown");
 }
 
 void	Response::deleteResponse(void){
@@ -434,7 +418,6 @@ std::string	Response::getContentType(std::string stack){
 
 t_file_type	Response::stringToEnum(std::string const& str){
 
-	std::cout << str << std::endl;
 	if (str.compare(0, 20, "89 50 4e 47 d a 1a a") == 0) return (PNG);
 	if (str.compare(0, 5, "ff d8") == 0) return (JPEG);
 	if (str.compare(0, 23, "3c 3f 78 6d 6c 20 76 65") == 0) return (SVG);
@@ -459,7 +442,6 @@ void	Response::errorResponse(int error_code, std::string message, std::map<int, 
 
 	path = matchErrorCodeWithPage(error_code, error_paths);
 
-	std::cout << path << std::endl;
 	this->_status_code = error_code;
 	this->_status_message = message;
 	this->_content_type = "text/html";
