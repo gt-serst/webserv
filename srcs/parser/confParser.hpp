@@ -26,7 +26,7 @@ typedef struct s_server_scope
 	std::vector<std::string>		server_name;
 	std::map<int, std::string>		error_page_paths;
 	std::map<std::string, t_locations>	locations;
-	std::string				cgi_path;
+	std::map<std::string, std::string>	cgi_path;
 	std::string				upload_path;
 }	t_server_scope;
 

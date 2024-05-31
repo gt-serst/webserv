@@ -4,15 +4,15 @@ static void		freeConfig(t_server_scope *serverConfig, int servers)
 {
 	(void)servers;
 	/*for (unsigned int i = 0; i <= *servers; i++)
-	{
-		std::map<std::string, t_locations>::iterator it = serverConfig[*servers].locations;
-		while (it != serverConfig[*servers].locations.end())
-		{
-			if (it->second.root_path.empty() == 0)
-				delete it->second.root_path;
-			++it;
-		}
-	}*/
+	  {
+	  std::map<std::string, t_locations>::iterator it = serverConfig[*servers].locations;
+	  while (it != serverConfig[*servers].locations.end())
+	  {
+	  if (it->second.root_path.empty() == 0)
+	  delete it->second.root_path;
+	  ++it;
+	  }
+	  }*/
 	delete[] serverConfig;
 }
 
@@ -190,26 +190,59 @@ static t_server_scope *isServerUploadPath(int *i, std::string buffer, t_server_s
 	return (NULL);
 }
 
-static t_server_scope *isServerCGI(int *i, std::string buffer, t_server_scope *serverConfig, int *servers)
+static t_server_scope	*isServerCGI(int *i, std::string buffer, t_server_scope *serverConfig, int *servers)
 {
-	if (buffer.substr(*i, 6) != "CGI\t\t\t")
+	if (buffer.substr(*i, 6) == "CGI\t\t\t")
 	{
-		freeConfig(serverConfig, *servers);
-		return (NULL);
-	}
-	*i += 6;
-	int j = *i;
-	while (buffer[j] && buffer[j] != '\n' && buffer[j] != ' ' && isprint(buffer[j]))
-		j++;
-	if (j != *i && buffer[j] && buffer[j] == '\n')
-	{
-		serverConfig[*servers].cgi_path = buffer.substr(*i, j - *i);
-		*i = j + 1;
-		return (serverConfig);
+		*i += 6;
+		int j = *i;
+		while (buffer[j] && isprint(buffer[j]) && buffer[j] != ' ')
+			j++;
+		if (j != *i)
+		{
+			std::map<std::string, std::string> result;
+			if (serverConfig[*servers].cgi_path.empty() == 0)
+				result = serverConfig[*servers].cgi_path;
+			std::string path = buffer.substr(*i, j - *i);
+			*i += 1;
+			j = *i;
+			if (buffer[j] == '.')
+			{
+				while (buffer[j] && isprint(buffer[j]) && buffer[j] != ' ')
+					j++;
+			}
+			if (j != *i && buffer[j] == '\n')
+			{
+				result[buffer.substr(*i, j - *i)] = path;
+				serverConfig[*servers].cgi_path = result;
+				return (serverConfig);
+			}
+		}
 	}
 	freeConfig(serverConfig, *servers);
 	return (NULL);
 }
+
+/*static t_server_scope *isServerCGI(int *i, std::string buffer, t_server_scope *serverConfig, int *servers)
+  {
+  if (buffer.substr(*i, 6) != "CGI\t\t\t")
+  {
+  freeConfig(serverConfig, *servers);
+  return (NULL);
+  }
+ *i += 6;
+ int j = *i;
+ while (buffer[j] && buffer[j] != '\n' && buffer[j] != ' ' && isprint(buffer[j]))
+ j++;
+ if (j != *i && buffer[j] && buffer[j] == '\n')
+ {
+ serverConfig[*servers].cgi_path = buffer.substr(*i, j - *i);
+ *i = j + 1;
+ return (serverConfig);
+ }
+ freeConfig(serverConfig, *servers);
+ return (NULL);
+ }*/
 
 static t_server_scope	*isServerMaxBodySize(int *i, std::string buffer, t_server_scope *serverConfig, int *servers)
 {
