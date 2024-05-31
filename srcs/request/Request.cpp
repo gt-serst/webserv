@@ -8,6 +8,42 @@
 
 //SET FUNCTIONS
 
+void	Request::manage_chunks()
+{
+	
+}
+
+void	Request::validity_checks() //
+{
+	if (getHeader("Host").empty())
+	{
+		_error_code = 400;
+		_error_msg = "Host header is missing";
+		return ;
+	}
+	if (_body_len != -1)
+	{
+		if (std::string hlen = getHeader("Content-Length").empty() == false)
+		{
+			if (std::stoi(hlen) != _body_len)
+			{
+				_error_code = 400;
+				_error_msg = "Body length does not match with Content-Length header";
+				return ;
+			}
+		}
+	}
+	if (_body.empty() == false)
+	{
+		if (getHeader("Content-Type").empty())
+		{
+			_error_code = 400;
+			_error_msg = "Content-Type header is missing";
+			return ;
+		}
+	}
+}
+
 int hexDigitToInt(char ch) 
 {
     if (ch >= '0' && ch <= '9') return ch - '0';
@@ -123,6 +159,8 @@ Request::Request(std::string& buffer, Server& server)
 	_query = "";
 	_error_code = -1;
 	_error_msg = "";
+	_body_len = -1;
+	chunked = false;
 	state = R_line;
 	setRequest(buffer);
 	if (state != R_error)
@@ -172,7 +210,12 @@ void Request::setRequest(std::string& buffer)
 	pos = setHeader(ss, pos);
 	if (state == R_done || state == R_error)
 		return ;
-	setBody(ss, pos);
+	if (getHeader("Transfer-Encoding").compare("chunked"))
+		chunked = true;
+	if (chunked == true)
+		manage_chunks();
+	else
+		setBody(ss, pos);
 }
 
 void Request::parseRequestLine(char *line)
@@ -576,7 +619,7 @@ std::streampos Request::setHeader(std::stringstream& ss, std::streampos startpos
 		}
 	}
 	state = R_done;
-	return 0;
+	return(ss.tellg());
 }
 
 void Request::setBody(std::stringstream& ss, std::streampos startpos)
@@ -588,6 +631,7 @@ void Request::setBody(std::stringstream& ss, std::streampos startpos)
 	if (bodyContent.size() >= 2 && bodyContent.compare(bodyContent.size() - 2, 2, "\r\n") == 0)
 	{
 		_body = bodyContent;
+		_body_len = _body.length();
 		state = R_done; //
 	}
 	else

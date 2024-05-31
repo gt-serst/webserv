@@ -61,14 +61,17 @@ class Request
 		std::string _litteral_ip;
 		int _error_code;
 		int	_port;
-		//int _len;
+		int _body_len;
 		int state;
+		bool chunked;
 
 		void parseRequestLine(char *line);
 		std::streampos setHeader(std::stringstream& ss, std::streampos startpos);
 		void setBody(std::stringstream& ss, std::streampos startpos);
 		// void setLen(std::string _request);
 		std::string	standardise(std::string str);
+		void validity_checks();
+		void manage_chunks();
 
 	public:
 		Request();
