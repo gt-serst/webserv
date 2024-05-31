@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:28:16 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/05/31 11:37:43 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/05/31 13:01:46 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,12 +16,14 @@
 #include "Router.hpp"
 #include <string>
 #include <map>
+#include <vector>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <fstream>
 #include <sys/types.h>
 #include <dirent.h>
 #include <sstream>
+#include <ctime>
 
 Response::Response(void){}
 
@@ -51,7 +53,7 @@ void	Response::handleDirective(std::string path, t_locations loc, Request req, S
 				fileRoutine(path, loc, serv.getConfig().upload_path, req);
 			}
 			else if (isMethodAllowed(loc, req) == true)
-				runDirMethod(path, loc, serv.getConfig().upload_path, req);
+				runDirMethod(path, loc, serv.getConfig().server_name, serv.getConfig().upload_path, req);
 			else
 				perror("405 Method Not Allowed");
 		}
@@ -81,6 +83,7 @@ int	Response::getFileType(std::string path){
 
 	struct stat path_stat;
 
+	std::cout << path << std::endl;
 	if (stat(path.c_str(), &path_stat) != 0)
 		perror("404 Stat failed");
 	if (S_ISDIR(path_stat.st_mode) == true)
@@ -147,17 +150,17 @@ bool	Response::isMethodAllowed(t_locations loc, Request req){
 	return (false);
 }
 
-void	Response::runDirMethod(std::string path, t_locations loc, std::string upload_path, Request req){
+void	Response::runDirMethod(std::string path, t_locations loc, std::vector<std::string> server_name, std::string upload_path, Request req){
 
 	if (req.getRequestMethod() == "GET")
-		isAutoIndex(path, loc);
+		isAutoIndex(path, loc, server_name);
 	else if (req.getRequestMethod() == "POST")
 		uploadDir(path, upload_path);
 	else if (req.getRequestMethod() == "DELETE")
 		deleteDir(path);
 }
 
-void	Response::isAutoIndex(std::string path, t_locations loc){
+void	Response::isAutoIndex(std::string path, t_locations loc, std::vector<std::string> server_name){
 
 	::DIR			*dr;
 	struct dirent	*de;
@@ -172,7 +175,7 @@ void	Response::isAutoIndex(std::string path, t_locations loc){
 				dir_list.append(de->d_name);
 				dir_list += '\n';
 			}
-			autoIndexResponse(dir_list);
+			autoIndexResponse(path, dir_list, server_name);
 			closedir(dr);
 		}
 		else
@@ -265,9 +268,41 @@ void	Response::deleteFile(std::string path){
 		perror("403 Write access failed");
 }
 
-void	Response::autoIndexResponse(std::string dir_list){
+void	Response::autoIndexResponse(std::string path, std::string dir_list, std::vector<std::string> server_name){
 
-	std::cout << dir_list << std::endl;
+	size_t	j;
+	std::vector<std::string> vec_dir_list;
+
+	j = 0;
+	for (size_t i = 0; i < dir_list.length(); i++)
+	{
+		if (dir_list[i] == '\n')
+		{
+			vec_dir_list.push_back(dir_list.substr(j + 1, i - j));
+			j = i;
+		}
+	}
+	vec_dir_list.erase(vec_dir_list.begin());
+	for (std::vector<std::string>::iterator it = vec_dir_list.begin(); it != vec_dir_list.end(); ++it)
+	{
+		struct stat file_info;
+		std::string all_path = path + *it;
+		std::cout << all_path << std::endl;
+		if (stat(all_path.c_str(), &file_info) != 0)
+			perror("Stat failed");
+		char buffer[80];
+		struct tm* time_info;
+
+		time_info = localtime(&file_info.st_mtime);
+		strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", time_info);
+		std::cout << *it << std::endl;
+		std::string redirect_url = server_name[0] + path + *it;
+		std::string txt_button = *it;
+		std::string creation_date = buffer;
+		std::cout << creation_date << std::endl;
+		std::string char_count = getCharCount(*it);
+		std::cout << char_count << std::endl;
+	}
 
 	this->_body = "<!DOCTYPE html>\n"
 "<html>\n"
@@ -326,6 +361,14 @@ void	Response::autoIndexResponse(std::string dir_list){
 	this->_content_len = this->_body.length();
 	generateResponse();
 	//ne pas pv revenir derrière le root
+}
+
+std::string	Response::getCharCount(std::string file){
+
+	int	count;
+
+	count = sizeof(file) * file.length();
+	return (std::to_string(count));
 }
 
 void	Response::deleteResponse(void){
