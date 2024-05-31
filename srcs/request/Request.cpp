@@ -59,7 +59,7 @@ Request::~Request()
 		std::cout << "Error " << _error_code << " " << _error_msg << std::endl;
 		return ;
 	}
-	std::cout << "Printing request params" << std::endl;
+	/*std::cout << "Printing request params" << std::endl;
 	std::cout << "Method == " << _request_method << std::endl;
 	std::cout << "Path == " << _path_to_file << std::endl;
 	std::cout << "Query == " << _query << std::endl;
@@ -68,7 +68,7 @@ Request::~Request()
 	{
 		std::cout << it->first << ": " << it->second << std::endl;
 	}
-	std::cout << "Request destroyed" << std::endl;
+	std::cout << "Request destroyed" << std::endl;*/
 }
 
 void Request::setRequest(std::string& buffer)

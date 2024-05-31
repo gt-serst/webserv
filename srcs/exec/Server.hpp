@@ -6,7 +6,7 @@
 /*   By: geraudtserstevens <geraudtserstevens@st    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/08 09:43:45 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/05/27 22:27:25 by geraudtsers      ###   ########.fr       */
+/*   Updated: 2024/05/30 15:42:26 by geraudtsers      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,42 +15,28 @@
 
 # include "../parser/confParser.hpp"
 # include <string>
-# include <sys/socket.h>
-# include <arpa/inet.h>
-
-/*typedef struct s_locations
-{
-	std::string							location_path;
-	std::string							root_path;
-	std::map<std::string, std::string>	redirections;
-	std::vector<std::string>			default_path;
-	std::vector<std::string>			allowed_methods;
-	bool								auto_index;
-}	t_locations;
-
-typedef struct s_server_scope
-{
-	int									port;
-	int									max_body_size;
-	std::vector<std::string>			server_name;
-	std::map<int, std::string>			error_page_paths;
-	std::map<std::string, t_locations>	locations;
-	std::string							cgi_path;
-	std::string							upload_path;
-}	t_server_scope;*/
+# include <map>
 
 class Server
 {
 	public:
-		Server();
-		Server(t_server_scope conf);
-		~Server();
-		t_server_scope		getConfig() const;
-		int					server_fd;
-		struct sockaddr_in	server_addr;
-		socklen_t			server_addr_len;
+		Server(void);
+		Server(t_server_scope config);
+		~Server(void);
+		int							createServerSocket(void);
+		int							listenClientConnection(void);
+		int							readClientSocket(int client_fd);
+		int							handleRequest(int client_fd);
+		int							sendResponse(int client_fd);
+		void						closeServerSocket(void);
+		void						closeClientSocket(int client_fd);
+		int							getFd(void) const;
+		t_server_scope				getConfig(void) const;
+
 	private:
-		t_server_scope		_config;
+		int							_fd;
+		t_server_scope				_config;
+		std::map<int, std::string>	_requests;
 };
 
 #endif

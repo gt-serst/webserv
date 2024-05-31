@@ -6,7 +6,7 @@
 /*   By: geraudtserstevens <geraudtserstevens@st    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 11:15:20 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/05/27 23:49:20 by geraudtsers      ###   ########.fr       */
+/*   Updated: 2024/05/30 23:10:12 by geraudtsers      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,9 +16,9 @@
 #include <string>
 #include <map>
 
-Router::Router(){}
+Router::Router(void){}
 
-Router::~Router(){}
+Router::~Router(void){}
 
 t_locations	Router::routeRequest(std::string& path_to_file, std::map<std::string, t_locations> routes){
 
@@ -26,9 +26,13 @@ t_locations	Router::routeRequest(std::string& path_to_file, std::map<std::string
 	t_locations	location;
 
 	tmp = path_to_file;
+	std::cout << "Old path: " << path_to_file << std::endl;
 	location = recursiveRouteRequest(tmp, routes);
 	if (path_to_file == handleRedirection(path_to_file, location.redirections))
+	{
+		std::cout << "Path: " << path_to_file << std::endl;
 		return (location);
+	}
 	else
 	{
 		std::string redirect_path = handleRedirection(path_to_file, location.redirections);
@@ -38,6 +42,7 @@ t_locations	Router::routeRequest(std::string& path_to_file, std::map<std::string
 			location = recursiveRouteRequest(path_to_file, routes);
 			redirect_path = handleRedirection(path_to_file, location.redirections);
 		}
+		std::cout << "New path after redirection: " << path_to_file << std::endl;
 		return (location);
 	}
 }
