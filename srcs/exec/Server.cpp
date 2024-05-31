@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: geraudtserstevens <geraudtserstevens@st    +#+  +:+       +#+        */
+/*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/08 09:59:24 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/05/30 15:55:21 by geraudtsers      ###   ########.fr       */
+/*   Updated: 2024/05/31 10:11:47 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -128,14 +128,15 @@ int	Server::handleRequest(int client_fd){
 		return (-1);
 	if (request.getErrorCode() == -1)
 	{
-		std::cout << "Hello" << std::endl;
+		if (response.checkPortAndServerName(getConfig()) == false)
+			return (-1);
 		std::string path_to_file = request.getPathToFile();
 
 		location = router.routeRequest(path_to_file, this->_config.locations);
 
 		request.setPathToFile(path_to_file);
 
-		response.handleDirective(request.getPathToFile(), location, this->_config.locations, request, this->_config.error_page_paths);
+		response.handleDirective(request.getPathToFile(), location, request, *this);
 	}
 	else
 		response.errorResponse(request.getErrorCode(), request.getErrorMsg(), getConfig().error_page_paths);

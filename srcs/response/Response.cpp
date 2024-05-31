@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: geraudtserstevens <geraudtserstevens@st    +#+  +:+       +#+        */
+/*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:28:16 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/05/30 23:13:06 by geraudtsers      ###   ########.fr       */
+/*   Updated: 2024/05/31 11:37:43 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,9 +27,15 @@ Response::Response(void){}
 
 Response::~Response(void){}
 
-void	Response::handleDirective(std::string path, t_locations loc, std::map<std::string, t_locations> routes, Request req, std::map<int, std::string> error_paths){
+bool	Response::checkPortAndServerName(t_server_scope config){
 
-	(void)error_paths;
+	if (config.port < 0 || config.server_name.empty() == true)
+		return (false);
+	return (true);
+}
+
+void	Response::handleDirective(std::string path, t_locations loc, Request req, Server serv){
+
 	this->_http_version = req.getVersion();
 	if (attachRootToPath(path, loc.root_path) == false)
 		perror("404 Root failed");
@@ -39,18 +45,18 @@ void	Response::handleDirective(std::string path, t_locations loc, std::map<std::
 		{
 			if (path[path.length() - 1] != '/')
 				loc.root_path.insert(loc.root_path.length() - 1, "/");
-			if (findIndexFile(path, loc, routes) == true)
+			if (findIndexFile(path, loc, serv.getConfig().locations) == true)
 			{
 				attachRootToPath(path, loc.root_path); //path du fichier index doit-il encore garder le chemin du répertoire dans lequel il se trouve, pour le moment le path, avant d'être rooté, correspond uniquement au fichier index
-				fileRoutine(path, loc, req);
+				fileRoutine(path, loc, serv.getConfig().upload_path, req);
 			}
 			else if (isMethodAllowed(loc, req) == true)
-				runDirMethod(path, loc, req);
+				runDirMethod(path, loc, serv.getConfig().upload_path, req);
 			else
 				perror("405 Method Not Allowed");
 		}
 		else if (getFileType(path) == E_FILE)
-			fileRoutine(path, loc, req);
+			fileRoutine(path, loc, serv.getConfig().upload_path, req);
 		else
 			perror("404 Neither a dir nor a file");
 	}
@@ -113,12 +119,12 @@ bool	Response::findIndexFile(std::string& path, t_locations& loc, std::map<std::
 	return (false);
 }
 
-void	Response::fileRoutine(std::string path, t_locations loc, Request req){
+void	Response::fileRoutine(std::string path, t_locations loc, std::string upload_path, Request req){
 
 	if (findCGI(req._server.getConfig().cgi_path) == true && isMethodAllowed(loc, req) == true)
 		std::cout << "Send CGI path and run it" << std::endl;
 	else if (isMethodAllowed(loc, req) == true)
-		runFileMethod(path, req);
+		runFileMethod(path, upload_path, req);
 	else
 		perror("405 Method Not Allowed");
 }
@@ -141,12 +147,12 @@ bool	Response::isMethodAllowed(t_locations loc, Request req){
 	return (false);
 }
 
-void	Response::runDirMethod(std::string path, t_locations loc, Request req){
+void	Response::runDirMethod(std::string path, t_locations loc, std::string upload_path, Request req){
 
 	if (req.getRequestMethod() == "GET")
 		isAutoIndex(path, loc);
 	else if (req.getRequestMethod() == "POST")
-		uploadDir(path);
+		uploadDir(path, upload_path);
 	else if (req.getRequestMethod() == "DELETE")
 		deleteDir(path);
 }
@@ -179,8 +185,9 @@ void	Response::isAutoIndex(std::string path, t_locations loc){
 		perror("404 Opendir failed");
 }
 
-void	Response::uploadDir(std::string path){
+void	Response::uploadDir(std::string path, std::string upload_path){
 
+	(void)upload_path;
 	if (access(path.c_str(), W_OK) == 0)
 	{
 		uploadDirResponse();
@@ -201,12 +208,12 @@ void	Response::deleteDir(std::string path){
 		perror("403 Write access failed");
 }
 
-void	Response::runFileMethod(std::string path, Request req){
+void	Response::runFileMethod(std::string path, std::string upload_path, Request req){
 
 	if (req.getRequestMethod() == "GET")
 		downloadFile(path);
 	else if (req.getRequestMethod() == "POST")
-		uploadFile(path, req);
+		uploadFile(path, upload_path, req);
 	else if (req.getRequestMethod() == "DELETE")
 		deleteFile(path);
 }
@@ -231,10 +238,11 @@ void	Response::downloadFile(std::string path){
 		perror("404 Open failed");
 }
 
-void	Response::uploadFile(std::string path, Request req){
+void	Response::uploadFile(std::string path, std::string upload_path, Request req){
 
 	std::ofstream output(path);
 
+	(void)upload_path;
 	if (output.is_open())
 	{
 		output << req.getBody();
@@ -261,6 +269,62 @@ void	Response::autoIndexResponse(std::string dir_list){
 
 	std::cout << dir_list << std::endl;
 
+	this->_body = "<!DOCTYPE html>\n"
+"<html>\n"
+"<head>\n"
+"    <title>Button with Date and Character Count</title>\n"
+"    <style>\n"
+"        .container {\n"
+"            display: flex;\n"
+"            justify-content: space-between;\n"
+"            align-items: center;\n"
+"            padding: 10px;\n"
+"            background-color: #f0f0f0;\n"
+"        }\n"
+"        .button {\n"
+"            display: inline-block;\n"
+"            padding: 10px 20px;\n"
+"            font-size: 16px;\n"
+"            cursor: pointer;\n"
+"            text-align: center;\n"
+"            text-decoration: none;\n"
+"            outline: none;\n"
+"            color: #fff;\n"
+"            background-color: #4CAF50;\n"
+"            border: none;\n"
+"            border-radius: 15px;\n"
+"            box-shadow: 0 4px #999;\n"
+"        }\n"
+"        .button:hover {\n"
+"            background-color: #3e8e41;\n"
+"        }\n"
+"        .button:active {\n"
+"            background-color: #3e8e41;\n"
+"            box-shadow: 0 5px #666;\n"
+"            transform: translateY(4px);\n"
+"        }\n"
+"        .date, .char-count {\n"
+"            flex: 1;\n"
+"            text-align: center;\n"
+"        }\n"
+"        .char-count {\n"
+"            text-align: right;\n"
+"        }\n"
+"    </style>\n"
+"</head>\n"
+"<body>\n"
+"    <div class=\"container\">\n"
+"        <a href=\"https://www.example.com\" class=\"button\">Go to Example.com</a>\n"
+"        <div class=\"date\">Created on: 2024-05-30</div>\n"
+"        <div class=\"char-count\">Character count: 1234</div>\n"
+"    </div>\n"
+"</body>\n"
+"</html>\n";
+	this->_status_code = 200;
+	this->_status_message = "OK";
+	this->_content_type = "text/html";
+	this->_content_len = this->_body.length();
+	generateResponse();
 	//ne pas pv revenir derrière le root
 }
 
@@ -271,7 +335,7 @@ void	Response::deleteResponse(void){
 	generateResponse();
 }
 
-void	Response::uploadDirResponse(void){
+void	Response::uploadDirResponse(){
 
 	this->_status_code = 201;
 	this->_status_message = "Created";
