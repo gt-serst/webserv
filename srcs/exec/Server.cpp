@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/08 09:59:24 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/05/31 10:11:47 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/03 16:42:14 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -130,6 +130,7 @@ int	Server::handleRequest(int client_fd){
 	{
 		if (response.checkPortAndServerName(getConfig()) == false)
 			return (-1);
+
 		std::string path_to_file = request.getPathToFile();
 
 		location = router.routeRequest(path_to_file, this->_config.locations);
