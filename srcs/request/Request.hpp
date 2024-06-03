@@ -40,6 +40,14 @@ enum state //state is current state so the name is what we previsly validated ||
 	R_crlf,
 	R_fragment,
 	R_headers,
+	R_chunked_start,
+	R_chunk_size,
+	R_chunk_cr,
+	R_chunk_lf,
+	R_chunk_content,
+	R_chunk_content_cr,
+	R_chunk_content_lf,
+	R_chunk_done,
 	R_body,
 	R_error,
 	R_done
@@ -63,6 +71,7 @@ class Request
 		int	_port;
 		int _body_len;
 		int state;
+		int chunk_size;
 		bool chunked;
 
 		void parseRequestLine(char *line);
@@ -71,7 +80,7 @@ class Request
 		// void setLen(std::string _request);
 		std::string	standardise(std::string str);
 		void validity_checks();
-		void manage_chunks();
+		void manage_chunks(char *chunk);
 
 	public:
 		Request();

@@ -8,9 +8,112 @@
 
 //SET FUNCTIONS
 
-void	Request::manage_chunks()
+void	Request::manage_chunks(char *chunk)
 {
-	
+	char ch;
+	int len = strlen(chunk);
+	for (int i = 0; i < len; i++)
+	{
+		ch = chunk[i];
+		switch (state)
+		{
+			case R_chunked_start:
+			{
+				if (ch >= '0' && ch <= '9')
+				{
+					state = R_chunk_size;
+					chunk_size = ch - '0';
+					break ;
+				}
+				ch = (ch | 0x20);
+				if (ch >= 'a' && ch <= 'z')
+				{
+					state = R_chunk_size;
+					chunk_size = ch - 'a' + 10;
+					break ;
+				}
+				else
+				{
+					state = R_error;
+					_error_msg = "Chunk syntax";
+					_error_code = 400; //for now
+					return ;
+				}
+			}
+			case R_chunk_size:
+			{
+				if (ch == '\r')
+				{
+					state = R_chunk_cr;
+					break ;
+				}
+				if (ch >= '0' && ch <= '9')
+				{
+					chunk_size = chunk_size * 16 + (ch - '0');
+					break ;
+				}
+				ch = (ch | 0x20);
+				if (ch >= 'a' && ch <= 'z')
+				{
+					chunk_size = chunk_size * 16 + (ch - 'a' + 10);
+					break;
+				}
+			}
+			case R_chunk_cr:
+			{
+				if (ch == '\n')
+				{
+					state = R_chunk_lf;
+					break ;
+				}
+				state = R_error;
+				_error_msg = "Chunk syntax";
+				_error_code = 400; //for now
+				return ;
+			}
+			case R_chunk_lf:
+			{
+				if (chunk_size == 0)
+				{
+					state = R_chunk_done;
+					return ;
+				}
+				else
+				{
+					state = R_chunk_content;
+					break ;
+				}
+			}
+			case R_chunk_content:
+			{
+				if (ch == '\r')
+				{
+					state = R_chunk_content_cr;
+				}
+				_body.push_back(ch);
+				break ;
+			}
+			case R_chunk_content_cr:
+			{
+				if (ch == '\n')
+					state = R_chunk_content_lf;
+				else
+				{
+					state = R_error;
+					return ;
+				}
+				break ;
+			}
+			case R_chunk_content_lf:
+			{
+				if (chunk_size == 0)
+					state = R_chunk_done;
+				else
+					state = R_chunked_start;
+				return ;
+			}
+		}
+	}
 }
 
 void	Request::validity_checks() //
@@ -23,7 +126,8 @@ void	Request::validity_checks() //
 	}
 	if (_body_len != -1)
 	{
-		if (std::string hlen = getHeader("Content-Length").empty() == false)
+		std::string hlen = getHeader("Content-Length");
+		if (hlen.empty() == false)
 		{
 			if (std::stoi(hlen) != _body_len)
 			{
@@ -159,6 +263,7 @@ Request::Request(std::string& buffer, Server& server)
 	_query = "";
 	_error_code = -1;
 	_error_msg = "";
+	chunk_size = 0;
 	_body_len = -1;
 	chunked = false;
 	state = R_line;
@@ -211,11 +316,12 @@ void Request::setRequest(std::string& buffer)
 	if (state == R_done || state == R_error)
 		return ;
 	if (getHeader("Transfer-Encoding").compare("chunked"))
+	{
+		state = R_chunked_start;
 		chunked = true;
-	if (chunked == true)
-		manage_chunks();
-	else
-		setBody(ss, pos);
+		return ;
+	}
+	setBody(ss, pos);
 }
 
 void Request::parseRequestLine(char *line)
