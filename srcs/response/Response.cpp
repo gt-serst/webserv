@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:28:16 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/03 17:34:13 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/03 18:16:15 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -79,6 +79,7 @@ void	Response::handleDirective(std::string path, t_locations loc, Request req, S
 
 bool	Response::attachRootToPath(std::string& path, std::string root){
 
+	//si méthode == POST alors vérifier si le root est accessible mais pas append le path au root vu que le path sera les répertoires/fichiers qui seront créés par le POST
 	if (root.empty() == false)
 	{
 		if (root[root.length() - 1] == '/')
@@ -175,9 +176,9 @@ void	Response::isAutoIndex(std::string path, t_locations loc, Request req, std::
 	struct dirent	*de;
 	std::string		dir_list;
 
-	// if (access(path, W_OK) == -1)
-	// 	errorResponse(403, "Forbidden", error_paths);
-	//else
+	if (access(path.c_str(), W_OK) == -1)
+		errorResponse(403, "Forbidden", error_paths);
+	else
 	{
 		if ((dr = opendir(path.c_str())) != NULL)
 		{
@@ -513,6 +514,7 @@ void	Response::errorResponse(int error_code, std::string message, std::map<int, 
 
 	std::string path;
 
+	std::cout << error_code << std::endl;
 	path = matchErrorCodeWithPage(error_code, error_paths);
 
 	this->_status_code = error_code;
@@ -521,15 +523,12 @@ void	Response::errorResponse(int error_code, std::string message, std::map<int, 
 
 	if (access(path.c_str(), F_OK) == -1)
 	{
-		error_paths.clear();
-		std::cout << "Not Found" << std::endl;
-		errorResponse(404, "Not Found", error_paths);
+		error404();
 		perror("404 Not Found");
 	}
 	else if (access(path.c_str(), W_OK) == -1)
 	{
-		error_paths.clear();
-		errorResponse(403, "Forbidden", error_paths);
+		error403();
 		perror("403 Forbidden");
 	}
 	else
@@ -552,10 +551,7 @@ void	Response::errorResponse(int error_code, std::string message, std::map<int, 
 			generateResponse();
 		}
 		else
-		{
-			error_paths.clear();
-			errorResponse(404, "Not Found", error_paths);
-		}
+			error404();
 	}
 }
 
@@ -573,6 +569,46 @@ std::string	Response::matchErrorCodeWithPage(int error_code, std::map<int, std::
 		return ("var/www/html/error400.html");
 	else
 		return ("/Users/gt-serst/webserv/var/www/html/error404.html");
+}
+
+void	Response::error404(void)
+{
+	this->_status_code = 404;
+	this->_status_message = "Not Found";
+	this->_content_type = "text/html";
+	this->_body = "<!DOCTYPE html>\n"
+				  "<html lang=\"en\">\n"
+				  "<head>\n"
+				  "<meta charset=\"UTF-8\">\n"
+				  "<title>404 Not Found</title>\n"
+				  "</head>\n"
+				  "<body>\n"
+				  "<h1>404 Not Found</h1>\n"
+				  "<p>The requested resource could not be found on this server.</p>\n"
+				  "</body>\n"
+				  "</html>";
+	this->_content_len = this->_body.length();
+	generateResponse();
+}
+
+void	Response::error403(void)
+{
+	this->_status_code = 403;
+	this->_status_message = "Forbidden";
+	this->_content_type = "text/html";
+	this->_body = "<!DOCTYPE html>\n"
+				  "<html lang=\"en\">\n"
+				  "<head>\n"
+				  "<meta charset=\"UTF-8\">\n"
+				  "<title>403 Forbidden</title>\n"
+				  "</head>\n"
+				  "<body>\n"
+				  "<h1>403 Forbidden</h1>\n"
+				  "<p>You do not have permission to access this resource on this server.</p>\n"
+				  "</body>\n"
+				  "</html>";
+	this->_content_len = this->_body.length();
+	generateResponse();
 }
 
 void	Response::generateResponse(void){

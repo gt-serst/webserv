@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:12:17 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/03 17:03:40 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/03 17:52:25 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -75,6 +75,8 @@ class Response{
 		void		uploadFileResponse(void);
 		void		generateResponse(void);
 		std::string	matchErrorCodeWithPage(int error_code, std::map<int, std::string> error_paths);
+		void		error404(void);
+		void		error403(void);
 		std::string	_response;
 		std::string	_http_version;
 		int			_status_code;
