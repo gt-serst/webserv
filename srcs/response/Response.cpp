@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:28:16 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/03 18:16:15 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/03 18:22:41 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -566,7 +566,9 @@ std::string	Response::matchErrorCodeWithPage(int error_code, std::map<int, std::
 		}
 	}
 	if (error_code == 400)
-		return ("var/www/html/error400.html");
+		return ("/Users/gt-serst/webserv/var/www/html/error400.html");
+	else if (error_code == 500)
+		return ("/Users/gt-serst/webserv/var/www/html/error500.html");
 	else
 		return ("/Users/gt-serst/webserv/var/www/html/error404.html");
 }
