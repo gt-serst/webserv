@@ -8,7 +8,7 @@
 
 //SET FUNCTIONS
 
-void	Request::manage_chunks(char *chunk)
+void	Request::manage_chunks(char *chunk) //still need to manage errors here
 {
 	char ch;
 	int len = strlen(chunk);
@@ -90,7 +90,8 @@ void	Request::manage_chunks(char *chunk)
 				{
 					state = R_chunk_content_cr;
 				}
-				_body.push_back(ch);
+				else
+					_body.push_back(ch);
 				break ;
 			}
 			case R_chunk_content_cr:
@@ -114,6 +115,7 @@ void	Request::manage_chunks(char *chunk)
 			}
 		}
 	}
+	state = R_error;
 }
 
 void	Request::validity_checks() //
@@ -148,7 +150,7 @@ void	Request::validity_checks() //
 	}
 }
 
-int hexDigitToInt(char ch) 
+int hexDigitToInt(char ch)
 {
     if (ch >= '0' && ch <= '9') return ch - '0';
     if (ch >= 'a' && ch <= 'f') return ch - 'a' + 10;
