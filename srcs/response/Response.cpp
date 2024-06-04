@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:28:16 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/04 12:32:13 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/04 13:49:03 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,7 +48,7 @@ void	Response::handleDirective(std::string path, t_locations loc, Request& req, 
 	{
 		if (getFileType(path) == E_DIR)
 		{
-			std::cout << "Dir" << std::endl;
+			//std::cout << "Dir" << std::endl;
 			if (path.find_last_of("/") != path.length() - 1)
 				loc.root_path.insert(loc.root_path.length() - 1, "/");
 			if (findIndexFile(path, loc, serv.getConfig().locations) == true)
@@ -66,7 +66,7 @@ void	Response::handleDirective(std::string path, t_locations loc, Request& req, 
 		}
 		else if (getFileType(path) == E_FILE)
 		{
-			std::cout << "File" << std::endl;
+			//std::cout << "File" << std::endl;
 			fileRoutine(path, loc, req, serv);
 		}
 		else
@@ -84,9 +84,9 @@ bool	Response::attachRootToPath(std::string& path, std::string root){
 	{
 		if (root[root.length() - 1] == '/')
 			root.erase(root.length() - 1,1);
-		std::cout << "Path: " << path << std::endl;
+		//std::cout << "Path: " << path << std::endl;
 		path.insert(0, root);
-		std::cout << "Path rooted: " << path << std::endl;
+		//std::cout << "Path rooted: " << path << std::endl;
 	}
 	else
 		return (false);
@@ -131,6 +131,7 @@ bool	Response::findIndexFile(std::string& path, t_locations& loc, std::map<std::
 
 void	Response::fileRoutine(std::string path, t_locations loc, Request& req, Server& serv){
 
+	//détecter si l'extenssion du fichier demandé est un php, py etc pour lancer les bonnes CGI, itérer sur les chemins CGI pour lancer le script correspondant
 	if (findCGI(req._server.getConfig().cgi_path) == true && isMethodAllowed(loc, req) == true)
 		std::cout << "Send CGI path and run it" << std::endl;
 	else if (isMethodAllowed(loc, req) == true)
@@ -514,7 +515,7 @@ void	Response::errorResponse(int error_code, std::string message, std::map<int, 
 
 	std::string path;
 
-	std::cout << error_code << std::endl;
+	//std::cout << error_code << std::endl;
 	path = matchErrorCodeWithPage(error_code, error_paths);
 
 	this->_status_code = error_code;
@@ -561,7 +562,7 @@ std::string	Response::matchErrorCodeWithPage(int error_code, std::map<int, std::
 	{
 		if (it->first == error_code)
 		{
-			std::cout << it->second << std::endl;
+			//std::cout << it->second << std::endl;
 			return (it->second);
 		}
 	}
