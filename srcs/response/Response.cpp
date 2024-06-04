@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:28:16 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/04 13:49:03 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/04 15:11:26 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,12 +48,12 @@ void	Response::handleDirective(std::string path, t_locations loc, Request& req, 
 	{
 		if (getFileType(path) == E_DIR)
 		{
-			//std::cout << "Dir" << std::endl;
+			std::cout << "Dir" << std::endl;
 			if (path.find_last_of("/") != path.length() - 1)
-				loc.root_path.insert(loc.root_path.length() - 1, "/");
-			if (findIndexFile(path, loc, serv.getConfig().locations) == true)
+				path.insert(path.length(), "/");
+			if (findIndexFile(path, loc, serv.getConfig().locations, req) == true)
 			{
-				attachRootToPath(path, loc.root_path); //path du fichier index doit-il encore garder le chemin du répertoire dans lequel il se trouve, pour le moment le path, avant d'être rooté, correspond uniquement au fichier index
+ 				attachRootToPath(path, loc.root_path);
 				fileRoutine(path, loc, req, serv);
 			}
 			else if (isMethodAllowed(loc, req) == true)
@@ -66,7 +66,7 @@ void	Response::handleDirective(std::string path, t_locations loc, Request& req, 
 		}
 		else if (getFileType(path) == E_FILE)
 		{
-			//std::cout << "File" << std::endl;
+			std::cout << "File" << std::endl;
 			fileRoutine(path, loc, req, serv);
 		}
 		else
@@ -84,9 +84,9 @@ bool	Response::attachRootToPath(std::string& path, std::string root){
 	{
 		if (root[root.length() - 1] == '/')
 			root.erase(root.length() - 1,1);
-		//std::cout << "Path: " << path << std::endl;
+		std::cout << "Path: " << path << std::endl;
 		path.insert(0, root);
-		//std::cout << "Path rooted: " << path << std::endl;
+		std::cout << "Path rooted: " << path << std::endl;
 	}
 	else
 		return (false);
@@ -107,21 +107,30 @@ int	Response::getFileType(std::string path){
 		return (E_UNKN);
 }
 
-bool	Response::findIndexFile(std::string& path, t_locations& loc, std::map<std::string, t_locations> routes){
+bool	Response::findIndexFile(std::string& path, t_locations& loc, std::map<std::string, t_locations> routes, Request& req){
 
-	std::string	index;
 	Router		router;
 
 	if(loc.default_path.empty() == false)
 	{
-		for (size_t i = 0; i < loc.default_path.size(); i++)
+		for (int i = loc.default_path.size() - 1; i >= 0; i--)
 		{
-			index = path;
-			index.append(loc.default_path[i]);
-			if (access(index.c_str(), F_OK) == 0)
+			std::string tmp = path;
+
+			tmp.append(loc.default_path[i]);
+			if (access(tmp.c_str(), F_OK) == 0)
 			{
-				path = loc.default_path[i].insert(0, "/");
-				loc = router.routeRequest(path, routes);
+				std::string	index;
+				std::string new_path;
+
+				new_path = req.getPathToFile();
+				if (new_path.find_last_of("/") != new_path.length() - 1)
+					new_path.insert(new_path.length(), "/");
+				req.setPathToFile(new_path);
+				path = req.getPathToFile().append(loc.default_path[i]);
+				index = loc.default_path[i].insert(0, "/");
+				loc = router.routeRequest(index, routes);
+				req.setPathToFile(path);
 				return (true);
 			}
 		}
@@ -254,8 +263,10 @@ void	Response::downloadFile(std::string path, std::map<int, std::string> error_p
 
 	std::ifstream input(path, std::ios::binary);
 
+	std::cout << path << std::endl;
 	if (input.is_open())
 	{
+		std::cout << "Open file" << std::endl;
 		std::string buffer;
 		std::string stack;
 		while (std::getline(input, buffer))

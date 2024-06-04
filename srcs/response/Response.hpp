@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:12:17 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/04 12:32:18 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/04 14:54:46 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,7 +52,7 @@ class Response{
 	private:
 		bool		attachRootToPath(std::string& path, std::string root);
 		int			getFileType(std::string path);
-		bool		findIndexFile(std::string& path, t_locations& loc, std::map<std::string, t_locations> routes);
+		bool		findIndexFile(std::string& path, t_locations& loc, std::map<std::string, t_locations> routes, Request& req);
 		void		fileRoutine(std::string path, t_locations loc, Request& req, Server& serv);
 		bool		isMethodAllowed(t_locations loc, Request& req);
 		void		runDirMethod(std::string path, t_locations loc, Request& req, Server& serv);

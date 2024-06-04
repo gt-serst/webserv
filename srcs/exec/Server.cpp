@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/08 09:59:24 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/04 13:50:19 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/04 15:09:29 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -129,7 +129,7 @@ int	Server::readClientSocket(int client_fd){
 		perror("Recv failed");
 		return (-1);
 	}
-	//std::cout << stack << std::endl;
+	std::cout << stack << std::endl;
 	_requests.insert(std::make_pair(client_fd, stack));
 	// rc = recv(client_fd, buffer, sizeof(buffer) - 1, 0);
 	// if (rc == 0 || rc == -1)
