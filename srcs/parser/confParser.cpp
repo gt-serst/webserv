@@ -204,8 +204,8 @@ static t_server_scope	*isServerCGI(int *i, std::string buffer, t_server_scope *s
 			if (serverConfig[*servers].cgi_path.empty() == 0)
 				result = serverConfig[*servers].cgi_path;
 			std::string path = buffer.substr(*i, j - *i);
-			*i += 1;
-			j = *i;
+			j += 1;
+			*i = j;
 			if (buffer[j] == '.')
 			{
 				while (buffer[j] && isprint(buffer[j]) && buffer[j] != ' ')
@@ -214,6 +214,7 @@ static t_server_scope	*isServerCGI(int *i, std::string buffer, t_server_scope *s
 			if (j != *i && buffer[j] == '\n')
 			{
 				result[buffer.substr(*i, j - *i)] = path;
+				*i = j + 1;
 				serverConfig[*servers].cgi_path = result;
 				return (serverConfig);
 			}
