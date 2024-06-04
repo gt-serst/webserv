@@ -142,7 +142,7 @@ void	Response::fileRoutine(std::string path, t_locations loc, Request req, Serve
 	}
 }
 
-bool	Response::findCGI(std::string cgi_path){
+bool	Response::findCGI(std::map<std::string, std::string> cgi_path){
 
 	if (cgi_path.empty() == false)
 		return (true);

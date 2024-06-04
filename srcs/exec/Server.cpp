@@ -122,7 +122,7 @@ int	Server::handleRequest(int client_fd){
 	Router		router;
 	Response	response;
 
-	Request request = Request(_requests[client_fd], *this);
+	Request request(_requests[client_fd], *this);
 
 	if (request.getPathToFile().compare("/favicon.ico") == 0)
 		return (-1);

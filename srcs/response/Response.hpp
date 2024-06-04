@@ -59,7 +59,7 @@ class Response{
 		void		isAutoIndex(std::string path, t_locations loc, Request req, std::map<int, std::string> error_paths);
 		void		uploadDir(std::string path, Server serv);
 		void		deleteDir(std::string path, Server serv);
-		bool		findCGI(std::string cgi_path);
+		bool		findCGI(std::map<std::string, std::string> cgi_path);
 		void		runFileMethod(std::string path, Request req, Server serv);
 		void		downloadFile(std::string path, std::map<int, std::string> error_paths);
 		void		uploadFile(std::string path, Request req, Server serv);

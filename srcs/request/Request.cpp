@@ -281,25 +281,22 @@ Request::Request(std::string& buffer, Server& server)
 		_query = standardise(_query); //this function should first do the hexa transform then tolower the string
 	if (state != R_error)
 		validity_checks();
+	std::cout << "Request parsing over" << std::endl;
 }
 
 Request::~Request()
 {
-	if (state == R_error)
-	{
-		std::cout << "Error " << _error_code << " " << _error_msg << std::endl;
-	}
-	std::cout << "Printing request params" << std::endl;
-	std::cout << "Method == " << _request_method << std::endl;
-	std::cout << "Path == " << _path_to_file << std::endl;
-	std::cout << "Query == " << _query << std::endl;
-	std::cout << "Version == " << _version << std::endl;
-	std::cout << "IP == " << _litteral_ip << std::endl;
-	std::cout << "Hostname == " << _hostname << std::endl;
-	for (std::map<std::string, std::string>::const_iterator it = _headers.begin(); it != _headers.end(); ++it)
-	{
-		std::cout << it->first << ": " << it->second << std::endl;
-	}
+	// std::cout << "Printing request params" << std::endl;
+	// std::cout << "Method == " << _request_method << std::endl;
+	// std::cout << "Path == " << _path_to_file << std::endl;
+	// std::cout << "Query == " << _query << std::endl;
+	// std::cout << "Version == " << _version << std::endl;
+	// std::cout << "IP == " << _litteral_ip << std::endl;
+	// std::cout << "Hostname == " << _hostname << std::endl;
+	// for (std::map<std::string, std::string>::const_iterator it = _headers.begin(); it != _headers.end(); ++it)
+	// {
+	// 	std::cout << it->first << ": " << it->second << std::endl;
+	// }
 	std::cout << "Request destroyed" << std::endl;
 }
 
