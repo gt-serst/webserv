@@ -12,7 +12,6 @@
 #include <limits.h>
 #define MAX_URI_SIZE 200
 #define MAX_REQUEST_SIZE
-#define MAX_BODY 1000000
 
 enum state //state is current state so the name is what we previsly validated || when we encounter any (% hex hex) char we should translate hexa to ascii
 {
@@ -41,6 +40,14 @@ enum state //state is current state so the name is what we previsly validated ||
 	R_crlf,
 	R_fragment,
 	R_headers,
+	R_chunked_start,
+	R_chunk_size,
+	R_chunk_cr,
+	R_chunk_lf,
+	R_chunk_content,
+	R_chunk_content_cr,
+	R_chunk_content_lf,
+	R_chunk_done,
 	R_body,
 	R_error,
 	R_done
@@ -52,21 +59,28 @@ class Request
 	private:
 		std::string _request;
 		std::string _request_method;
-		std::string _hostname; //?
-		std::string _path_to_file;
+		std::string _hostname;//std
+		std::string _path_to_file;//std
 		std::string _version;
 		std::map<std::string, std::string> _headers;
 		std::string _body;
-		std::string _query;
+		std::string _query;//std
 		std::string _error_msg;
+		std::string _litteral_ip;
 		int _error_code;
-		//int _len;
+		int	_port;
+		int _body_len;
 		int state;
+		int chunk_size;
+		bool chunked;
 
-		void parseRequestLine(const char *line);
+		void parseRequestLine(char *line);
 		std::streampos setHeader(std::stringstream& ss, std::streampos startpos);
 		void setBody(std::stringstream& ss, std::streampos startpos);
 		// void setLen(std::string _request);
+		std::string	standardise(std::string str);
+		void validity_checks();
+		void manage_chunks(char *chunk);
 
 	public:
 		Request();
@@ -82,7 +96,9 @@ class Request
 		std::string	getHeader(const std::string& key) const;
 		std::string	getBody() const;
 		std::string	getErrorMsg() const;
+		std::string getHost() const;
 		int			getErrorCode() const;
+		int			getPort() const;
 		Server _server;
 		// int getLen();
 };
