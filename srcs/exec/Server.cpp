@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
+/*   By: geraudtserstevens <geraudtserstevens@st    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/08 09:59:24 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/04 18:45:09 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/05 00:50:46 by geraudtsers      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -118,6 +118,15 @@ int	Server::readClientSocket(int client_fd){
 	char		buffer[BUFFER_SIZE];
 	std::string	stack;
 
+	rc = recv(client_fd, buffer, sizeof(buffer) - 1, 0);
+	if (rc == 0)
+	{
+		this->closeClientSocket(client_fd);
+		perror("Favicon cookies read");
+		return (-1);
+	}
+	buffer[rc] = '\0';
+	stack += buffer;
 	while (0 < (rc = recv(client_fd, buffer, sizeof(buffer) - 1, 0)))
 	{
 		buffer[rc] = '\0';

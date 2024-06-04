@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
+/*   By: geraudtserstevens <geraudtserstevens@st    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:28:16 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/04 18:52:58 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/05 00:56:05 by geraudtsers      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -118,6 +118,7 @@ bool	Response::findIndexFile(std::string& path, t_locations& loc, std::map<std::
 			std::string tmp = path;
 
 			tmp.append(loc.default_path[i]);
+			std::cout << tmp << std::endl;
 			if (access(tmp.c_str(), F_OK) == 0)
 			{
 				std::string	index;
@@ -129,6 +130,7 @@ bool	Response::findIndexFile(std::string& path, t_locations& loc, std::map<std::
 				req.setPathToFile(new_path);
 				path = req.getPathToFile().append(loc.default_path[i]);
 				index = loc.default_path[i].insert(0, "/");
+				std::cout << index << std::endl;
 				loc = router.routeRequest(index, routes);
 				req.setPathToFile(path);
 				return (true);
@@ -459,23 +461,21 @@ std::string	Response::getContentType(std::string stack){
 	std::stringstream	ss_hex;
 	std::vector<char>	bytes(8);
 	std::string			octets;
-	bool				txt = true;
+	bool				text = true;
 
 	if (stack.compare(0, 15, "<!DOCTYPE html>") == 0)
 		return ("text/html");
-	else if (txt)
+	for (size_t i = 0; i < stack.length(); i++)
 	{
-		for (size_t i = 0; i < stack.length(); i++)
+		if (!isprint(stack[i]) && !isspace(stack[i]))
 		{
-			if (!isprint(stack[i]) || !isspace(stack[i]))
-			{
-				txt = false;
-				break;
-			}
+			std::cout << "Not a char" << std::endl;
+			text = false;
+			break;
 		}
-		if (txt == true)
-			return ("text/plain");
 	}
+	if (text == true)
+		return ("text/plain");
 	ss << stack;
 	ss.read(&bytes[0], bytes.size());
 	for (size_t i = 0; i < bytes.size(); i++)
