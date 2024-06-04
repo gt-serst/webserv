@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:28:16 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/04 12:32:13 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/04 17:13:21 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -50,10 +50,10 @@ void	Response::handleDirective(std::string path, t_locations loc, Request& req, 
 		{
 			std::cout << "Dir" << std::endl;
 			if (path.find_last_of("/") != path.length() - 1)
-				loc.root_path.insert(loc.root_path.length() - 1, "/");
-			if (findIndexFile(path, loc, serv.getConfig().locations) == true)
+				path.insert(path.length(), "/");
+			if (findIndexFile(path, loc, serv.getConfig().locations, req) == true)
 			{
-				attachRootToPath(path, loc.root_path); //path du fichier index doit-il encore garder le chemin du répertoire dans lequel il se trouve, pour le moment le path, avant d'être rooté, correspond uniquement au fichier index
+ 				attachRootToPath(path, loc.root_path);
 				fileRoutine(path, loc, req, serv);
 			}
 			else if (isMethodAllowed(loc, req) == true)
@@ -107,21 +107,30 @@ int	Response::getFileType(std::string path){
 		return (E_UNKN);
 }
 
-bool	Response::findIndexFile(std::string& path, t_locations& loc, std::map<std::string, t_locations> routes){
+bool	Response::findIndexFile(std::string& path, t_locations& loc, std::map<std::string, t_locations> routes, Request& req){
 
-	std::string	index;
 	Router		router;
 
 	if(loc.default_path.empty() == false)
 	{
-		for (size_t i = 0; i < loc.default_path.size(); i++)
+		for (int i = loc.default_path.size() - 1; i >= 0; i--)
 		{
-			index = path;
-			index.append(loc.default_path[i]);
-			if (access(index.c_str(), F_OK) == 0)
+			std::string tmp = path;
+
+			tmp.append(loc.default_path[i]);
+			if (access(tmp.c_str(), F_OK) == 0)
 			{
-				path = loc.default_path[i].insert(0, "/");
-				loc = router.routeRequest(path, routes);
+				std::string	index;
+				std::string new_path;
+
+				new_path = req.getPathToFile();
+				if (new_path.find_last_of("/") != new_path.length() - 1)
+					new_path.insert(new_path.length(), "/");
+				req.setPathToFile(new_path);
+				path = req.getPathToFile().append(loc.default_path[i]);
+				index = loc.default_path[i].insert(0, "/");
+				loc = router.routeRequest(index, routes);
+				req.setPathToFile(path);
 				return (true);
 			}
 		}
@@ -131,6 +140,7 @@ bool	Response::findIndexFile(std::string& path, t_locations& loc, std::map<std::
 
 void	Response::fileRoutine(std::string path, t_locations loc, Request& req, Server& serv){
 
+	//détecter si l'extenssion du fichier demandé est un php, py etc pour lancer les bonnes CGI, itérer sur les chemins CGI pour lancer le script correspondant
 	if (findCGI(req._server.getConfig().cgi_path) == true && isMethodAllowed(loc, req) == true)
 		std::cout << "Send CGI path and run it" << std::endl;
 	else if (isMethodAllowed(loc, req) == true)
@@ -167,7 +177,7 @@ void	Response::runDirMethod(std::string path, t_locations loc, Request& req, Ser
 	else if (req.getRequestMethod() == "POST")
 		uploadDir(path, serv);
 	else if (req.getRequestMethod() == "DELETE")
-		deleteDir(path, serv);
+		deleteDir(path, serv.getConfig().error_page_paths);
 }
 
 void	Response::isAutoIndex(std::string path, t_locations loc, Request& req, std::map<int, std::string> error_paths){
@@ -220,13 +230,13 @@ void	Response::uploadDir(std::string path, Server& serv){
 	}
 }
 
-void	Response::deleteDir(std::string path, Server& serv){
+void	Response::deleteDir(std::string path, std::map<int, std::string> error_paths){
 
 	if (access(path.c_str(), W_OK) == 0)
 	{
 		if (rmdir(path.c_str()) < 0)
 		{
-			errorResponse(500, "Internal Server Error", serv.getConfig().error_page_paths);
+			errorResponse(500, "Internal Server Error", error_paths);
 			perror("500 Delete directory failed");
 			return;
 		}
@@ -234,7 +244,7 @@ void	Response::deleteDir(std::string path, Server& serv){
 	}
 	else
 	{
-		errorResponse(403, "Forbidden", serv.getConfig().error_page_paths);
+		errorResponse(403, "Forbidden", error_paths);
 		perror("403 Write access failed");
 	}
 }
@@ -253,8 +263,10 @@ void	Response::downloadFile(std::string path, std::map<int, std::string> error_p
 
 	std::ifstream input(path, std::ios::binary);
 
+	std::cout << path << std::endl;
 	if (input.is_open())
 	{
+		std::cout << "Open file" << std::endl;
 		std::string buffer;
 		std::string stack;
 		while (std::getline(input, buffer))
@@ -514,9 +526,10 @@ void	Response::errorResponse(int error_code, std::string message, std::map<int, 
 
 	std::string path;
 
-	std::cout << error_code << std::endl;
+	//std::cout << error_code << std::endl;
 	path = matchErrorCodeWithPage(error_code, error_paths);
 
+	this->_http_version = "1.1";
 	this->_status_code = error_code;
 	this->_status_message = message;
 	this->_content_type = "text/html";
@@ -561,7 +574,7 @@ std::string	Response::matchErrorCodeWithPage(int error_code, std::map<int, std::
 	{
 		if (it->first == error_code)
 		{
-			std::cout << it->second << std::endl;
+			//std::cout << it->second << std::endl;
 			return (it->second);
 		}
 	}
@@ -569,6 +582,8 @@ std::string	Response::matchErrorCodeWithPage(int error_code, std::map<int, std::
 		return ("/Users/gt-serst/webserv/var/www/html/error400.html");
 	else if (error_code == 500)
 		return ("/Users/gt-serst/webserv/var/www/html/error500.html");
+	else if (error_code == 405)
+		return ("/Users/gt-serst/webserv/var/www/html/error405.html");
 	else
 		return ("/Users/gt-serst/webserv/var/www/html/error404.html");
 }

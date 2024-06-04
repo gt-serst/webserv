@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/07 11:04:51 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/04 12:28:07 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/04 17:23:38 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,18 +23,21 @@
 #include <iostream>
 #include <stdio.h>
 
-ServerManager::ServerManager(void){}
+ServerManager::ServerManager(void){
+
+	std::cout << "ServerManager created" << std::endl;
+}
 
 ServerManager::~ServerManager(void){
 
-	_servers.clear();
-	_sockets.clear();
-	_ready.clear();
+	// _servers.clear();
+	// _sockets.clear();
+	// _ready.clear();
+	std::cout << "ServerManager destroyed" << std::endl;
 }
 
 void	ServerManager::launchServer(t_server_scope *servers, int nb_servers){
 
-	std::cout << nb_servers << std::endl;
 	initServer(servers, nb_servers);
 	serverRoutine();
 	clear();
@@ -45,7 +48,6 @@ void	ServerManager::initServer(t_server_scope *servers, int nb_servers){
 	FD_ZERO(&_fd_set);
 	for (int i = 0; i < nb_servers; i++)
 	{
-		std::cout << "New server" << std::endl;
 		int		fd;
 		Server	server(servers[i]);
 
@@ -60,7 +62,7 @@ void	ServerManager::serverRoutine(void){
 
 	while (1)
 	{
-		//std::cout << "New loop" << std::endl;
+		std::cout << "New loop" << std::endl;
 		int				rc;
 		fd_set			reading_set;
 		fd_set			writing_set;
@@ -77,18 +79,19 @@ void	ServerManager::serverRoutine(void){
 				FD_SET(*it, &writing_set);
 
 			rc = select(FD_SETSIZE, &reading_set, &writing_set, NULL, &timeout);
-			//std::cout << rc << std::endl;
 		}
 		if (rc > 0)
 		{
 			for (std::vector<int>::iterator it = _ready.begin(); it != _ready.end(); ++it)
 			{
+				std::cout << "First loop: Send" << std::endl;
 				if (FD_ISSET(*it, &writing_set))
 				{
-					rc = _sockets[*it]->sendResponse(*it);
+					int rc = _sockets[*it]->sendResponse(*it);
 					if (rc == 0)
 					{
-						_sockets.erase(*it);
+						std::cout << *it << std::endl;
+						//_sockets.erase(*it);
 						_ready.erase(it);
 					}
 					else if (rc == -1)
@@ -98,14 +101,16 @@ void	ServerManager::serverRoutine(void){
 						_sockets.erase(*it);
 						_ready.erase(it);
 					}
+					rc = 0;
 					break;
 				}
 			}
 			for (std::map<int, Server*>::iterator it = _sockets.begin(); it != _sockets.end(); ++it)
 			{
+				std::cout << "Second loop: Read" << std::endl;
 				if (FD_ISSET(it->first, &reading_set))
 				{
-					rc = it->second->readClientSocket(it->first);
+					int rc = it->second->readClientSocket(it->first);
 					if (rc == 0)
 					{
 						rc = it->second->handleRequest(it->first);
@@ -118,11 +123,13 @@ void	ServerManager::serverRoutine(void){
 						FD_CLR(it->first, &reading_set);
 						_sockets.erase(it->first);
 					}
+					rc = 0;
 					break;
 				}
 			}
 			for (std::map<int, Server>::iterator it = _servers.begin(); it != _servers.end(); ++it)
 			{
+				std::cout << "Third loop: Listen" << std::endl;
 				if (FD_ISSET(it->first, &reading_set))
 				{
 					int client_fd = it->second.listenClientConnection();
@@ -132,6 +139,7 @@ void	ServerManager::serverRoutine(void){
 						FD_SET(client_fd, &_fd_set);
 						_sockets.insert(std::make_pair(client_fd, &(it->second)));
 					}
+					rc = 0;
 					break;
 				}
 			}
@@ -141,15 +149,20 @@ void	ServerManager::serverRoutine(void){
 		else
 		{
 			for (std::map<int, Server*>::iterator it = _sockets.begin() ; it != _sockets.end() ; it++)
+			{
+				std::cout << "Four loop: Close" << std::endl;
 				it->second->closeClientSocket(it->first);
+			}
 			_sockets.clear();
 			_ready.clear();
 			FD_ZERO(&_fd_set);
 			for (std::map<int, Server>::iterator it = _servers.begin() ; it != _servers.end() ; it++)
+			{
+				std::cout << "Set a server" << std::endl;
 				FD_SET(it->first, &_fd_set);
+			}
 		}
-
-		//std::cout << "End loop" << std::endl;
+		std::cout << "End loop" << std::endl;
 	}
 }
 

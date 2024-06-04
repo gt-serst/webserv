@@ -409,8 +409,8 @@ void Request::parseRequestLine(char *line)
 				}
 				else
 				{
-					_error_msg = "bad request : unsuported method";
-					_error_code = 400;
+					_error_msg = "Method Not Allowed";
+					_error_code = 405;
 					state = R_error;
 					return ;
 				}
