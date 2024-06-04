@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:28:16 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/03 18:22:41 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/04 11:12:05 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,7 +36,7 @@ bool	Response::checkPortAndServerName(t_server_scope config){
 	return (true);
 }
 
-void	Response::handleDirective(std::string path, t_locations loc, Request req, Server serv){
+void	Response::handleDirective(std::string path, t_locations loc, Request& req, Server& serv){
 
 	this->_http_version = req.getVersion();
 	if (attachRootToPath(path, loc.root_path) == false)
@@ -129,7 +129,7 @@ bool	Response::findIndexFile(std::string& path, t_locations& loc, std::map<std::
 	return (false);
 }
 
-void	Response::fileRoutine(std::string path, t_locations loc, Request req, Server serv){
+void	Response::fileRoutine(std::string path, t_locations loc, Request& req, Server& serv){
 
 	if (findCGI(req._server.getConfig().cgi_path) == true && isMethodAllowed(loc, req) == true)
 		std::cout << "Send CGI path and run it" << std::endl;
@@ -142,7 +142,7 @@ void	Response::fileRoutine(std::string path, t_locations loc, Request req, Serve
 	}
 }
 
-bool	Response::findCGI(std::string cgi_path){
+bool	Response::findCGI(std::map<std::string, std::string>	cgi_path){
 
 	if (cgi_path.empty() == false)
 		return (true);
@@ -150,7 +150,7 @@ bool	Response::findCGI(std::string cgi_path){
 		return (false);
 }
 
-bool	Response::isMethodAllowed(t_locations loc, Request req){
+bool	Response::isMethodAllowed(t_locations loc, Request& req){
 
 	for (size_t i = 0; i < loc.allowed_methods.size(); i++)
 	{
@@ -160,7 +160,7 @@ bool	Response::isMethodAllowed(t_locations loc, Request req){
 	return (false);
 }
 
-void	Response::runDirMethod(std::string path, t_locations loc, Request req, Server serv){
+void	Response::runDirMethod(std::string path, t_locations loc, Request& req, Server& serv){
 
 	if (req.getRequestMethod() == "GET")
 		isAutoIndex(path, loc, req, serv.getConfig().error_page_paths);
@@ -170,7 +170,7 @@ void	Response::runDirMethod(std::string path, t_locations loc, Request req, Serv
 		deleteDir(path, serv);
 }
 
-void	Response::isAutoIndex(std::string path, t_locations loc, Request req, std::map<int, std::string> error_paths){
+void	Response::isAutoIndex(std::string path, t_locations loc, Request& req, std::map<int, std::string> error_paths){
 
 	::DIR			*dr;
 	struct dirent	*de;
@@ -207,7 +207,7 @@ void	Response::isAutoIndex(std::string path, t_locations loc, Request req, std::
 	}
 }
 
-void	Response::uploadDir(std::string path, Server serv){
+void	Response::uploadDir(std::string path, Server& serv){
 
 	if (access(path.c_str(), W_OK) == 0)
 	{
@@ -220,7 +220,7 @@ void	Response::uploadDir(std::string path, Server serv){
 	}
 }
 
-void	Response::deleteDir(std::string path, Server serv){
+void	Response::deleteDir(std::string path, Server& serv){
 
 	if (access(path.c_str(), W_OK) == 0)
 	{
@@ -239,7 +239,7 @@ void	Response::deleteDir(std::string path, Server serv){
 	}
 }
 
-void	Response::runFileMethod(std::string path, Request req, Server serv){
+void	Response::runFileMethod(std::string path, Request& req, Server& serv){
 
 	if (req.getRequestMethod() == "GET")
 		downloadFile(path, serv.getConfig().error_page_paths);
@@ -272,7 +272,7 @@ void	Response::downloadFile(std::string path, std::map<int, std::string> error_p
 	}
 }
 
-void	Response::uploadFile(std::string path, Request req, Server serv){
+void	Response::uploadFile(std::string path, Request& req, Server& serv){
 
 	std::ofstream output(path);
 
@@ -308,7 +308,7 @@ void	Response::deleteFile(std::string path, std::map<int, std::string> error_pat
 	}
 }
 
-void Response::autoIndexResponse(std::string path, std::string dir_list, Request req) {
+void Response::autoIndexResponse(std::string path, std::string dir_list, Request& req) {
 
 	size_t j = 0;
 	std::vector<std::string> vec_dir_list;

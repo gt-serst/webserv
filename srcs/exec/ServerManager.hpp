@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ServerManager.hpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: geraudtserstevens <geraudtserstevens@st    +#+  +:+       +#+        */
+/*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/07 11:00:48 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/05/30 15:56:09 by geraudtsers      ###   ########.fr       */
+/*   Updated: 2024/06/04 12:28:18 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,7 +31,7 @@ class ServerManager
 		void					serverRoutine(void);
 		void					clear(void);
 		std::map<int, Server>	_servers;
-		std::map<int, Server>	_sockets;
+		std::map<int, Server*>	_sockets;
 		std::vector<int>		_ready;
 		fd_set					_fd_set;
 };

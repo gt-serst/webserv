@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ServerManager.cpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: geraudtserstevens <geraudtserstevens@st    +#+  +:+       +#+        */
+/*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/07 11:04:51 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/05/30 15:56:32 by geraudtsers      ###   ########.fr       */
+/*   Updated: 2024/06/04 12:28:07 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -85,7 +85,7 @@ void	ServerManager::serverRoutine(void){
 			{
 				if (FD_ISSET(*it, &writing_set))
 				{
-					rc = _sockets[*it].sendResponse(*it);
+					rc = _sockets[*it]->sendResponse(*it);
 					if (rc == 0)
 					{
 						_sockets.erase(*it);
@@ -101,14 +101,14 @@ void	ServerManager::serverRoutine(void){
 					break;
 				}
 			}
-			for (std::map<int, Server>::iterator it = _sockets.begin(); it != _sockets.end(); ++it)
+			for (std::map<int, Server*>::iterator it = _sockets.begin(); it != _sockets.end(); ++it)
 			{
 				if (FD_ISSET(it->first, &reading_set))
 				{
-					rc = it->second.readClientSocket(it->first);
+					rc = it->second->readClientSocket(it->first);
 					if (rc == 0)
 					{
-						rc = it->second.handleRequest(it->first);
+						rc = it->second->handleRequest(it->first);
 						if (rc == 0)
 							_ready.push_back(it->first);
 					}
@@ -130,7 +130,7 @@ void	ServerManager::serverRoutine(void){
 					if (client_fd != -1)
 					{
 						FD_SET(client_fd, &_fd_set);
-						_sockets.insert(std::make_pair(client_fd, it->second));
+						_sockets.insert(std::make_pair(client_fd, &(it->second)));
 					}
 					break;
 				}
@@ -140,8 +140,8 @@ void	ServerManager::serverRoutine(void){
 			perror("Select() failed");*/
 		else
 		{
-			for (std::map<int, Server>::iterator it = _sockets.begin() ; it != _sockets.end() ; it++)
-				it->second.closeClientSocket(it->first);
+			for (std::map<int, Server*>::iterator it = _sockets.begin() ; it != _sockets.end() ; it++)
+				it->second->closeClientSocket(it->first);
 			_sockets.clear();
 			_ready.clear();
 			FD_ZERO(&_fd_set);

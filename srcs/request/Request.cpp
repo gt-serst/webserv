@@ -67,8 +67,8 @@ Request::~Request()
 	for (std::map<std::string, std::string>::const_iterator it = _headers.begin(); it != _headers.end(); ++it)
 	{
 		std::cout << it->first << ": " << it->second << std::endl;
-	}
-	std::cout << "Request destroyed" << std::endl;*/
+	}*/
+	std::cout << "Request destroyed" << std::endl;
 }
 
 void Request::setRequest(std::string& buffer)

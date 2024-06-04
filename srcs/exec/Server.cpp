@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/08 09:59:24 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/03 16:42:14 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/04 11:40:42 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,10 +31,14 @@
 
 Server::Server(void){}
 
-Server::Server(t_server_scope config) : _config(config){}
+Server::Server(t_server_scope config) : _config(config){
+
+	std::cout << "Server created" << std::endl;
+}
 
 Server::~Server(void){
 
+	std::cout << "Server destroyed" << std::endl;
 	this->_requests.clear();
 }
 
@@ -71,6 +75,7 @@ int	Server::createServerSocket(void){
 	rc = listen(this->_fd, connection_backlog);
 	if (rc < 0)
 		perror("Listen() failed");
+	std::cout << "End of listen" << std::endl;
 	return (this->_fd);
 }
 
@@ -122,7 +127,7 @@ int	Server::handleRequest(int client_fd){
 	Router		router;
 	Response	response;
 
-	Request request = Request(_requests[client_fd], *this);
+	Request request(_requests[client_fd], *this);
 
 	if (request.getPathToFile().compare("/favicon.ico") == 0)
 		return (-1);
