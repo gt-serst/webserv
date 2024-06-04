@@ -7,6 +7,34 @@
 //only POST should have a body
 
 //SET FUNCTIONS
+bool Request::handle_query()
+{
+    _query_args.clear();
+    size_t start = 0;
+
+    while (start < _query_str.size())
+	{
+        size_t equal_pos = _query_str.find('=', start);
+        size_t amp_pos = _query_str.find('&', start);
+        if (equal_pos == std::string::npos)
+            return false;
+        std::string key = _query_str.substr(start, equal_pos - start);
+        std::string value;
+        if (amp_pos == std::string::npos)
+		{
+            value = _query_str.substr(equal_pos + 1);
+            _query_args[key] = value;
+            break;
+        } 
+		else
+		{
+            value = _query_str.substr(equal_pos + 1, amp_pos - equal_pos - 1);
+            _query_args[key] = value;
+            start = amp_pos + 1;
+        }
+    }
+    return true;
+}
 
 void	Request::manage_chunks(char *chunk) //still need to manage errors here
 {
@@ -278,7 +306,16 @@ Request::Request(std::string& buffer, Server& server)
 	if (state != R_error)
 		_path_to_file = standardise(_path_to_file);
 	if (state != R_error)
+	{
 		_query_str = standardise(_query_str); //this function should first do the hexa transform then tolower the string
+		if (!handle_query())
+		{
+			_error_code = 400;
+			_error_msg = "Bad query format";
+			state = R_error;
+			return ;
+		}
+	}
 	if (state != R_error)
 		validity_checks();
 	std::cout << "Request parsing over" << std::endl;
@@ -296,10 +333,15 @@ Request::~Request()
 	std::cout << "Path == " << _path_to_file << std::endl;
 	std::cout << "Query == " << _query_str << std::endl;
 	std::cout << "Version == " << _version << std::endl;
+	//std::cout << "Body == " << _body << std::endl;
 	for (std::map<std::string, std::string>::const_iterator it = _headers.begin(); it != _headers.end(); ++it)
 	{
 		std::cout << it->first << ": " << it->second << std::endl;
 	}
+	for (std::map<std::string, std::string>::const_iterator it = _query_args.begin(); it != _query_args.end(); ++it)
+	{
+        std::cout << it->first << " = " << it->second << std::endl;
+    }
 	std::cout << "Request destroyed" << std::endl;
 }
 

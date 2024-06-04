@@ -63,6 +63,7 @@ class Request
 		std::string _path_to_file;//std
 		std::string _version;
 		std::map<std::string, std::string> _headers;
+		std::map<std::string, std::string> _query_args;
 		std::string _body;
 		std::string _query_str;
 		std::string _error_msg;
@@ -80,6 +81,7 @@ class Request
 		std::string	standardise(std::string str);
 		void validity_checks();
 		void manage_chunks(char *chunk);
+		bool	handle_query();
 
 	public:
 		Request();
