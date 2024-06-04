@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:28:16 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/04 17:34:04 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/04 17:56:16 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,7 +48,7 @@ void	Response::handleDirective(std::string path, t_locations loc, Request& req, 
 	{
 		if (getFileType(path) == E_DIR)
 		{
-			std::cout << "Dir" << std::endl;
+			//std::cout << "Dir" << std::endl;
 			if (path.find_last_of("/") != path.length() - 1)
 				path.insert(path.length(), "/");
 			if (findIndexFile(path, loc, serv.getConfig().locations, req) == true)
@@ -66,7 +66,7 @@ void	Response::handleDirective(std::string path, t_locations loc, Request& req, 
 		}
 		else if (getFileType(path) == E_FILE)
 		{
-			std::cout << "File" << std::endl;
+			//std::cout << "File" << std::endl;
 			fileRoutine(path, loc, req, serv);
 		}
 		else
@@ -83,9 +83,9 @@ bool	Response::attachRootToPath(std::string& path, std::string root){
 	{
 		if (root[root.length() - 1] == '/')
 			root.erase(root.length() - 1,1);
-		std::cout << "Path: " << path << std::endl;
+		//std::cout << "Path: " << path << std::endl;
 		path.insert(0, root);
-		std::cout << "Path rooted: " << path << std::endl;
+		//std::cout << "Path rooted: " << path << std::endl;
 	}
 	else
 		return (false);
@@ -262,10 +262,10 @@ void	Response::downloadFile(std::string path, std::map<int, std::string> error_p
 
 	std::ifstream input(path, std::ios::binary);
 
-	std::cout << path << std::endl;
+	//std::cout << path << std::endl;
 	if (input.is_open())
 	{
-		std::cout << "Open file" << std::endl;
+		//std::cout << "Open file" << std::endl;
 		std::string buffer;
 		std::string stack;
 		while (std::getline(input, buffer))

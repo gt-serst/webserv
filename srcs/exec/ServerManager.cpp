@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/07 11:04:51 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/04 17:47:27 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/04 18:16:00 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,7 +25,7 @@
 
 ServerManager::ServerManager(void){
 
-	std::cout << "ServerManager created" << std::endl;
+	//std::cout << "ServerManager created" << std::endl;
 }
 
 ServerManager::~ServerManager(void){
@@ -33,7 +33,7 @@ ServerManager::~ServerManager(void){
 	// _servers.clear();
 	// _sockets.clear();
 	// _ready.clear();
-	std::cout << "ServerManager destroyed" << std::endl;
+	//std::cout << "ServerManager destroyed" << std::endl;
 }
 
 void	ServerManager::launchServer(t_server_scope *servers, int nb_servers){
@@ -62,7 +62,7 @@ void	ServerManager::serverRoutine(void){
 
 	while (1)
 	{
-		std::cout << "New loop" << std::endl;
+		//std::cout << "New loop" << std::endl;
 		int				rc;
 		fd_set			reading_set;
 		fd_set			writing_set;
@@ -84,13 +84,14 @@ void	ServerManager::serverRoutine(void){
 		{
 			for (std::vector<int>::iterator it = _ready.begin(); it != _ready.end(); ++it)
 			{
-				std::cout << "First loop: Send" << std::endl;
+				//std::cout << "First loop: Send" << std::endl;
 				if (FD_ISSET(*it, &writing_set))
 				{
+					//std::cout << "Entering first loop" << std::endl;
 					int rc = _sockets[*it]->sendResponse(*it);
 					if (rc == 0)
 					{
-						//_sockets.erase(*it);
+						_sockets.erase(*it);
 						_ready.erase(it);
 					}
 					else if (rc == -1)
@@ -106,9 +107,10 @@ void	ServerManager::serverRoutine(void){
 			}
 			for (std::map<int, Server*>::iterator it = _sockets.begin(); it != _sockets.end(); ++it)
 			{
-				std::cout << "Second loop: Read" << std::endl;
+				//std::cout << "Second loop: Read" << std::endl;
 				if (FD_ISSET(it->first, &reading_set))
 				{
+					//std::cout << "Entering second loop" << std::endl;
 					int rc = it->second->readClientSocket(it->first);
 					if (rc == 0)
 					{
@@ -121,6 +123,7 @@ void	ServerManager::serverRoutine(void){
 						FD_CLR(it->first, &_fd_set);
 						FD_CLR(it->first, &reading_set);
 						_sockets.erase(it->first);
+						it = _sockets.begin();
 					}
 					rc = 0;
 					break;
@@ -128,9 +131,10 @@ void	ServerManager::serverRoutine(void){
 			}
 			for (std::map<int, Server>::iterator it = _servers.begin(); it != _servers.end(); ++it)
 			{
-				std::cout << "Third loop: Listen" << std::endl;
+				//std::cout << "Third loop: Listen" << std::endl;
 				if (FD_ISSET(it->first, &reading_set))
 				{
+					//std::cout << "Entering third loop" << std::endl;
 					int client_fd = it->second.listenClientConnection();
 
 					if (client_fd != -1)
@@ -149,7 +153,7 @@ void	ServerManager::serverRoutine(void){
 		{
 			for (std::map<int, Server*>::iterator it = _sockets.begin() ; it != _sockets.end() ; it++)
 			{
-				std::cout << "Four loop: Close" << std::endl;
+				//std::cout << "Four loop: Close" << std::endl;
 				it->second->closeClientSocket(it->first);
 			}
 			_sockets.clear();
@@ -157,11 +161,11 @@ void	ServerManager::serverRoutine(void){
 			FD_ZERO(&_fd_set);
 			for (std::map<int, Server>::iterator it = _servers.begin() ; it != _servers.end() ; it++)
 			{
-				std::cout << "Set a server" << std::endl;
+				//std::cout << "Set a server" << std::endl;
 				FD_SET(it->first, &_fd_set);
 			}
 		}
-		std::cout << "End loop" << std::endl;
+		//std::cout << "End loop" << std::endl;
 	}
 }
 

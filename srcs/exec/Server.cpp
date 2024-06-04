@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/08 09:59:24 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/04 17:45:14 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/04 18:01:21 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,12 +33,12 @@ Server::Server(void){}
 
 Server::Server(t_server_scope config) : _config(config){
 
-	std::cout << "Server created" << std::endl;
+	//std::cout << "Server created" << std::endl;
 }
 
 Server::~Server(void){
 
-	std::cout << "Server destroyed" << std::endl;
+	//std::cout << "Server destroyed" << std::endl;
 	// this->_requests.clear();
 }
 
@@ -69,7 +69,7 @@ int	Server::createServerSocket(void){
 
 	server_addr.sin_family = AF_INET;
 	server_addr.sin_addr.s_addr = INADDR_ANY;
-	std::cout << this->_config.port << std::endl;
+	// std::cout << this->_config.port << std::endl;
 	server_addr.sin_port = htons(this->_config.port);
 
 	rc = bind(this->_fd, (struct sockaddr *) &server_addr, sizeof(server_addr));
@@ -129,7 +129,7 @@ int	Server::readClientSocket(int client_fd){
 		perror("Recv failed");
 		return (-1);
 	}
-	//std::cout << stack << std::endl;
+	std::cout << stack << std::endl;
 	_requests.insert(std::make_pair(client_fd, stack));
 	// rc = recv(client_fd, buffer, sizeof(buffer) - 1, 0);
 	// if (rc == 0 || rc == -1)
@@ -152,7 +152,7 @@ int	Server::handleRequest(int client_fd){
 
 	if (request.getPathToFile().find("/favicon.ico") != std::string::npos)
 	{
-		std::cout << "Favicon detected" << std::endl;
+		//std::cout << "Favicon detected" << std::endl;
 		return (-1);
 	}
 	if (request.getErrorCode() == -1)

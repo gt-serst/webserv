@@ -286,7 +286,7 @@ Request::Request(){}
 
 Request::Request(std::string& buffer, Server& server)
 {
-	std::cout << "Parsing request" << std::endl << std::endl;
+	//std::cout << "Parsing request" << std::endl << std::endl;
 	_server = server;
 	_version = "";
 	_path_to_file = "/";
@@ -318,7 +318,7 @@ Request::Request(std::string& buffer, Server& server)
 	}
 	if (state != R_error)
 		validity_checks();
-	std::cout << "Request parsing over" << std::endl;
+	//std::cout << "Request parsing over" << std::endl;
 }
 
 Request::~Request()
@@ -334,15 +334,15 @@ Request::~Request()
 	// std::cout << "Query == " << _query_str << std::endl;
 	// std::cout << "Version == " << _version << std::endl;
 	//std::cout << "Body == " << _body << std::endl;
-	for (std::map<std::string, std::string>::const_iterator it = _headers.begin(); it != _headers.end(); ++it)
-	{
-		std::cout << it->first << ": " << it->second << std::endl;
-	}
-	for (std::map<std::string, std::string>::const_iterator it = _query_args.begin(); it != _query_args.end(); ++it)
-	{
-        std::cout << it->first << " = " << it->second << std::endl;
-    }
-	std::cout << "Request destroyed" << std::endl;
+	// for (std::map<std::string, std::string>::const_iterator it = _headers.begin(); it != _headers.end(); ++it)
+	// {
+	// 	std::cout << it->first << ": " << it->second << std::endl;
+	// }
+	// for (std::map<std::string, std::string>::const_iterator it = _query_args.begin(); it != _query_args.end(); ++it)
+	// {
+    //     std::cout << it->first << " = " << it->second << std::endl;
+    // }
+	//std::cout << "Request destroyed" << std::endl;
 }
 
 void Request::setRequest(std::string& buffer)
@@ -506,7 +506,7 @@ void Request::parseRequestLine(char *line)
 				}
 				else if (!isdigit(line[i]) && line[i] != '.')
 				{
-					std::cout << line[i] << std::endl;
+					//std::cout << line[i] << std::endl;
 					_error_msg = "Bad request wrong ip";
 					_error_code = 400;
 					state = R_error;
@@ -692,7 +692,7 @@ void Request::parseRequestLine(char *line)
 			{
 				if (i == len)
 				{
-					std::cout << "First line parsing succesfull" << std::endl;
+					//std::cout << "First line parsing succesfull" << std::endl;
 					return ; //good
 				}
 				else
