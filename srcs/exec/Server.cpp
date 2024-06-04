@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/08 09:59:24 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/04 18:01:21 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/04 18:45:09 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -130,7 +130,8 @@ int	Server::readClientSocket(int client_fd){
 		return (-1);
 	}
 	std::cout << stack << std::endl;
-	_requests.insert(std::make_pair(client_fd, stack));
+	_requests[client_fd] = stack;
+	// _requests.insert(std::make_pair(client_fd, stack));
 	// rc = recv(client_fd, buffer, sizeof(buffer) - 1, 0);
 	// if (rc == 0 || rc == -1)
 	// {
@@ -148,11 +149,12 @@ int	Server::handleRequest(int client_fd){
 	Router		router;
 	Response	response;
 
+	std::cout << "Request send to Request constructor: |" << _requests[client_fd] << "|" << std::endl;
 	Request request(_requests[client_fd], *this);
 
 	if (request.getPathToFile().find("/favicon.ico") != std::string::npos)
 	{
-		//std::cout << "Favicon detected" << std::endl;
+		std::cout << "Favicon detected" << std::endl;
 		return (-1);
 	}
 	if (request.getErrorCode() == -1)
@@ -166,6 +168,8 @@ int	Server::handleRequest(int client_fd){
 
 		request.setPathToFile(path_to_file);
 
+		std::cout << request.getPathToFile() << std::endl;
+
 		response.handleDirective(request.getPathToFile(), location, request, *this);
 	}
 	else
@@ -174,6 +178,7 @@ int	Server::handleRequest(int client_fd){
 		response.errorResponse(request.getErrorCode(), request.getErrorMsg(), getConfig().error_page_paths);
 	}
 
+	//_requests.insert(std::make_pair(client_fd, response.getResponse()));
 	_requests[client_fd] = response.getResponse();
 	return (0);
 }
@@ -184,8 +189,7 @@ int	Server::sendResponse(int client_fd){
 	int	len;
 
 	len = _requests[client_fd].length();
-	//std::cout << "Response:" << std::endl;
-	//std::cout << _requests[client_fd] << std::endl;
+	std::cout << _requests[client_fd] << std::endl;
 	rc = send(client_fd, _requests[client_fd].c_str(), len, 0);
 	if (rc == -1)
 	{

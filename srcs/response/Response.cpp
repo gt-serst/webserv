@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:28:16 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/04 17:56:16 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/04 18:52:58 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -46,6 +46,7 @@ void	Response::handleDirective(std::string path, t_locations loc, Request& req, 
 	}
 	else
 	{
+		// in the case of a POST request we should not check if the type file because we only accept file to be uploaded on the server, and the last part of the path refers to the file name to be created so obviously it does not yet exist
 		if (getFileType(path) == E_DIR)
 		{
 			//std::cout << "Dir" << std::endl;
