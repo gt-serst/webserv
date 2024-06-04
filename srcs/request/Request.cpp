@@ -108,7 +108,10 @@ void	Request::manage_chunks(char *chunk) //still need to manage errors here
 			case R_chunk_content_lf:
 			{
 				if (chunk_size == 0)
+				{
 					state = R_chunk_done;
+					chunked = false;
+				}
 				else
 					state = R_chunked_start;
 				return ;
