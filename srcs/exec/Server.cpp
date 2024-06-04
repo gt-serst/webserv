@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/08 09:59:24 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/04 15:09:29 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/04 17:29:25 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,7 +39,7 @@ Server::Server(t_server_scope config) : _config(config){
 Server::~Server(void){
 
 	std::cout << "Server destroyed" << std::endl;
-	this->_requests.clear();
+	// this->_requests.clear();
 }
 
 int	Server::createServerSocket(void){
@@ -150,8 +150,11 @@ int	Server::handleRequest(int client_fd){
 
 	Request request(_requests[client_fd], *this);
 
-	if (request.getPathToFile().compare("/favicon.ico") == 0)
+	if (request.getPathToFile().find("/favicon.ico") != std::string::npos)
+	{
+		std::cout << "Favicon detected" << std::endl;
 		return (-1);
+	}
 	if (request.getErrorCode() == -1)
 	{
 		if (response.checkPortAndServerName(getConfig()) == false)
@@ -166,7 +169,10 @@ int	Server::handleRequest(int client_fd){
 		response.handleDirective(request.getPathToFile(), location, request, *this);
 	}
 	else
+	{
+		std::cout << "Error in parsing" << std::endl;
 		response.errorResponse(request.getErrorCode(), request.getErrorMsg(), getConfig().error_page_paths);
+	}
 
 	_requests[client_fd] = response.getResponse();
 	return (0);
@@ -179,7 +185,7 @@ int	Server::sendResponse(int client_fd){
 
 	len = _requests[client_fd].length();
 	//std::cout << "Response:" << std::endl;
-	//std::cout << _requests[client_fd] << std::endl;
+	std::cout << _requests[client_fd] << std::endl;
 	rc = send(client_fd, _requests[client_fd].c_str(), len, 0);
 	if (rc == -1)
 	{
@@ -188,10 +194,7 @@ int	Server::sendResponse(int client_fd){
 		return (-1);
 	}
 	else
-	{
-		this->closeClientSocket(client_fd);
 		return (0);
-	}
 }
 
 void	Server::closeServerSocket(void){

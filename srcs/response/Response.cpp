@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:28:16 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/04 15:11:26 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/04 17:13:21 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -177,7 +177,7 @@ void	Response::runDirMethod(std::string path, t_locations loc, Request& req, Ser
 	else if (req.getRequestMethod() == "POST")
 		uploadDir(path, serv);
 	else if (req.getRequestMethod() == "DELETE")
-		deleteDir(path, serv);
+		deleteDir(path, serv.getConfig().error_page_paths);
 }
 
 void	Response::isAutoIndex(std::string path, t_locations loc, Request& req, std::map<int, std::string> error_paths){
@@ -230,13 +230,13 @@ void	Response::uploadDir(std::string path, Server& serv){
 	}
 }
 
-void	Response::deleteDir(std::string path, Server& serv){
+void	Response::deleteDir(std::string path, std::map<int, std::string> error_paths){
 
 	if (access(path.c_str(), W_OK) == 0)
 	{
 		if (rmdir(path.c_str()) < 0)
 		{
-			errorResponse(500, "Internal Server Error", serv.getConfig().error_page_paths);
+			errorResponse(500, "Internal Server Error", error_paths);
 			perror("500 Delete directory failed");
 			return;
 		}
@@ -244,7 +244,7 @@ void	Response::deleteDir(std::string path, Server& serv){
 	}
 	else
 	{
-		errorResponse(403, "Forbidden", serv.getConfig().error_page_paths);
+		errorResponse(403, "Forbidden", error_paths);
 		perror("403 Write access failed");
 	}
 }
@@ -529,6 +529,7 @@ void	Response::errorResponse(int error_code, std::string message, std::map<int, 
 	//std::cout << error_code << std::endl;
 	path = matchErrorCodeWithPage(error_code, error_paths);
 
+	this->_http_version = "1.1";
 	this->_status_code = error_code;
 	this->_status_message = message;
 	this->_content_type = "text/html";
@@ -581,6 +582,8 @@ std::string	Response::matchErrorCodeWithPage(int error_code, std::map<int, std::
 		return ("/Users/gt-serst/webserv/var/www/html/error400.html");
 	else if (error_code == 500)
 		return ("/Users/gt-serst/webserv/var/www/html/error500.html");
+	else if (error_code == 405)
+		return ("/Users/gt-serst/webserv/var/www/html/error405.html");
 	else
 		return ("/Users/gt-serst/webserv/var/www/html/error404.html");
 }
