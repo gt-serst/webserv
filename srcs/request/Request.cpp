@@ -265,7 +265,7 @@ Request::Request(std::string& buffer, Server& server)
 	_hostname = "";
 	_litteral_ip = "";
 	_body = "";
-	_query = "";
+	_query_str = "";
 	_error_code = -1;
 	_error_msg = "";
 	chunk_size = 0;
@@ -278,7 +278,7 @@ Request::Request(std::string& buffer, Server& server)
 	if (state != R_error)
 		_path_to_file = standardise(_path_to_file);
 	if (state != R_error)
-		_query = standardise(_query); //this function should first do the hexa transform then tolower the string
+		_query_str = standardise(_query_str); //this function should first do the hexa transform then tolower the string
 	if (state != R_error)
 		validity_checks();
 	std::cout << "Request parsing over" << std::endl;
@@ -286,21 +286,21 @@ Request::Request(std::string& buffer, Server& server)
 
 Request::~Request()
 {
-	if (state == R_error)
-	{
-		std::cout << "Error " << _error_code << " " << _error_msg << std::endl;
-		return ;
-	}
-	/*std::cout << "Printing request params" << std::endl;
+	// if (state == R_error)
+	// {
+	// 	std::cout << "Error " << _error_code << " " << _error_msg << std::endl;
+	// 	return ;
+	// }
+	std::cout << "Printing request params" << std::endl;
 	std::cout << "Method == " << _request_method << std::endl;
 	std::cout << "Path == " << _path_to_file << std::endl;
-	std::cout << "Query == " << _query << std::endl;
+	std::cout << "Query == " << _query_str << std::endl;
 	std::cout << "Version == " << _version << std::endl;
 	for (std::map<std::string, std::string>::const_iterator it = _headers.begin(); it != _headers.end(); ++it)
 	{
 		std::cout << it->first << ": " << it->second << std::endl;
 	}
-	std::cout << "Request destroyed" << std::endl;*/
+	std::cout << "Request destroyed" << std::endl;
 }
 
 void Request::setRequest(std::string& buffer)
@@ -665,13 +665,13 @@ void Request::parseRequestLine(char *line)
 			{
 				if (line[i] == ' ')
 				{
-					_query = convert_charptr_string(line, start, i);
+					_query_str = convert_charptr_string(line, start, i);
 					start = 0;
 					state = R_second_space;
 				}
 				else if (line[i] == '#')
 				{
-					_query = convert_charptr_string(line, start, i);
+					_query_str = convert_charptr_string(line, start, i);
 					start = i + 1;
 					state = R_fragment;
 				}
@@ -811,4 +811,9 @@ int Request::getPort() const
 std::string Request::getHost() const
 {
 	return _hostname;
+}
+
+std::string Request::getQuerystr() const
+{
+	return _query_str;
 }

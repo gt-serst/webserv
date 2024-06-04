@@ -64,7 +64,7 @@ class Request
 		std::string _version;
 		std::map<std::string, std::string> _headers;
 		std::string _body;
-		std::string _query;//std
+		std::string _query_str;
 		std::string _error_msg;
 		std::string _litteral_ip;
 		int _error_code;
@@ -77,7 +77,6 @@ class Request
 		void parseRequestLine(char *line);
 		std::streampos setHeader(std::stringstream& ss, std::streampos startpos);
 		void setBody(std::stringstream& ss, std::streampos startpos);
-		// void setLen(std::string _request);
 		std::string	standardise(std::string str);
 		void validity_checks();
 		void manage_chunks(char *chunk);
@@ -99,6 +98,7 @@ class Request
 		std::string getHost() const;
 		int			getErrorCode() const;
 		int			getPort() const;
+		std::string getQuerystr() const;
 		Server _server;
 		// int getLen();
 };
