@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/08 09:59:24 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/04 17:29:25 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/04 17:45:14 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -129,7 +129,7 @@ int	Server::readClientSocket(int client_fd){
 		perror("Recv failed");
 		return (-1);
 	}
-	std::cout << stack << std::endl;
+	//std::cout << stack << std::endl;
 	_requests.insert(std::make_pair(client_fd, stack));
 	// rc = recv(client_fd, buffer, sizeof(buffer) - 1, 0);
 	// if (rc == 0 || rc == -1)
@@ -170,7 +170,7 @@ int	Server::handleRequest(int client_fd){
 	}
 	else
 	{
-		std::cout << "Error in parsing" << std::endl;
+		//std::cout << "Error in parsing" << std::endl;
 		response.errorResponse(request.getErrorCode(), request.getErrorMsg(), getConfig().error_page_paths);
 	}
 
@@ -185,7 +185,7 @@ int	Server::sendResponse(int client_fd){
 
 	len = _requests[client_fd].length();
 	//std::cout << "Response:" << std::endl;
-	std::cout << _requests[client_fd] << std::endl;
+	//std::cout << _requests[client_fd] << std::endl;
 	rc = send(client_fd, _requests[client_fd].c_str(), len, 0);
 	if (rc == -1)
 	{

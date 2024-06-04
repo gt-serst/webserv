@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/07 11:04:51 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/04 17:23:38 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/04 17:47:27 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -90,7 +90,6 @@ void	ServerManager::serverRoutine(void){
 					int rc = _sockets[*it]->sendResponse(*it);
 					if (rc == 0)
 					{
-						std::cout << *it << std::endl;
 						//_sockets.erase(*it);
 						_ready.erase(it);
 					}

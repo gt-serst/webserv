@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:28:16 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/04 17:13:21 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/04 17:34:04 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -79,7 +79,6 @@ void	Response::handleDirective(std::string path, t_locations loc, Request& req, 
 
 bool	Response::attachRootToPath(std::string& path, std::string root){
 
-	//si méthode == POST alors vérifier si le root est accessible mais pas append le path au root vu que le path sera les répertoires/fichiers qui seront créés par le POST
 	if (root.empty() == false)
 	{
 		if (root[root.length() - 1] == '/')

@@ -25,7 +25,7 @@ bool Request::handle_query()
             value = _query_str.substr(equal_pos + 1);
             _query_args[key] = value;
             break;
-        } 
+        }
 		else
 		{
             value = _query_str.substr(equal_pos + 1, amp_pos - equal_pos - 1);
@@ -328,11 +328,11 @@ Request::~Request()
 	// 	std::cout << "Error " << _error_code << " " << _error_msg << std::endl;
 	// 	return ;
 	// }
-	std::cout << "Printing request params" << std::endl;
-	std::cout << "Method == " << _request_method << std::endl;
-	std::cout << "Path == " << _path_to_file << std::endl;
-	std::cout << "Query == " << _query_str << std::endl;
-	std::cout << "Version == " << _version << std::endl;
+	// std::cout << "Printing request params" << std::endl;
+	// std::cout << "Method == " << _request_method << std::endl;
+	// std::cout << "Path == " << _path_to_file << std::endl;
+	// std::cout << "Query == " << _query_str << std::endl;
+	// std::cout << "Version == " << _version << std::endl;
 	//std::cout << "Body == " << _body << std::endl;
 	for (std::map<std::string, std::string>::const_iterator it = _headers.begin(); it != _headers.end(); ++it)
 	{
