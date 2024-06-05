@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:28:16 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/05 14:16:57 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/05 14:48:02 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -186,10 +186,6 @@ void	Response::runDirMethod(std::string path, t_locations loc, Request& req, Ser
 
 	if (req.getRequestMethod() == "GET" && loc.auto_index == true)
 		isAutoIndex(path, loc, req, serv.getConfig().error_page_paths);
-	else if (req.getRequestMethod() == "POST")
-		uploadDir(path, serv);
-	else if (req.getRequestMethod() == "DELETE")
-		deleteDir(path, serv.getConfig().error_page_paths);
 	else
 		errorResponse(404, "Not Found", serv.getConfig().error_page_paths);
 }
@@ -230,40 +226,6 @@ void	Response::isAutoIndex(std::string path, t_locations loc, Request& req, std:
 			perror("404 Opendir failed");
 		}
 	}
-}
-
-void	Response::uploadDir(std::string path, Server& serv){
-
-	// if (access(path.c_str(), W_OK) == 0)
-	if (checkFileAccess(path, serv.getConfig().error_page_paths) == true)
-	{
-		uploadDirResponse();
-	}
-	// else
-	// {
-	// 	errorResponse(403, "Forbidden", serv.getConfig().error_page_paths);
-	// 	perror("403 Write access failed");
-	// }
-}
-
-void	Response::deleteDir(std::string path, std::map<int, std::string> error_paths){
-
-	// if (access(path.c_str(), W_OK) == 0)
-	if (checkFileAccess(path, error_paths) == true)
-	{
-		if (rmdir(path.c_str()) < 0)
-		{
-			errorResponse(500, "Internal Server Error", error_paths);
-			perror("500 Delete directory failed");
-			return;
-		}
-		deleteResponse();
-	}
-	// else
-	// {
-	// 	errorResponse(403, "Forbidden", error_paths);
-	// 	perror("403 Write access failed");
-	// }
 }
 
 void	Response::runFileMethod(std::string path, Request& req, Server& serv){
@@ -443,13 +405,6 @@ void	Response::deleteResponse(void){
 
 	this->_status_code = 200;
 	this->_status_message = "OK";
-	generateResponse();
-}
-
-void	Response::uploadDirResponse(void){
-
-	this->_status_code = 201;
-	this->_status_message = "Created";
 	generateResponse();
 }
 

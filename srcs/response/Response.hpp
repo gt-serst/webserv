@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:12:17 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/05 14:02:55 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/05 14:48:57 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -57,8 +57,6 @@ class Response{
 		bool		isMethodAllowed(t_locations loc, Request& req);
 		void		runDirMethod(std::string path, t_locations loc, Request& req, Server& serv);
 		void		isAutoIndex(std::string path, t_locations loc, Request& req, std::map<int, std::string> error_paths);
-		void		uploadDir(std::string path, Server& serv);
-		void		deleteDir(std::string path, std::map<int, std::string> error_paths);
 		bool		findCGI(std::map<std::string, std::string>	cgi_path);
 		void		runFileMethod(std::string path, Request& req, Server& serv);
 		void		downloadFile(std::string path, std::map<int, std::string> error_paths);
@@ -67,7 +65,6 @@ class Response{
 		void		autoIndexResponse(std::string path, std::string dir_list, Request& req);
 		std::string	getCharCount(struct stat file_info);
 		void		insertHtmlIndexLine(std::string redirect_url, std::string txt_button, std::string creation_date, std::string char_count);
-		void		uploadDirResponse(void);
 		void		deleteResponse(void);
 		void		downloadFileResponse(std::string stack, std::map<int, std::string> error_paths);
 		std::string	getContentType(std::string stack);
