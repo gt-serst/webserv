@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:28:16 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/05 11:51:28 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/05 14:16:57 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -79,19 +79,23 @@ bool	Response::attachRootToPath(std::string& path, std::string root, std::map<in
 
 	if (root.empty() == false)
 	{
-		if (root[root.length() - 1] == '/')
-			root.erase(root.length() - 1,1);
-		//std::cout << "Path: " << path << std::endl;
-		path.insert(0, root);
-		//std::cout << "Path rooted: " << path << std::endl;
+		if (checkRootAccess(root) == true)
+		{
+			if (root[root.length() - 1] == '/')
+				root.erase(root.length() - 1,1);
+			//std::cout << "Path: " << path << std::endl;
+			path.insert(0, root);
+			//std::cout << "Path rooted: " << path << std::endl;
+			return (true);
+		}
+		else
+			fileNotFound();
 	}
 	else
 	{
 		perror("500 Internal Server Error");
 		return (errorResponse(500, "Internal Server Error", error_paths), false);
 	}
-	if (checkFileAccess(path, error_paths) == true)
-		return (true);
 	return (false);
 }
 
@@ -145,15 +149,18 @@ bool	Response::findIndexFile(std::string& path, t_locations& loc, std::map<std::
 
 void	Response::fileRoutine(std::string path, t_locations loc, Request& req, Server& serv){
 
-	//détecter si l'extenssion du fichier demandé est un php, py etc pour lancer les bonnes CGI, itérer sur les chemins CGI pour lancer le script correspondant
-	if (findCGI(req._server.getConfig().cgi_path) == true && isMethodAllowed(loc, req) == true)
-		std::cout << "Send CGI path and run it" << std::endl;
-	else if (isMethodAllowed(loc, req) == true)
-		runFileMethod(path, req, serv);
-	else
+	if (checkFileAccess(path, serv.getConfig().error_page_paths) == true)
 	{
-		errorResponse(405, "Method Not Allowed", serv.getConfig().error_page_paths);
-		perror("405 Method Not Allowed");
+		//détecter si l'extenssion du fichier demandé est un php, py etc pour lancer les bonnes CGI, itérer sur les chemins CGI pour lancer le script correspondant
+		if (findCGI(req._server.getConfig().cgi_path) == true && isMethodAllowed(loc, req) == true)
+			std::cout << "Send CGI path and run it" << std::endl;
+		else if (isMethodAllowed(loc, req) == true)
+			runFileMethod(path, req, serv);
+		else
+		{
+			errorResponse(405, "Method Not Allowed", serv.getConfig().error_page_paths);
+			perror("405 Method Not Allowed");
+		}
 	}
 }
 
@@ -177,12 +184,14 @@ bool	Response::isMethodAllowed(t_locations loc, Request& req){
 
 void	Response::runDirMethod(std::string path, t_locations loc, Request& req, Server& serv){
 
-	if (req.getRequestMethod() == "GET")
+	if (req.getRequestMethod() == "GET" && loc.auto_index == true)
 		isAutoIndex(path, loc, req, serv.getConfig().error_page_paths);
 	else if (req.getRequestMethod() == "POST")
 		uploadDir(path, serv);
 	else if (req.getRequestMethod() == "DELETE")
 		deleteDir(path, serv.getConfig().error_page_paths);
+	else
+		errorResponse(404, "Not Found", serv.getConfig().error_page_paths);
 }
 
 void	Response::isAutoIndex(std::string path, t_locations loc, Request& req, std::map<int, std::string> error_paths){
@@ -261,10 +270,10 @@ void	Response::runFileMethod(std::string path, Request& req, Server& serv){
 
 	if (req.getRequestMethod() == "GET")
 		downloadFile(path, serv.getConfig().error_page_paths);
-	else if (req.getRequestMethod() == "POST")
-		uploadFile(path, req, serv);
 	else if (req.getRequestMethod() == "DELETE")
 		deleteFile(path, serv.getConfig().error_page_paths);
+	else
+		errorResponse(404, "Not Found", serv.getConfig().error_page_paths);
 }
 
 void	Response::downloadFile(std::string path, std::map<int, std::string> error_paths){
@@ -312,8 +321,8 @@ void	Response::uploadFile(std::string path, Request& req, Server& serv){
 void	Response::deleteFile(std::string path, std::map<int, std::string> error_paths){
 
 	// if (access(path.c_str(), W_OK) == 0)
-	if (checkFileAccess(path, error_paths) == true)
-	{
+	//if (checkFileAccess(path, error_paths) == true)
+	//{
 		if (remove(path.c_str()) < 0)
 		{
 			errorResponse(500, "Internal Server Error", error_paths);
@@ -321,7 +330,7 @@ void	Response::deleteFile(std::string path, std::map<int, std::string> error_pat
 			return;
 		}
 		deleteResponse();
-	}
+	//}
 	// else
 	// {
 	// 	errorResponse(403, "Forbiddden", error_paths);
@@ -536,7 +545,7 @@ void	Response::errorResponse(int error_code, std::string message, std::map<int, 
 	//std::cout << error_code << std::endl;
 	this->_http_version = "1.1";
 	path = matchErrorCodeWithPage(error_code, error_paths);
-	if (checkFileAccessForError(path) == true)
+	if (checkRootAccess(path) == true)
 	{
 		this->_status_code = error_code;
 		this->_status_message = message;
@@ -560,7 +569,7 @@ void	Response::errorResponse(int error_code, std::string message, std::map<int, 
 			generateResponse();
 		}
 		else
-			error404();
+			fileNotFound();
 	}
 }
 
@@ -584,62 +593,12 @@ std::string	Response::matchErrorCodeWithPage(int error_code, std::map<int, std::
 		return ("/Users/gt-serst/webserv/var/www/html/error404.html");
 }
 
-void	Response::error404(void){
+void	Response::fileNotFound(void){
 
 	this->_status_code = 404;
 	this->_status_message = "Not Found";
-	this->_content_type = "text/html";
-	this->_body = "<!DOCTYPE html>\n"
-				  "<html lang=\"en\">\n"
-				  "<head>\n"
-				  "<meta charset=\"UTF-8\">\n"
-				  "<title>404 Not Found</title>\n"
-				  "</head>\n"
-				  "<body>\n"
-				  "<h1>404 Not Found</h1>\n"
-				  "<p>The requested resource could not be found on this server.</p>\n"
-				  "</body>\n"
-				  "</html>";
-	this->_content_len = this->_body.length();
-	generateResponse();
-}
-
-void	Response::error403(void){
-
-	this->_status_code = 403;
-	this->_status_message = "Forbidden";
-	this->_content_type = "text/html";
-	this->_body = "<!DOCTYPE html>\n"
-				  "<html lang=\"en\">\n"
-				  "<head>\n"
-				  "<meta charset=\"UTF-8\">\n"
-				  "<title>403 Forbidden</title>\n"
-				  "</head>\n"
-				  "<body>\n"
-				  "<h1>403 Forbidden</h1>\n"
-				  "<p>You do not have permission to access this resource on this server.</p>\n"
-				  "</body>\n"
-				  "</html>";
-	this->_content_len = this->_body.length();
-	generateResponse();
-}
-
-void	Response::error500(void){
-
-	this->_status_code = 500;
-	this->_status_message = "Internal Server Error";
-	this->_content_type = "text/html";
-	this->_body = "<!DOCTYPE html>\n"
-				  "<html lang=\"en\">\n"
-				  "<head>\n"
-				  "<meta charset=\"UTF-8\">\n"
-				  "<title>500 Internal Server Error</title>\n"
-				  "</head>\n"
-				  "<body>\n"
-				  "<h1>500 Internal Server Error</h1>\n"
-				  "<p>The server encountered an internal error or misconfiguration and was unable to complete your request.</p>\n"
-				  "</body>\n"
-				  "</html>";
+	this->_content_type = "text/plain";
+	this->_body = "File not found.";
 	this->_content_len = this->_body.length();
 	generateResponse();
 }
@@ -654,58 +613,44 @@ bool	Response::checkFileAccess(std::string path, std::map<int, std::string> erro
 		{
 			perror("404 Not Found");
 			errorResponse(404, "Not Found", error_paths);
-			return (false);
 		}
 		else
 		{
-			if (access(path.c_str(), R_OK) != 0)
-			{
-				if (errno == EACCES)
-				{
-					perror("403 Forbidden");
-					errorResponse(403, "Forbidden", error_paths);
-				}
-				else
-				{
-					perror("500 Internal Server Error");
-					errorResponse(500, "Internal Server Error", error_paths);
-				}
-				return (false);
-			}
+			perror("500 Internal Server Error");
+			errorResponse(500, "Internal Server Error", error_paths);
 		}
+		return (false);
+	}
+	if (access(path.c_str(), R_OK) != 0)
+	{
+		if (errno == EACCES)
+		{
+			perror("403 Forbidden");
+			errorResponse(403, "Forbidden", error_paths);
+		}
+		else
+		{
+			perror("500 Internal Server Error");
+			errorResponse(500, "Internal Server Error", error_paths);
+		}
+		return (false);
 	}
 	return (true);
 }
 
-bool	Response::checkFileAccessForError(std::string path){
+bool	Response::checkRootAccess(std::string path){
 
 	struct stat buf;
 
 	if (stat(path.c_str(), &buf) != 0)
 	{
-		if (errno == ENOENT)
-		{
-			perror("404 Not Found");
-			error404();
-			return (false);
-		}
-		else
-		{
-			if (access(path.c_str(), R_OK) != 0)
-			{
-				if (errno == EACCES)
-				{
-					perror("403 Forbidden");
-					error403();
-				}
-				else
-				{
-					perror("500 Internal Server Error");
-					error500();
-				}
-				return (false);
-			}
-		}
+		fileNotFound();
+		return (false);
+	}
+	if (access(path.c_str(), R_OK) != 0)
+	{
+		fileNotFound();
+		return (false);
 	}
 	return (true);
 }
