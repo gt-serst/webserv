@@ -7,6 +7,20 @@
 //only POST should have a body
 
 //SET FUNCTIONS
+bool Request::getBoundary()
+{
+	std::string content = getHeader("Content-Type");
+	if (content.empty())
+		return ;
+	if (_headers["Content-Type"].find("multipart/form-data") != std::string::npos)
+	{
+		size_t pos = _headers["Content-Type"].find("boundary=", 0);
+		if (pos != std::string::npos)
+			_boundary = _headers["Content-Type"].substr(pos + 9, __headers["Content-Type"].size());
+		multiform = true;
+	}
+}
+
 bool Request::handle_query()
 {
     _query_args.clear();
@@ -172,9 +186,6 @@ void	Request::validity_checks() //
 			_error_msg = "Body length does not match with Content-Length header";
 			return ;
 		}
-	}
-	if (_body.empty() == false)
-	{
 		if (getHeader("Content-Type").empty())
 		{
 			_error_code = 400;
@@ -302,6 +313,8 @@ Request::Request(std::string& buffer, Server& server)
 	chunk_size = 0;
 	_body_len = -1;
 	chunked = false;
+	multiform = false;
+	_boundary = "";
 	state = R_line;
 	setRequest(buffer);
 	if (state != R_error)
@@ -782,7 +795,8 @@ std::streampos Request::setHeader(std::stringstream& ss, std::streampos startpos
 
 void Request::setBody(std::stringstream& ss, std::streampos startpos)
 {
-	//std::cout << "PARSING BODY"  << std::endl;
+	if (!getBoundary())
+		return ;
 	ss.seekg(startpos);
 	std::string bodyContent((std::istreambuf_iterator<char>(ss)), std::istreambuf_iterator<char>());
 

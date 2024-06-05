@@ -68,12 +68,14 @@ class Request
 		std::string _query_str;
 		std::string _error_msg;
 		std::string _litteral_ip;
+		std::string _boundary;
 		int _error_code;
 		int	_port;
 		int _body_len;
 		int state;
 		int chunk_size;
 		bool chunked;
+		bool multiform;
 
 		void parseRequestLine(char *line);
 		std::streampos setHeader(std::stringstream& ss, std::streampos startpos);
@@ -82,6 +84,7 @@ class Request
 		void validity_checks();
 		void manage_chunks(char *chunk);
 		bool	handle_query();
+		bool	getBoundary();
 
 	public:
 		Request();
