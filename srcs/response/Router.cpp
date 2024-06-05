@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 11:15:20 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/04 14:08:37 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/05 14:53:47 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -53,7 +53,7 @@ t_locations	Router::recursiveRouteRequest(std::string tmp, std::map<std::string,
 		perror("Router failed");
 	for (std::map<std::string, t_locations>::iterator it = routes.begin(); it != routes.end(); ++it)
 	{
-		//std::cout << "Loc: " << it->first << std::endl;
+		std::cout << "Loc: " << it->first << std::endl;
 		//std::cout << "Tmp path: " << tmp << std::endl;
 		if (it->first.compare(tmp) == 0)
 			return (it->second);

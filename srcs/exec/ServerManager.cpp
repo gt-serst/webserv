@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/07 11:04:51 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/04 18:46:25 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/05 17:32:21 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,9 +30,13 @@ ServerManager::ServerManager(void){
 
 ServerManager::~ServerManager(void){
 
-	// _servers.clear();
-	// _sockets.clear();
-	// _ready.clear();
+	for (std::map<int, Server>::iterator it = _servers.begin(); it != _servers.end(); ++it)
+		it->second.closeServerSocket();
+	for (std::map<int, Server*>::iterator it = _sockets.begin(); it != _sockets.end(); ++it)
+		it->second->closeClientSocket(it->first);
+	_servers.clear();
+	_sockets.clear();
+	_ready.clear();
 	//std::cout << "ServerManager destroyed" << std::endl;
 }
 
@@ -40,21 +44,26 @@ void	ServerManager::launchServer(t_server_scope *servers, int nb_servers){
 
 	initServer(servers, nb_servers);
 	serverRoutine();
-	clear();
 }
 
 void	ServerManager::initServer(t_server_scope *servers, int nb_servers){
 
 	FD_ZERO(&_fd_set);
+	this->_max_fd = 0;
+
 	for (int i = 0; i < nb_servers; i++)
 	{
 		int		fd;
 		Server	server(servers[i]);
 
-		server.createServerSocket();
-		fd = server.getFd();
-		FD_SET(fd, &_fd_set);
-		_servers.insert(std::make_pair(fd, server));
+		if (server.createServerSocket() != -1)
+		{
+			fd = server.getFd();
+			FD_SET(fd, &_fd_set);
+			if (fd > this->_max_fd)
+				this->_max_fd = fd;
+			_servers.insert(std::make_pair(fd, server));
+		}
 	}
 }
 
@@ -78,7 +87,7 @@ void	ServerManager::serverRoutine(void){
 			for (std::vector<int>::iterator it = _ready.begin(); it < _ready.end(); ++it)
 				FD_SET(*it, &writing_set);
 
-			rc = select(FD_SETSIZE, &reading_set, &writing_set, NULL, &timeout);
+			rc = select(_max_fd + 1, &reading_set, &writing_set, NULL, &timeout);
 		}
 		if (rc > 0)
 		{
@@ -89,9 +98,13 @@ void	ServerManager::serverRoutine(void){
 				{
 					//std::cout << "Entering first loop" << std::endl;
 					int rc = _sockets[*it]->sendResponse(*it);
-					if (rc == 0)
+					FD_CLR(*it, &_fd_set);
+					FD_CLR(*it, &reading_set);
+					close(*it);
+					_sockets.erase(*it);
+					_ready.erase(it);
+					/*if (rc == 0)
 					{
-						_sockets.erase(*it);
 						_ready.erase(it);
 					}
 					else if (rc == -1)
@@ -100,7 +113,7 @@ void	ServerManager::serverRoutine(void){
 						FD_CLR(*it, &reading_set);
 						_sockets.erase(*it);
 						_ready.erase(it);
-					}
+					}*/
 					rc = 0;
 					break;
 				}
@@ -141,6 +154,8 @@ void	ServerManager::serverRoutine(void){
 					{
 						FD_SET(client_fd, &_fd_set);
 						_sockets.insert(std::make_pair(client_fd, &(it->second)));
+						if (client_fd > this->_max_fd)
+							this->_max_fd = client_fd;
 					}
 					rc = 0;
 					break;
@@ -161,16 +176,9 @@ void	ServerManager::serverRoutine(void){
 			FD_ZERO(&_fd_set);
 			for (std::map<int, Server>::iterator it = _servers.begin() ; it != _servers.end() ; it++)
 			{
-				//std::cout << "Set a server" << std::endl;
 				FD_SET(it->first, &_fd_set);
 			}
 		}
 		//std::cout << "End loop" << std::endl;
 	}
-}
-
-void	ServerManager::clear(void){
-
-	for (std::map<int, Server>::iterator it = _servers.begin(); it != _servers.end(); ++it)
-		it->second.closeServerSocket();
 }
