@@ -328,21 +328,23 @@ Request::~Request()
 	// 	std::cout << "Error " << _error_code << " " << _error_msg << std::endl;
 	// 	return ;
 	// }
-	// std::cout << "Printing request params" << std::endl;
-	// std::cout << "Method == " << _request_method << std::endl;
-	// std::cout << "Path == " << _path_to_file << std::endl;
-	// std::cout << "Query == " << _query_str << std::endl;
-	// std::cout << "Version == " << _version << std::endl;
-	//std::cout << "Body == " << _body << std::endl;
-	// for (std::map<std::string, std::string>::const_iterator it = _headers.begin(); it != _headers.end(); ++it)
-	// {
-	// 	std::cout << it->first << ": " << it->second << std::endl;
-	// }
-	// for (std::map<std::string, std::string>::const_iterator it = _query_args.begin(); it != _query_args.end(); ++it)
-	// {
-    //     std::cout << it->first << " = " << it->second << std::endl;
-    // }
-	//std::cout << "Request destroyed" << std::endl;
+	std::cout << "Printing request params" << std::endl;
+	std::cout << "Method == " << _request_method << std::endl;
+	std::cout << "Path == " << _path_to_file << std::endl;
+	std::cout << "Query == " << _query_str << std::endl;
+	std::cout << "Version == " << _version << std::endl;	
+	std::cout << "Body == " << _body << std::endl;
+	if (chunked)
+		std::cout << "IS CHUNKED" << std::endl;
+	for (std::map<std::string, std::string>::const_iterator it = _headers.begin(); it != _headers.end(); ++it)
+	{
+		std::cout << it->first << ": " << it->second << std::endl;
+	}
+	for (std::map<std::string, std::string>::const_iterator it = _query_args.begin(); it != _query_args.end(); ++it)
+	{
+        std::cout << it->first << " = " << it->second << std::endl;
+    }
+	std::cout << "Request destroyed" << std::endl;
 }
 
 void Request::setRequest(std::string& buffer)
@@ -362,7 +364,7 @@ void Request::setRequest(std::string& buffer)
 	pos = setHeader(ss, pos);
 	if (state == R_done || state == R_error)
 		return ;
-	if (getHeader("Transfer-Encoding").compare("chunked"))
+	if (getHeader("Transfer-Encoding").compare("chunked") == 0)
 	{
 		state = R_chunked_start;
 		chunked = true;
@@ -777,6 +779,7 @@ std::streampos Request::setHeader(std::stringstream& ss, std::streampos startpos
 
 void Request::setBody(std::stringstream& ss, std::streampos startpos)
 {
+	//std::cout << "PARSING BODY"  << std::endl;
 	ss.seekg(startpos);
 	std::string bodyContent((std::istreambuf_iterator<char>(ss)), std::istreambuf_iterator<char>());
 

@@ -129,7 +129,7 @@ int	Server::readClientSocket(int client_fd){
 		perror("Recv failed");
 		return (-1);
 	}
-	std::cout << stack << std::endl;
+	//std::cout << stack << std::endl;
 	_requests[client_fd] = stack;
 	// _requests.insert(std::make_pair(client_fd, stack));
 	// rc = recv(client_fd, buffer, sizeof(buffer) - 1, 0);
@@ -149,7 +149,7 @@ int	Server::handleRequest(int client_fd){
 	Router		router;
 	Response	response;
 
-	std::cout << "Request send to Request constructor: |" << _requests[client_fd] << "|" << std::endl;
+	//std::cout << "Request send to Request constructor: |" << _requests[client_fd] << "|" << std::endl;
 	Request request(_requests[client_fd], *this);
 
 	if (request.getPathToFile().find("/favicon.ico") != std::string::npos)
