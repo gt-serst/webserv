@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:12:17 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/04 17:04:38 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/05 14:02:55 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -50,7 +50,7 @@ class Response{
 		std::string	getResponse() const;
 
 	private:
-		bool		attachRootToPath(std::string& path, std::string root);
+		bool		attachRootToPath(std::string& path, std::string root, std::map<int, std::string> error_paths);
 		int			getFileType(std::string path);
 		bool		findIndexFile(std::string& path, t_locations& loc, std::map<std::string, t_locations> routes, Request& req);
 		void		fileRoutine(std::string path, t_locations loc, Request& req, Server& serv);
@@ -75,8 +75,9 @@ class Response{
 		void		uploadFileResponse(void);
 		void		generateResponse(void);
 		std::string	matchErrorCodeWithPage(int error_code, std::map<int, std::string> error_paths);
-		void		error404(void);
-		void		error403(void);
+		void		fileNotFound(void);
+		bool		checkFileAccess(std::string path, std::map<int, std::string> error_paths);
+		bool		checkRootAccess(std::string path);
 		std::string	_response;
 		std::string	_http_version;
 		int			_status_code;

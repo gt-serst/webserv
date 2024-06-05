@@ -335,7 +335,7 @@ Request::~Request()
 	std::cout << "Method == " << _request_method << std::endl;
 	std::cout << "Path == " << _path_to_file << std::endl;
 	std::cout << "Query == " << _query_str << std::endl;
-	std::cout << "Version == " << _version << std::endl;	
+	std::cout << "Version == " << _version << std::endl;
 	std::cout << "Body == " << _body << std::endl;
 	if (chunked)
 		std::cout << "IS CHUNKED" << std::endl;
