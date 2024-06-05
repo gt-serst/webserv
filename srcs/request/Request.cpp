@@ -160,14 +160,17 @@ void	Request::validity_checks() //
 	if (_body_len != -1)
 	{
 		std::string hlen = getHeader("Content-Length");
-		if (hlen.empty() == false)
+		if (hlen.empty())
 		{
-			if (std::stoi(hlen) != _body_len)
-			{
-				_error_code = 400;
-				_error_msg = "Body length does not match with Content-Length header";
-				return ;
-			}
+			_error_code = 400;
+			_error_msg = "Content-Length header is missing";
+			return ;
+		}
+		if (std::stoi(hlen) != _body_len)
+		{
+			_error_code = 400;
+			_error_msg = "Body length does not match with Content-Length header";
+			return ;
 		}
 	}
 	if (_body.empty() == false)
