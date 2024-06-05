@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: geraudtserstevens <geraudtserstevens@st    +#+  +:+       +#+        */
+/*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:28:16 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/05 00:56:05 by geraudtsers      ###   ########.fr       */
+/*   Updated: 2024/06/05 11:51:28 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,23 +39,20 @@ bool	Response::checkPortAndServerName(t_server_scope config){
 void	Response::handleDirective(std::string path, t_locations loc, Request& req, Server& serv){
 
 	this->_http_version = req.getVersion();
-	if (attachRootToPath(path, loc.root_path) == false)
+	if (attachRootToPath(path, loc.root_path, serv.getConfig().error_page_paths) == true)
 	{
-		errorResponse(500, "Internal Server Error", serv.getConfig().error_page_paths);
-		perror("500 Internal Server Error");
-	}
-	else
-	{
+		if (req.getRequestMethod() == "POST")
+			uploadFile(path, req, serv);
 		// in the case of a POST request we should not check if the type file because we only accept file to be uploaded on the server, and the last part of the path refers to the file name to be created so obviously it does not yet exist
-		if (getFileType(path) == E_DIR)
+		else if (getFileType(path) == E_DIR)
 		{
 			//std::cout << "Dir" << std::endl;
 			if (path.find_last_of("/") != path.length() - 1)
 				path.insert(path.length(), "/");
 			if (findIndexFile(path, loc, serv.getConfig().locations, req) == true)
 			{
- 				attachRootToPath(path, loc.root_path);
-				fileRoutine(path, loc, req, serv);
+				if (attachRootToPath(path, loc.root_path, serv.getConfig().error_page_paths) == true)
+					fileRoutine(path, loc, req, serv);
 			}
 			else if (isMethodAllowed(loc, req) == true)
 				runDirMethod(path, loc, req, serv);
@@ -78,7 +75,7 @@ void	Response::handleDirective(std::string path, t_locations loc, Request& req, 
 	}
 }
 
-bool	Response::attachRootToPath(std::string& path, std::string root){
+bool	Response::attachRootToPath(std::string& path, std::string root, std::map<int, std::string> error_paths){
 
 	if (root.empty() == false)
 	{
@@ -89,8 +86,13 @@ bool	Response::attachRootToPath(std::string& path, std::string root){
 		//std::cout << "Path rooted: " << path << std::endl;
 	}
 	else
-		return (false);
-	return (true);
+	{
+		perror("500 Internal Server Error");
+		return (errorResponse(500, "Internal Server Error", error_paths), false);
+	}
+	if (checkFileAccess(path, error_paths) == true)
+		return (true);
+	return (false);
 }
 
 int	Response::getFileType(std::string path){
@@ -119,6 +121,7 @@ bool	Response::findIndexFile(std::string& path, t_locations& loc, std::map<std::
 
 			tmp.append(loc.default_path[i]);
 			std::cout << tmp << std::endl;
+			// if (checkFileAccess(path, error_paths) == true)
 			if (access(tmp.c_str(), F_OK) == 0)
 			{
 				std::string	index;
@@ -188,9 +191,10 @@ void	Response::isAutoIndex(std::string path, t_locations loc, Request& req, std:
 	struct dirent	*de;
 	std::string		dir_list;
 
-	if (access(path.c_str(), W_OK) == -1)
-		errorResponse(403, "Forbidden", error_paths);
-	else
+	// if (access(path.c_str(), W_OK) == -1)
+	// 	errorResponse(403, "Forbidden", error_paths);
+	std::cout << path << std::endl;
+	if (checkFileAccess(path, error_paths) == true)
 	{
 		if ((dr = opendir(path.c_str())) != NULL)
 		{
@@ -221,20 +225,22 @@ void	Response::isAutoIndex(std::string path, t_locations loc, Request& req, std:
 
 void	Response::uploadDir(std::string path, Server& serv){
 
-	if (access(path.c_str(), W_OK) == 0)
+	// if (access(path.c_str(), W_OK) == 0)
+	if (checkFileAccess(path, serv.getConfig().error_page_paths) == true)
 	{
 		uploadDirResponse();
 	}
-	else
-	{
-		errorResponse(403, "Forbidden", serv.getConfig().error_page_paths);
-		perror("403 Write access failed");
-	}
+	// else
+	// {
+	// 	errorResponse(403, "Forbidden", serv.getConfig().error_page_paths);
+	// 	perror("403 Write access failed");
+	// }
 }
 
 void	Response::deleteDir(std::string path, std::map<int, std::string> error_paths){
 
-	if (access(path.c_str(), W_OK) == 0)
+	// if (access(path.c_str(), W_OK) == 0)
+	if (checkFileAccess(path, error_paths) == true)
 	{
 		if (rmdir(path.c_str()) < 0)
 		{
@@ -244,11 +250,11 @@ void	Response::deleteDir(std::string path, std::map<int, std::string> error_path
 		}
 		deleteResponse();
 	}
-	else
-	{
-		errorResponse(403, "Forbidden", error_paths);
-		perror("403 Write access failed");
-	}
+	// else
+	// {
+	// 	errorResponse(403, "Forbidden", error_paths);
+	// 	perror("403 Write access failed");
+	// }
 }
 
 void	Response::runFileMethod(std::string path, Request& req, Server& serv){
@@ -305,7 +311,8 @@ void	Response::uploadFile(std::string path, Request& req, Server& serv){
 
 void	Response::deleteFile(std::string path, std::map<int, std::string> error_paths){
 
-	if (access(path.c_str(), W_OK) == 0)
+	// if (access(path.c_str(), W_OK) == 0)
+	if (checkFileAccess(path, error_paths) == true)
 	{
 		if (remove(path.c_str()) < 0)
 		{
@@ -315,11 +322,11 @@ void	Response::deleteFile(std::string path, std::map<int, std::string> error_pat
 		}
 		deleteResponse();
 	}
-	else
-	{
-		errorResponse(403, "Forbiddden", error_paths);
-		perror("403 Write access failed");
-	}
+	// else
+	// {
+	// 	errorResponse(403, "Forbiddden", error_paths);
+	// 	perror("403 Write access failed");
+	// }
 }
 
 void Response::autoIndexResponse(std::string path, std::string dir_list, Request& req) {
@@ -527,25 +534,14 @@ void	Response::errorResponse(int error_code, std::string message, std::map<int, 
 	std::string path;
 
 	//std::cout << error_code << std::endl;
-	path = matchErrorCodeWithPage(error_code, error_paths);
-
 	this->_http_version = "1.1";
-	this->_status_code = error_code;
-	this->_status_message = message;
-	this->_content_type = "text/html";
+	path = matchErrorCodeWithPage(error_code, error_paths);
+	if (checkFileAccessForError(path) == true)
+	{
+		this->_status_code = error_code;
+		this->_status_message = message;
+		this->_content_type = "text/html";
 
-	if (access(path.c_str(), F_OK) == -1)
-	{
-		error404();
-		perror("404 Not Found");
-	}
-	else if (access(path.c_str(), W_OK) == -1)
-	{
-		error403();
-		perror("403 Forbidden");
-	}
-	else
-	{
 		std::ifstream	input(path);
 
 		if (input.is_open())
@@ -588,8 +584,8 @@ std::string	Response::matchErrorCodeWithPage(int error_code, std::map<int, std::
 		return ("/Users/gt-serst/webserv/var/www/html/error404.html");
 }
 
-void	Response::error404(void)
-{
+void	Response::error404(void){
+
 	this->_status_code = 404;
 	this->_status_message = "Not Found";
 	this->_content_type = "text/html";
@@ -608,8 +604,8 @@ void	Response::error404(void)
 	generateResponse();
 }
 
-void	Response::error403(void)
-{
+void	Response::error403(void){
+
 	this->_status_code = 403;
 	this->_status_message = "Forbidden";
 	this->_content_type = "text/html";
@@ -626,6 +622,92 @@ void	Response::error403(void)
 				  "</html>";
 	this->_content_len = this->_body.length();
 	generateResponse();
+}
+
+void	Response::error500(void){
+
+	this->_status_code = 500;
+	this->_status_message = "Internal Server Error";
+	this->_content_type = "text/html";
+	this->_body = "<!DOCTYPE html>\n"
+				  "<html lang=\"en\">\n"
+				  "<head>\n"
+				  "<meta charset=\"UTF-8\">\n"
+				  "<title>500 Internal Server Error</title>\n"
+				  "</head>\n"
+				  "<body>\n"
+				  "<h1>500 Internal Server Error</h1>\n"
+				  "<p>The server encountered an internal error or misconfiguration and was unable to complete your request.</p>\n"
+				  "</body>\n"
+				  "</html>";
+	this->_content_len = this->_body.length();
+	generateResponse();
+}
+
+bool	Response::checkFileAccess(std::string path, std::map<int, std::string> error_paths){
+
+	struct stat buf;
+
+	if (stat(path.c_str(), &buf) != 0)
+	{
+		if (errno == ENOENT)
+		{
+			perror("404 Not Found");
+			errorResponse(404, "Not Found", error_paths);
+			return (false);
+		}
+		else
+		{
+			if (access(path.c_str(), R_OK) != 0)
+			{
+				if (errno == EACCES)
+				{
+					perror("403 Forbidden");
+					errorResponse(403, "Forbidden", error_paths);
+				}
+				else
+				{
+					perror("500 Internal Server Error");
+					errorResponse(500, "Internal Server Error", error_paths);
+				}
+				return (false);
+			}
+		}
+	}
+	return (true);
+}
+
+bool	Response::checkFileAccessForError(std::string path){
+
+	struct stat buf;
+
+	if (stat(path.c_str(), &buf) != 0)
+	{
+		if (errno == ENOENT)
+		{
+			perror("404 Not Found");
+			error404();
+			return (false);
+		}
+		else
+		{
+			if (access(path.c_str(), R_OK) != 0)
+			{
+				if (errno == EACCES)
+				{
+					perror("403 Forbidden");
+					error403();
+				}
+				else
+				{
+					perror("500 Internal Server Error");
+					error500();
+				}
+				return (false);
+			}
+		}
+	}
+	return (true);
 }
 
 void	Response::generateResponse(void){

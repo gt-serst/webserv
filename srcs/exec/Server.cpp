@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: geraudtserstevens <geraudtserstevens@st    +#+  +:+       +#+        */
+/*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/08 09:59:24 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/05 00:50:46 by geraudtsers      ###   ########.fr       */
+/*   Updated: 2024/06/05 11:28:39 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -163,6 +163,7 @@ int	Server::handleRequest(int client_fd){
 
 	if (request.getPathToFile().find("/favicon.ico") != std::string::npos)
 	{
+		// request parsing detect error 405 for favicon
 		std::cout << "Favicon detected" << std::endl;
 		return (-1);
 	}
