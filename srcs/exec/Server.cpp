@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/08 09:59:24 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/06 11:06:23 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/06 17:06:39 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -168,6 +168,7 @@ int	Server::handleRequest(int client_fd){
 		std::cout << "Favicon detected" << std::endl;
 		return (-1);
 	}
+	response.setVersion(request.getVersion());
 	if (request.getErrorCode() == -1)
 	{
 		if (response.checkPortAndServerName(getConfig()) == false)

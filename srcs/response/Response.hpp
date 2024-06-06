@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:12:17 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/06 15:21:16 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/06 18:21:59 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,13 +19,6 @@
 # include <map>
 # include <sys/types.h>
 # include <dirent.h>
-
-typedef enum e_file
-{
-	E_DIR,
-	E_FILE,
-	E_UNKN
-}	t_file;
 
 typedef enum e_file_type
 {
@@ -47,21 +40,21 @@ class Response{
 		void		handleDirective(std::string path, t_locations loc, Request& req, Server& serv);
 		bool		checkPortAndServerName(t_server_scope config);
 		void		errorResponse(int error_code, std::string message, std::map<int, std::string> error_paths);
+		void		setVersion(std::string version);
 		std::string	getResponse() const;
 
 	private:
-		bool		initDir(std::string& path, t_locations loc, Request& req, Server& serv);
-		bool		attachRootToPath(std::string& path, std::string root, std::map<int, std::string> error_paths);
-		int			getFileType(std::string path);
+		bool		initDir(std::string root, std::string& path, std::string upload_path, std::map<int, std::string> rooted_error_paths, Request& req);
+		bool		attachRootToPath(std::string& path, std::string root);
 		bool		findIndexFile(std::string& path, t_locations& loc, std::map<std::string, t_locations> routes, Request& req);
-		void		fileRoutine(std::string path, t_locations loc, Request& req, Server& serv);
+		void		fileRoutine(std::string path, std::map<int, std::string> rooted_error_paths, t_locations loc, Request& req);
 		bool		isMethodAllowed(t_locations loc, Request& req);
-		void		runDirMethod(std::string path, t_locations loc, Request& req, Server& serv);
-		void		isAutoIndex(std::string path, t_locations loc, Request& req, std::map<int, std::string> error_paths);
+		void		runDirMethod(std::string path, std::map<int, std::string> rooted_error_paths, t_locations loc, Request& req);
+		void		isAutoIndex(std::string path, std::map<int, std::string> rooted_error_paths, t_locations loc, Request& req);
 		bool		findCGI(std::map<std::string, std::string>	cgi_path);
-		void		runFileMethod(std::string path, Request& req, Server& serv);
+		void		runFileMethod(std::string path, std::map<int, std::string> rooted_error_paths, Request& req);
 		void		downloadFile(std::string path, std::map<int, std::string> error_paths);
-		void		uploadFile(std::string path, std::string upload_path, Request& req, Server& serv);
+		void		uploadFile(std::string path, std::string upload_path, std::map<int, std::string> rooted_error_paths, Request& req);
 		void		deleteFile(std::string path, std::map<int, std::string> error_paths);
 		void		autoIndexResponse(std::string path, std::string dir_list, Request& req);
 		std::string	getCharCount(struct stat file_info);
@@ -76,6 +69,7 @@ class Response{
 		void		fileNotFound(void);
 		bool		checkFileAccess(std::string path, std::map<int, std::string> error_paths);
 		bool		checkRootAccess(std::string path);
+		bool		checkErrorFileAccess(std::string error_path);
 		std::string	_response;
 		std::string	_http_version;
 		int			_status_code;
