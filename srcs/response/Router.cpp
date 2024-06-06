@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 11:15:20 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/05 14:53:47 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/06 11:34:43 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,30 +20,39 @@ Router::Router(void){}
 
 Router::~Router(void){}
 
-t_locations	Router::routeRequest(std::string& path_to_file, std::map<std::string, t_locations> routes){
+bool	Router::routeRequest(std::string& path_to_file, t_locations& loc, std::map<std::string, t_locations> routes){
 
 	std::string	tmp;
-	t_locations	location;
 
 	tmp = path_to_file;
 	//std::cout << "Old path: " << path_to_file << std::endl;
-	location = recursiveRouteRequest(tmp, routes);
-	if (path_to_file == handleRedirection(path_to_file, location.redirections))
+	loc = recursiveRouteRequest(tmp, routes);
+	if (path_to_file == handleRedirection(path_to_file, loc.redirections))
 	{
 		//std::cout << "Path: " << path_to_file << std::endl;
-		return (location);
+		return (true);
 	}
 	else
 	{
-		std::string redirect_path = handleRedirection(path_to_file, location.redirections);
-		while (path_to_file != redirect_path)
+		std::string old_redir;
+		std::string new_redir = handleRedirection(path_to_file, loc.redirections);
+
+		while (path_to_file != new_redir)
 		{
-			path_to_file = redirect_path;
-			location = recursiveRouteRequest(path_to_file, routes);
-			redirect_path = handleRedirection(path_to_file, location.redirections);
+			if (old_redir == new_redir)
+				return (false);
+			else
+			{
+				path_to_file = new_redir;
+				loc = recursiveRouteRequest(path_to_file, routes);
+				old_redir = loc.redirections.begin()->second;
+				//std::cout << old_redir << std::endl;
+				new_redir = handleRedirection(path_to_file, loc.redirections);
+				//std::cout << new_redir << std::endl;
+			}
 		}
 		//std::cout << "New path after redirection: " << path_to_file << std::endl;
-		return (location);
+		return (true);
 	}
 }
 

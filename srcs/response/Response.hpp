@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:12:17 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/05 14:48:57 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/06 11:47:12 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -60,7 +60,7 @@ class Response{
 		bool		findCGI(std::map<std::string, std::string>	cgi_path);
 		void		runFileMethod(std::string path, Request& req, Server& serv);
 		void		downloadFile(std::string path, std::map<int, std::string> error_paths);
-		void		uploadFile(std::string path, Request& req, Server& serv);
+		void		uploadFile(std::string path, std::string root, std::string upload_path, Request& req, Server& serv);
 		void		deleteFile(std::string path, std::map<int, std::string> error_paths);
 		void		autoIndexResponse(std::string path, std::string dir_list, Request& req);
 		std::string	getCharCount(struct stat file_info);

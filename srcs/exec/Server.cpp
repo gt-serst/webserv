@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/08 09:59:24 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/05 17:26:46 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/06 11:06:23 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -155,7 +155,7 @@ int	Server::readClientSocket(int client_fd){
 
 int	Server::handleRequest(int client_fd){
 
-	t_locations	location;
+	t_locations	loc;
 	Router		router;
 	Response	response;
 
@@ -175,13 +175,16 @@ int	Server::handleRequest(int client_fd){
 
 		std::string path_to_file = request.getPathToFile();
 
-		location = router.routeRequest(path_to_file, this->_config.locations);
+		if (router.routeRequest(path_to_file, loc, this->_config.locations) == true)
+		{
+			request.setPathToFile(path_to_file);
 
-		request.setPathToFile(path_to_file);
+			std::cout << request.getPathToFile() << std::endl;
 
-		std::cout << request.getPathToFile() << std::endl;
-
-		response.handleDirective(request.getPathToFile(), location, request, *this);
+			response.handleDirective(request.getPathToFile(), loc, request, *this);
+		}
+		else
+			response.errorResponse(301, "The page isn't redirecting properly", getConfig().error_page_paths);
 	}
 	else
 	{
