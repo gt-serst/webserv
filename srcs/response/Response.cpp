@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:28:16 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/06 18:05:24 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/06 19:15:41 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,6 +36,29 @@ bool	Response::checkPortAndServerName(t_server_scope config){
 	return (true);
 }
 
+bool	Response::checkContentType(std::string path){
+
+	std::ifstream input(path, std::ios::binary);
+
+	std::cout << "Path: " << path << std::endl;
+	if (input.is_open())
+	{
+		std::string buffer;
+		std::string stack;
+		while (std::getline(input, buffer))
+		{
+			stack += buffer;
+			stack += '\n';
+		}
+		input.close();
+		std::string type = getContentType(stack);
+		std::cout << "Type: "<< type << std::endl;
+		if (type == "application/x-zip-compressed")
+			return (false);
+	}
+	return (true);
+}
+
 void	Response::handleDirective(std::string path, t_locations loc, Request& req, Server& serv){
 
 	std::string					rooted_path;
@@ -44,6 +67,8 @@ void	Response::handleDirective(std::string path, t_locations loc, Request& req, 
 	// if (req.getRequestMethod() == "POST")
 	// 	uploadFile(path, loc.root_path, serv.getConfig().upload_path, req, serv);
 
+	if (checkContentType(path) == false)
+		return;
 	rooted_error_paths = serv.getConfig().error_page_paths;
 	for (std::map<int, std::string>::iterator it = rooted_error_paths.begin(); it != rooted_error_paths.end(); ++it)
 	{
@@ -65,7 +90,7 @@ void	Response::handleDirective(std::string path, t_locations loc, Request& req, 
 				errorResponse(404, "Not Found", rooted_error_paths);
 				return;
 			}
-			else if (S_ISDIR(buf.st_mode) == true)
+			else if (getFileType(buf) == 0)
 			{
 				std::cout << "Dir" << std::endl;
 				if (rooted_path.find_last_of("/") != rooted_path.length() - 1)
@@ -73,7 +98,9 @@ void	Response::handleDirective(std::string path, t_locations loc, Request& req, 
 				if (findIndexFile(rooted_path, loc, serv.getConfig().locations, req) == true)
 				{
 					if (attachRootToPath(rooted_path, loc.root_path) == true)
+					{	//check if the file is readable and that the content-type is accepted
 						fileRoutine(rooted_path, rooted_error_paths, loc, req);
+					}
 				}
 				else if (isMethodAllowed(loc, req) == true)
 					runDirMethod(rooted_path, rooted_error_paths, loc, req);
@@ -83,9 +110,10 @@ void	Response::handleDirective(std::string path, t_locations loc, Request& req, 
 					perror("405 Method Not Allowed");
 				}
 			}
-			else if (S_ISREG(buf.st_mode) == true)
+			else if (getFileType(buf) == 1)
 			{
 				std::cout << "File" << std::endl;
+				//check if the file is readable and that the content-type is accepted
 				fileRoutine(rooted_path, rooted_error_paths, loc, req);
 			}
 			else
@@ -105,6 +133,7 @@ bool	Response::initDir(std::string root, std::string& path, std::string upload_p
 
 		if (attachRootToPath(upload_path, root) == true)
 		{
+			//check if the file is readable and that the content-type is accepted
 			rooted_upload_path = upload_path;
 			uploadFile(path, rooted_upload_path, rooted_error_paths, req);
 		}
@@ -130,6 +159,16 @@ bool	Response::attachRootToPath(std::string& path, std::string root){
 		}
 	}
 	return (fileNotFound(), false);
+}
+
+int	Response::getFileType(struct stat buf){
+
+	if (S_ISDIR(buf.st_mode) == true)
+		return (0);
+	else if (S_ISREG(buf.st_mode) == true)
+		return (1);
+	else
+		return (-1);
 }
 
 bool	Response::findIndexFile(std::string& path, t_locations& loc, std::map<std::string, t_locations> routes, Request& req){
@@ -530,6 +569,7 @@ void	Response::errorResponse(int error_code, std::string message, std::map<int, 
 	std::cout << error_code << std::endl;
 	error_path = matchErrorCodeWithPage(error_code, error_paths);
 	std::cout << "Error_path in errorResponse: " << error_path << std::endl;
+	//check if the file is readable and that the content-type is accepted
 	if (checkErrorFileAccess(error_path) == true)
 	{
 		this->_status_code = error_code;
@@ -661,6 +701,7 @@ bool	Response::checkErrorFileAccess(std::string error_path){
 		fileNotFound();
 		return (false);
 	}
+
 	return (true);
 }
 

@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:12:17 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/06 18:21:59 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/06 19:10:06 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -46,6 +46,7 @@ class Response{
 	private:
 		bool		initDir(std::string root, std::string& path, std::string upload_path, std::map<int, std::string> rooted_error_paths, Request& req);
 		bool		attachRootToPath(std::string& path, std::string root);
+		int			getFileType(struct stat buf);
 		bool		findIndexFile(std::string& path, t_locations& loc, std::map<std::string, t_locations> routes, Request& req);
 		void		fileRoutine(std::string path, std::map<int, std::string> rooted_error_paths, t_locations loc, Request& req);
 		bool		isMethodAllowed(t_locations loc, Request& req);
@@ -61,6 +62,7 @@ class Response{
 		void		insertHtmlIndexLine(std::string redirect_url, std::string txt_button, std::string creation_date, std::string char_count);
 		void		deleteResponse(void);
 		void		downloadFileResponse(std::string stack, std::map<int, std::string> error_paths);
+		bool		checkContentType(std::string path);
 		std::string	getContentType(std::string stack);
 		t_file_type	stringToEnum(std::string const& str);
 		void		uploadFileResponse(void);
