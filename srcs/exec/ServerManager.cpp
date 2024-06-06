@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/07 11:04:51 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/05 17:32:21 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/06 16:24:00 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -97,7 +97,7 @@ void	ServerManager::serverRoutine(void){
 				if (FD_ISSET(*it, &writing_set))
 				{
 					//std::cout << "Entering first loop" << std::endl;
-					int rc = _sockets[*it]->sendResponse(*it);
+					_sockets[*it]->sendResponse(*it);
 					FD_CLR(*it, &_fd_set);
 					FD_CLR(*it, &reading_set);
 					close(*it);
@@ -114,7 +114,6 @@ void	ServerManager::serverRoutine(void){
 						_sockets.erase(*it);
 						_ready.erase(it);
 					}*/
-					rc = 0;
 					break;
 				}
 			}

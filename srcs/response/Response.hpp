@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:12:17 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/06 11:47:12 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/06 15:21:16 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -50,6 +50,7 @@ class Response{
 		std::string	getResponse() const;
 
 	private:
+		bool		initDir(std::string& path, t_locations loc, Request& req, Server& serv);
 		bool		attachRootToPath(std::string& path, std::string root, std::map<int, std::string> error_paths);
 		int			getFileType(std::string path);
 		bool		findIndexFile(std::string& path, t_locations& loc, std::map<std::string, t_locations> routes, Request& req);
@@ -60,7 +61,7 @@ class Response{
 		bool		findCGI(std::map<std::string, std::string>	cgi_path);
 		void		runFileMethod(std::string path, Request& req, Server& serv);
 		void		downloadFile(std::string path, std::map<int, std::string> error_paths);
-		void		uploadFile(std::string path, std::string root, std::string upload_path, Request& req, Server& serv);
+		void		uploadFile(std::string path, std::string upload_path, Request& req, Server& serv);
 		void		deleteFile(std::string path, std::map<int, std::string> error_paths);
 		void		autoIndexResponse(std::string path, std::string dir_list, Request& req);
 		std::string	getCharCount(struct stat file_info);

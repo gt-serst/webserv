@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:28:16 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/06 11:55:39 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/06 16:22:29 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,44 +38,68 @@ bool	Response::checkPortAndServerName(t_server_scope config){
 
 void	Response::handleDirective(std::string path, t_locations loc, Request& req, Server& serv){
 
-	this->_http_version = req.getVersion();
-	if (req.getRequestMethod() == "POST")
-		uploadFile(path, loc.root_path, serv.getConfig().upload_path, req, serv);
-	else
+	std::string					rooted_path;
+	std::map<int, std::string>	rooted_error_paths;
+
+	// if (req.getRequestMethod() == "POST")
+	// 	uploadFile(path, loc.root_path, serv.getConfig().upload_path, req, serv);
+	if (initDir(path, loc, req, serv) == true)
 	{
-		if (attachRootToPath(path, loc.root_path, serv.getConfig().error_page_paths) == true)
-		{
+		//if (attachRootToPath(path, loc.root_path, serv.getConfig().error_page_paths) == true)
+		//{
 			// in the case of a POST request we should not check if the type file because we only accept file to be uploaded on the server, and the last part of the path refers to the file name to be created so obviously it does not yet exist
+			rooted_path = path;
 			if (getFileType(path) == E_DIR)
 			{
 				//std::cout << "Dir" << std::endl;
-				if (path.find_last_of("/") != path.length() - 1)
-					path.insert(path.length(), "/");
-				if (findIndexFile(path, loc, serv.getConfig().locations, req) == true)
+				if (rooted_path.find_last_of("/") != rooted_path.length() - 1)
+					rooted_path.insert(rooted_path.length(), "/");
+				if (findIndexFile(rooted_path, loc, serv.getConfig().locations, req) == true)
 				{
-					if (attachRootToPath(path, loc.root_path, serv.getConfig().error_page_paths) == true)
-						fileRoutine(path, loc, req, serv);
+					if (attachRootToPath(rooted_path, loc.root_path, serv.getConfig().error_page_paths) == true)
+						fileRoutine(rooted_path, loc, req, serv);
 				}
 				else if (isMethodAllowed(loc, req) == true)
-					runDirMethod(path, loc, req, serv);
+					runDirMethod(rooted_path, loc, req, serv);
 				else
 				{
 					errorResponse(405, "Method Not Allowed", serv.getConfig().error_page_paths);
 					perror("405 Method Not Allowed");
 				}
 			}
-			else if (getFileType(path) == E_FILE)
+			else if (getFileType(rooted_path) == E_FILE)
 			{
 				//std::cout << "File" << std::endl;
-				fileRoutine(path, loc, req, serv);
+				fileRoutine(rooted_path, loc, req, serv);
 			}
 			else
 			{
 				errorResponse(404, "Not Found", serv.getConfig().error_page_paths);
 				perror("404 Neither a dir nor a file");
 			}
-		}
+		//}
 	}
+}
+
+bool	Response::initDir(std::string& path, t_locations loc, Request& req, Server& serv){
+
+	this->_http_version = req.getVersion();
+
+	if (req.getRequestMethod() == "POST")
+	{
+		std::string	upload_path;
+		std::string rooted_upload_path;
+
+		upload_path = serv.getConfig().upload_path;
+		if (attachRootToPath(upload_path, loc.root_path, serv.getConfig().error_page_paths) == true)
+		{
+			rooted_upload_path = upload_path;
+			uploadFile(path, rooted_upload_path, req, serv);
+		}
+		return (false);
+	}
+	else
+		return (attachRootToPath(path, loc.root_path, serv.getConfig().error_page_paths));
 }
 
 bool	Response::attachRootToPath(std::string& path, std::string root, std::map<int, std::string> error_paths){
@@ -85,7 +109,7 @@ bool	Response::attachRootToPath(std::string& path, std::string root, std::map<in
 		if (checkRootAccess(root) == true)
 		{
 			if (root[root.length() - 1] == '/')
-				root.erase(root.length() - 1,1);
+				root.erase(root.length() - 1, 1);
 			//std::cout << "Path: " << path << std::endl;
 			path.insert(0, root);
 			//std::cout << "Path rooted: " << path << std::endl;
@@ -268,29 +292,28 @@ void	Response::downloadFile(std::string path, std::map<int, std::string> error_p
 	}
 }
 
-void	Response::uploadFile(std::string path, std::string root, std::string upload_path, Request& req, Server& serv){
+void	Response::uploadFile(std::string path, std::string upload_path, Request& req, Server& serv){
 
 	// Root verification can perhaps be done in the main function
+	if (upload_path[upload_path.length() - 1] == '/' && path[0] == '/')
+		path.erase(0, 1);
 	std::cout << "Upload file" << std::endl;
-	if (attachRootToPath(upload_path, root, serv.getConfig().error_page_paths) == true)
+	path.insert(0, upload_path);
+	std::cout << "Path with upload path: " << path << std::endl;
+	if (checkFileAccess(upload_path, serv.getConfig().error_page_paths) == true)
 	{
-		path.insert(0, upload_path);
-		std::cout << "Path with upload path: " << path << std::endl;
-		if (checkFileAccess(upload_path, serv.getConfig().error_page_paths) == true)
-		{
-			std::ofstream output(path);
+		std::ofstream output(path);
 
-			if (output.is_open())
-			{
-				output << req.getBody();
-				output.close();
-				uploadFileResponse();
-			}
-			else
-			{
-				errorResponse(404, "Not Found", serv.getConfig().error_page_paths);
-				perror("404 File creation failed");
-			}
+		if (output.is_open())
+		{
+			output << req.getBody();
+			output.close();
+			uploadFileResponse();
+		}
+		else
+		{
+			errorResponse(404, "Not Found", serv.getConfig().error_page_paths);
+			perror("404 File creation failed");
 		}
 	}
 }
@@ -554,15 +577,15 @@ std::string	Response::matchErrorCodeWithPage(int error_code, std::map<int, std::
 		}
 	}
 	if (error_code == 400)
-		return ("/Users/gt-serst/webserv/var/www/html/error400.html");
+		return ("/error400.html");
 	else if (error_code == 500)
-		return ("/Users/gt-serst/webserv/var/www/html/error500.html");
+		return ("/error500.html");
 	else if (error_code == 405)
-		return ("/Users/gt-serst/webserv/var/www/html/error405.html");
+		return ("/error405.html");
 	else if (error_code == 301)
-		return ("/Users/gt-serst/webserv/var/www/html/error301.html");
+		return ("/error301.html");
 	else
-		return ("/Users/gt-serst/webserv/var/www/html/error404.html");
+		return ("/error404.html");
 }
 
 void	Response::fileNotFound(void){
