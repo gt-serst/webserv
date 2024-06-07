@@ -889,3 +889,8 @@ std::string Request::getQuerystr() const
 {
 	return _query_str;
 }
+
+std::string Request::getIp() const
+{
+	return _litteral_ip;
+}

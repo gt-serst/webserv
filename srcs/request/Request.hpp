@@ -101,6 +101,7 @@ class Request
 		std::string	getBody() const;
 		std::string	getErrorMsg() const;
 		std::string getHost() const;
+		std::string getIp() const;
 		int			getErrorCode() const;
 		int			getPort() const;
 		std::string getQuerystr() const;

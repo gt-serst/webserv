@@ -205,13 +205,11 @@ bool	Response::findDefaultFile(std::string& path, t_locations& loc, std::map<std
 					new_path.insert(new_path.length(), "/");
 				req.setPathToFile(new_path);
 				path = req.getPathToFile().append(loc.default_path[i]);
-				default_file = loc.default_path[i].insert(0, "/");
-				std::cout << default_file << std::endl;
-				if (router.routeRequest(default_file, loc, routes) == true)
-				{
-					req.setPathToFile(path);
-					return (true);
-				}
+				index = loc.default_path[i].insert(0, "/");
+				std::cout << index << std::endl;
+				loc = router.routeRequest(index, routes);
+				req.setPathToFile(path);
+				return (true);
 			}
 		}
 	}
