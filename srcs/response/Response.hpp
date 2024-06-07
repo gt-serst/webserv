@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:12:17 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/07 13:27:47 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/07 16:06:12 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -60,7 +60,7 @@ class Response{
 		std::string	getCharCount(struct stat file_info);
 		void		insertHtmlIndexLine(std::string redirect_url, std::string txt_button, std::string creation_date, std::string char_count);
 		void		deleteResponse(void);
-		void		downloadFileResponse(std::string stack, std::map<int, std::string> error_paths);
+		void		downloadFileResponse(std::string stack);
 		bool		checkContentType(std::string path);
 		std::string	getContentType(std::string stack);
 		t_file_type	stringToEnum(std::string const& str);
