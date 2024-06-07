@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: geraudtserstevens <geraudtserstevens@st    +#+  +:+       +#+        */
+/*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/08 09:43:45 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/05/30 15:42:26 by geraudtsers      ###   ########.fr       */
+/*   Updated: 2024/06/05 16:28:00 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,6 +16,7 @@
 # include "../parser/confParser.hpp"
 # include <string>
 # include <map>
+# include <arpa/inet.h>
 
 class Server
 {
@@ -37,6 +38,7 @@ class Server
 		int							_fd;
 		t_server_scope				_config;
 		std::map<int, std::string>	_requests;
+		struct sockaddr_in			_server_addr;
 };
 
 #endif

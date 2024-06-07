@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/08 09:59:24 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/05 11:28:39 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/06 19:13:47 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,6 +19,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <cstring>
 #include <sys/socket.h>
 #include <fcntl.h>
 #include <arpa/inet.h>
@@ -39,14 +40,13 @@ Server::Server(t_server_scope config) : _config(config){
 Server::~Server(void){
 
 	//std::cout << "Server destroyed" << std::endl;
-	// this->_requests.clear();
+	_requests.clear();
 }
 
 int	Server::createServerSocket(void){
 
 	int					rc;
 	int					flags;
-	struct sockaddr_in	server_addr;
 
 	this->_fd = socket(AF_INET, SOCK_STREAM, 0);
 	if (this->_fd < 0)
@@ -67,18 +67,19 @@ int	Server::createServerSocket(void){
 	}
 	fcntl(this->_fd, F_SETFL, flags | O_NONBLOCK);
 
-	server_addr.sin_family = AF_INET;
-	server_addr.sin_addr.s_addr = INADDR_ANY;
+	std::memset((char *)&_server_addr, 0, sizeof(_server_addr));
+	_server_addr.sin_family = AF_INET;
+	_server_addr.sin_addr.s_addr = INADDR_ANY;
 	// std::cout << this->_config.port << std::endl;
-	server_addr.sin_port = htons(this->_config.port);
+	_server_addr.sin_port = htons(this->_config.port);
 
-	rc = bind(this->_fd, (struct sockaddr *) &server_addr, sizeof(server_addr));
+	rc = bind(this->_fd, (struct sockaddr *) &(_server_addr), sizeof(_server_addr));
 	if (rc < 0)
 	{
 		perror("Bind() failed");
 		return (-1);
 	}
-	int	connection_backlog = 5;
+	int	connection_backlog = 1000;
 	rc = listen(this->_fd, connection_backlog);
 	if (rc < 0)
 	{
@@ -154,7 +155,7 @@ int	Server::readClientSocket(int client_fd){
 
 int	Server::handleRequest(int client_fd){
 
-	t_locations	location;
+	t_locations	loc;
 	Router		router;
 	Response	response;
 
@@ -167,6 +168,7 @@ int	Server::handleRequest(int client_fd){
 		std::cout << "Favicon detected" << std::endl;
 		return (-1);
 	}
+	response.setVersion(request.getVersion());
 	if (request.getErrorCode() == -1)
 	{
 		if (response.checkPortAndServerName(getConfig()) == false)
@@ -174,13 +176,16 @@ int	Server::handleRequest(int client_fd){
 
 		std::string path_to_file = request.getPathToFile();
 
-		location = router.routeRequest(path_to_file, this->_config.locations);
+		if (router.routeRequest(path_to_file, loc, this->_config.locations) == true)
+		{
+			request.setPathToFile(path_to_file);
 
-		request.setPathToFile(path_to_file);
+			std::cout << request.getPathToFile() << std::endl;
 
-		std::cout << request.getPathToFile() << std::endl;
-
-		response.handleDirective(request.getPathToFile(), location, request, *this);
+			response.handleDirective(request.getPathToFile(), loc, request, *this);
+		}
+		else
+			response.errorResponse(301, "The page isn't redirecting properly", getConfig().error_page_paths);
 	}
 	else
 	{
@@ -189,7 +194,9 @@ int	Server::handleRequest(int client_fd){
 	}
 
 	//_requests.insert(std::make_pair(client_fd, response.getResponse()));
-	_requests[client_fd] = response.getResponse();
+	_requests.erase(client_fd);
+	_requests.insert(std::make_pair(client_fd, response.getResponse()));
+	// _requests[client_fd] = response.getResponse();
 	return (0);
 }
 
@@ -214,8 +221,9 @@ int	Server::sendResponse(int client_fd){
 
 void	Server::closeServerSocket(void){
 
-	if (this->_fd > 0)
-		close(this->_fd);
+	if (_fd > 0)
+		close(_fd);
+	_fd = -1;
 }
 
 void	Server::closeClientSocket(int client_fd){
