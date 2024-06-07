@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:28:16 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/06 19:15:41 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/07 12:48:39 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -53,10 +53,11 @@ bool	Response::checkContentType(std::string path){
 		input.close();
 		std::string type = getContentType(stack);
 		std::cout << "Type: "<< type << std::endl;
-		if (type == "application/x-zip-compressed")
-			return (false);
+		if (type == "text/html" || type == "text/plain" || type == "image/png" || type == "image/jpeg" || type == "image/svg+xml")
+			return (true);
 	}
-	return (true);
+	std::cout << "<<< Wrong Type >>>" << std::endl;
+	return (false);
 }
 
 void	Response::handleDirective(std::string path, t_locations loc, Request& req, Server& serv){
@@ -67,16 +68,14 @@ void	Response::handleDirective(std::string path, t_locations loc, Request& req, 
 	// if (req.getRequestMethod() == "POST")
 	// 	uploadFile(path, loc.root_path, serv.getConfig().upload_path, req, serv);
 
-	if (checkContentType(path) == false)
-		return;
 	rooted_error_paths = serv.getConfig().error_page_paths;
-	for (std::map<int, std::string>::iterator it = rooted_error_paths.begin(); it != rooted_error_paths.end(); ++it)
-	{
-		if (attachRootToPath(it->second, loc.root_path) == false)
-			return;
-		std::cout << "Rooted error_path: " << it->second << std::endl;
-	}
-	if (initDir(loc.root_path, path, serv.getConfig().upload_path, rooted_error_paths, req) == true)
+	// for (std::map<int, std::string>::iterator it = rooted_error_paths.begin(); it != rooted_error_paths.end(); ++it)
+	// {
+	// 	if (attachRootToPath(it->second, loc.root_path) == false)
+	// 		return;
+	// 	std::cout << "Rooted error_path: " << it->second << std::endl;
+	// }
+	if (rootPaths(loc, path, serv.getConfig().upload_path, rooted_error_paths, req) == true)
 	{
 		//if (attachRootToPath(path, loc.root_path, serv.getConfig().error_page_paths) == true)
 		//{
@@ -88,14 +87,13 @@ void	Response::handleDirective(std::string path, t_locations loc, Request& req, 
 			{
 				std::cout << "Rooted_path when stat failed: " << rooted_path << std::endl;
 				errorResponse(404, "Not Found", rooted_error_paths);
-				return;
 			}
 			else if (getFileType(buf) == 0)
 			{
 				std::cout << "Dir" << std::endl;
 				if (rooted_path.find_last_of("/") != rooted_path.length() - 1)
 					rooted_path.insert(rooted_path.length(), "/");
-				if (findIndexFile(rooted_path, loc, serv.getConfig().locations, req) == true)
+				if (findDefaultFile(rooted_path, loc, serv.getConfig().locations, req) == true)
 				{
 					if (attachRootToPath(rooted_path, loc.root_path) == true)
 					{	//check if the file is readable and that the content-type is accepted
@@ -123,24 +121,37 @@ void	Response::handleDirective(std::string path, t_locations loc, Request& req, 
 			}
 		//}
 	}
+	rooted_error_paths.clear();
 }
 
-bool	Response::initDir(std::string root, std::string& path, std::string upload_path, std::map<int, std::string> rooted_error_paths, Request& req){
+bool	Response::rootPaths(t_locations loc, std::string& path, std::string upload_path, std::map<int, std::string>& rooted_error_paths, Request& req){
 
+	for (std::map<int, std::string>::iterator it = rooted_error_paths.begin(); it != rooted_error_paths.end(); ++it)
+	{
+		if (attachRootToPath(it->second, loc.root_path) == false)
+			return (false);
+		std::cout << "Rooted error_path: " << it->second << std::endl;
+	}
 	if (req.getRequestMethod() == "POST")
 	{
 		std::string rooted_upload_path;
 
-		if (attachRootToPath(upload_path, root) == true)
+		if (attachRootToPath(upload_path, loc.root_path) == true)
 		{
-			//check if the file is readable and that the content-type is accepted
+			//check if the file is readable and that the content-type is accepted, but for a POST method the content will be in the body, lets see how the browser will send a media type
 			rooted_upload_path = upload_path;
-			uploadFile(path, rooted_upload_path, rooted_error_paths, req);
+			if (isMethodAllowed(loc, req) == true)
+				uploadFile(path, rooted_upload_path, rooted_error_paths, req);
+			else
+			{
+				errorResponse(405, "Method Not Allowed", rooted_error_paths);
+				perror("405 Method Not Allowed");
+			}
 		}
 		return (false);
 	}
 	else
-		return (attachRootToPath(path, root));
+		return (attachRootToPath(path, loc.root_path));
 }
 
 bool	Response::attachRootToPath(std::string& path, std::string root){
@@ -171,7 +182,7 @@ int	Response::getFileType(struct stat buf){
 		return (-1);
 }
 
-bool	Response::findIndexFile(std::string& path, t_locations& loc, std::map<std::string, t_locations> routes, Request& req){
+bool	Response::findDefaultFile(std::string& path, t_locations& loc, std::map<std::string, t_locations> routes, Request& req){
 
 	Router		router;
 
@@ -186,7 +197,7 @@ bool	Response::findIndexFile(std::string& path, t_locations& loc, std::map<std::
 			// if (checkFileAccess(path, error_paths) == true)
 			if (access(tmp.c_str(), F_OK) == 0)
 			{
-				std::string	index;
+				std::string	default_file;
 				std::string new_path;
 
 				new_path = req.getPathToFile();
@@ -194,9 +205,9 @@ bool	Response::findIndexFile(std::string& path, t_locations& loc, std::map<std::
 					new_path.insert(new_path.length(), "/");
 				req.setPathToFile(new_path);
 				path = req.getPathToFile().append(loc.default_path[i]);
-				index = loc.default_path[i].insert(0, "/");
-				std::cout << index << std::endl;
-				if (router.routeRequest(index, loc, routes) == true)
+				default_file = loc.default_path[i].insert(0, "/");
+				std::cout << default_file << std::endl;
+				if (router.routeRequest(default_file, loc, routes) == true)
 				{
 					req.setPathToFile(path);
 					return (true);
@@ -211,16 +222,25 @@ void	Response::fileRoutine(std::string path, std::map<int, std::string> rooted_e
 
 	if (checkFileAccess(path, rooted_error_paths) == true)
 	{
-		//détecter si l'extenssion du fichier demandé est un php, py etc pour lancer les bonnes CGI, itérer sur les chemins CGI pour lancer le script correspondant
-		if (findCGI(req._server.getConfig().cgi_path) == true && isMethodAllowed(loc, req) == true)
-			std::cout << "Send CGI path and run it" << std::endl;
-		else if (isMethodAllowed(loc, req) == true)
-			runFileMethod(path, rooted_error_paths, req);
+		if (checkContentType(path) == true)
+		{
+			//détecter si l'extenssion du fichier demandé est un php, py etc pour lancer les bonnes CGI, itérer sur les chemins CGI pour lancer le script correspondant
+			if (findCGI(req._server.getConfig().cgi_path) == true && isMethodAllowed(loc, req) == true)
+				std::cout << "Send CGI path and run it" << std::endl;
+			else if (isMethodAllowed(loc, req) == true)
+				runFileMethod(path, rooted_error_paths, req);
+			else
+			{
+				errorResponse(405, "Method Not Allowed", rooted_error_paths);
+				perror("405 Method Not Allowed");
+			}
+		}
 		else
 		{
-			errorResponse(405, "Method Not Allowed", rooted_error_paths);
-			perror("405 Method Not Allowed");
+			errorResponse(415, "Unsupported Media Type", rooted_error_paths);
+			perror("415 Unsupported Media Type");
 		}
+
 	}
 }
 
@@ -244,10 +264,15 @@ bool	Response::isMethodAllowed(t_locations loc, Request& req){
 
 void	Response::runDirMethod(std::string path, std::map<int, std::string> rooted_error_paths, t_locations loc, Request& req){
 
-	if (req.getRequestMethod() == "GET" && loc.auto_index == true)
-		isAutoIndex(path, rooted_error_paths, loc, req);
+	if (req.getRequestMethod() == "GET")
+	{
+		if (loc.auto_index == true)
+			isAutoIndex(path, rooted_error_paths, loc, req);
+		else
+			errorResponse(500, "Internal Server Error", rooted_error_paths);
+	}
 	else
-		errorResponse(404, "Not Found", rooted_error_paths);
+		errorResponse(405, "Method Not Allowed", rooted_error_paths);
 }
 
 void	Response::isAutoIndex(std::string path, std::map<int, std::string> rooted_error_paths, t_locations loc, Request& req){
@@ -258,9 +283,10 @@ void	Response::isAutoIndex(std::string path, std::map<int, std::string> rooted_e
 
 	// if (access(path.c_str(), W_OK) == -1)
 	// 	errorResponse(403, "Forbidden", error_paths);
-	std::cout << path << std::endl;
+	std::cout << "isAutoIndex function with path as dir: " << path << std::endl;
 	if (checkFileAccess(path, rooted_error_paths) == true)
 	{
+		std::cout << "Try to opendir" << std::endl;
 		if ((dr = opendir(path.c_str())) != NULL)
 		{
 			if (loc.auto_index == true)
@@ -568,36 +594,45 @@ void	Response::errorResponse(int error_code, std::string message, std::map<int, 
 
 	std::cout << error_code << std::endl;
 	error_path = matchErrorCodeWithPage(error_code, error_paths);
+	if (error_path.empty() == true)
+	{
+		createHtmlErrorPage(error_code, message);
+		generateResponse();
+		return;
+	}
 	std::cout << "Error_path in errorResponse: " << error_path << std::endl;
 	//check if the file is readable and that the content-type is accepted
 	if (checkErrorFileAccess(error_path) == true)
 	{
-		this->_status_code = error_code;
-		this->_status_message = message;
-		this->_content_type = "text/html";
-
-		std::ifstream	input(error_path);
-
-		if (input.is_open())
+		if (checkContentType(error_path) == true)
 		{
-			std::string	buffer;
-			std::string	stack;
+			this->_status_code = error_code;
+			this->_status_message = message;
+			this->_content_type = "text/html";
 
-			while (std::getline(input, buffer))
+			std::ifstream	input(error_path);
+
+			if (input.is_open())
 			{
-				stack += buffer;
-				stack += '\n';
+				std::string	buffer;
+				std::string	stack;
+
+				while (std::getline(input, buffer))
+				{
+					stack += buffer;
+					stack += '\n';
+				}
+				input.close();
+				this->_content_len = stack.length();
+				this->_body = stack;
+				generateResponse();
 			}
-			input.close();
-			this->_content_len = stack.length();
-			this->_body = stack;
-			generateResponse();
+			else
+				fileNotFound();
 		}
 		else
-			fileNotFound();
+			errorResponse(415, "Unsupported Media Type", error_paths);
 	}
-	else
-		errorResponse(415, "Unsupported Media Type", error_paths);
 }
 
 std::string	Response::matchErrorCodeWithPage(int error_code, std::map<int, std::string> error_paths){
@@ -611,18 +646,37 @@ std::string	Response::matchErrorCodeWithPage(int error_code, std::map<int, std::
 			return (it->second);
 		}
 	}
-	if (error_code == 400)
-		return ("var/www/html/error400.html");
-	else if (error_code == 500)
-		return ("var/www/html/error500.html");
-	else if (error_code == 405)
-		return ("var/www/html/error405.html");
-	else if (error_code == 301)
-		return ("var/www/html/error301.html");
-	else if (error_code == 415)
-		return ("var/www/html/error415.html");
-	else
-		return ("var/www/html/error404.html");
+	return ("");
+}
+
+void	Response::createHtmlErrorPage(int error_code, std::string message){
+
+	int			i;
+	int			integer[] = {301, 400, 403, 404, 405, 413, 415, 500};
+	std::string	error_headers[] = {"An error occurred.", "The server could not understand the request due to invalid syntax.", "You do not have permission to access this resource on this server.", "The requested resource could not be found on this server.",
+	"The method specified in the request is not allowed for the resource identified by the request URI.", "The request entity is larger than the server is willing or able to process.", "The media format of the requested data is not supported by the server.",
+	"The server encountered an internal error or misconfiguration and was unable to complete your request."};
+
+	i = 0;
+	while (i < 8 && error_code != integer[i])
+		i++;
+	std::string header = error_headers[i];
+
+	this->_body = "<!DOCTYPE html>\n"
+				  "<html lang=\"en\">\n"
+				  "<head>\n"
+				  "<meta charset=\"UTF-8\">\n"
+				  "<title>" + std::to_string(error_code) + " " + message + "</title>\n"
+				  "</head>\n"
+				  "<body>\n"
+				  "<h1>" + std::to_string(error_code) + " " + message + "</h1>\n"
+				  "<p>" + header + "</p>\n"
+				  "</body>\n"
+				  "</html>\n";
+	this->_status_code = error_code;
+	this->_status_message = message;
+	this->_content_type = "text/html";
+	this->_content_len = _body.length();
 }
 
 void	Response::fileNotFound(void){
@@ -693,15 +747,32 @@ bool	Response::checkErrorFileAccess(std::string error_path){
 
 	if (stat(error_path.c_str(), &buf) != 0)
 	{
-		fileNotFound();
+		if (errno == ENOENT)
+		{
+			createHtmlErrorPage(404, "Not Found");
+			generateResponse();
+		}
+		else
+		{
+			createHtmlErrorPage(500, "Internal Server Error");
+			generateResponse();
+		}
 		return (false);
 	}
 	if (access(error_path.c_str(), R_OK) != 0)
 	{
-		fileNotFound();
+		if (errno == EACCES)
+		{
+			createHtmlErrorPage(403, "Forbidden");
+			generateResponse();
+		}
+		else
+		{
+			createHtmlErrorPage(500, "Internal Server Error");
+			generateResponse();
+		}
 		return (false);
 	}
-
 	return (true);
 }
 

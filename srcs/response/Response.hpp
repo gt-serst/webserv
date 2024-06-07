@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:12:17 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/06 19:10:06 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/07 12:48:42 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -44,10 +44,10 @@ class Response{
 		std::string	getResponse() const;
 
 	private:
-		bool		initDir(std::string root, std::string& path, std::string upload_path, std::map<int, std::string> rooted_error_paths, Request& req);
+		bool		rootPaths(t_locations loc, std::string& path, std::string upload_path, std::map<int, std::string>& rooted_error_paths, Request& req);
 		bool		attachRootToPath(std::string& path, std::string root);
 		int			getFileType(struct stat buf);
-		bool		findIndexFile(std::string& path, t_locations& loc, std::map<std::string, t_locations> routes, Request& req);
+		bool		findDefaultFile(std::string& path, t_locations& loc, std::map<std::string, t_locations> routes, Request& req);
 		void		fileRoutine(std::string path, std::map<int, std::string> rooted_error_paths, t_locations loc, Request& req);
 		bool		isMethodAllowed(t_locations loc, Request& req);
 		void		runDirMethod(std::string path, std::map<int, std::string> rooted_error_paths, t_locations loc, Request& req);
@@ -68,6 +68,7 @@ class Response{
 		void		uploadFileResponse(void);
 		void		generateResponse(void);
 		std::string	matchErrorCodeWithPage(int error_code, std::map<int, std::string> error_paths);
+		void		createHtmlErrorPage(int error_code, std::string message);
 		void		fileNotFound(void);
 		bool		checkFileAccess(std::string path, std::map<int, std::string> error_paths);
 		bool		checkRootAccess(std::string path);
