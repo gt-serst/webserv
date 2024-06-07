@@ -85,6 +85,7 @@ class Request
 		void manage_chunks(char *chunk);
 		bool	handle_query();
 		bool	getBoundary();
+		void	parse_multiform(std::stringstream& ss, std::streampos startpos);
 
 	public:
 		Request();
@@ -106,7 +107,7 @@ class Request
 		int			getPort() const;
 		std::string getQuerystr() const;
 		Server _server;
-		// int getLen();
+		int getLen();
 };
 
 #endif

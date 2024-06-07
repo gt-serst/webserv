@@ -206,8 +206,8 @@ bool	Response::findDefaultFile(std::string& path, t_locations& loc, std::map<std
 				req.setPathToFile(new_path);
 				path = req.getPathToFile().append(loc.default_path[i]);
 				index = loc.default_path[i].insert(0, "/");
-				std::cout << index << std::endl;
-				loc = router.routeRequest(index, routes);
+				//std::cout << index << std::endl;
+				loc = router.routeRequest(path, index, routes);
 				req.setPathToFile(path);
 				return (true);
 			}

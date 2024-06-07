@@ -7,6 +7,12 @@
 //only POST should have a body
 
 //SET FUNCTIONS
+
+// void Request::parse_multiform(std::stringstream& ss, std::streampos startpos)
+// {
+
+// }
+
 bool Request::getBoundary()
 {
 	std::string content = getHeader("Content-Type");
@@ -16,10 +22,13 @@ bool Request::getBoundary()
 	{
 		size_t pos = _headers["Content-Type"].find("boundary=", 0);
 		if (pos != std::string::npos)
+		{
 			_boundary = _headers["Content-Type"].substr(pos + 9, _headers["Content-Type"].size());
-		multiform = true;
+			multiform = true;
+			return 1;
+		}
 	}
-	return 1;
+	return 0;
 }
 
 bool Request::handle_query()
@@ -396,7 +405,10 @@ void Request::setRequest(std::string& buffer)
 		chunked = true;
 		return ;
 	}
-	setBody(ss, pos);
+	// if (getBoundary())
+	// 	parse_multiform(ss, pos);
+	else
+		setBody(ss, pos);
 }
 
 void Request::parseRequestLine(char *line)
@@ -805,8 +817,6 @@ std::streampos Request::setHeader(std::stringstream& ss, std::streampos startpos
 
 void Request::setBody(std::stringstream& ss, std::streampos startpos)
 {
-	if (!getBoundary())
-		return ;
 	ss.seekg(startpos);
 	std::string bodyContent((std::istreambuf_iterator<char>(ss)), std::istreambuf_iterator<char>());
 
@@ -893,4 +903,9 @@ std::string Request::getQuerystr() const
 std::string Request::getIp() const
 {
 	return _litteral_ip;
+}
+
+int	Request::getLen() const
+{
+	return _body_len;
 }
