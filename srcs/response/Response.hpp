@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:12:17 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/07 12:48:42 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/07 13:27:47 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,7 +38,6 @@ class Response{
 		Response(void);
 		~Response(void);
 		void		handleDirective(std::string path, t_locations loc, Request& req, Server& serv);
-		bool		checkPortAndServerName(t_server_scope config);
 		void		errorResponse(int error_code, std::string message, std::map<int, std::string> error_paths);
 		void		setVersion(std::string version);
 		std::string	getResponse() const;
@@ -72,7 +71,7 @@ class Response{
 		void		fileNotFound(void);
 		bool		checkFileAccess(std::string path, std::map<int, std::string> error_paths);
 		bool		checkRootAccess(std::string path);
-		bool		checkErrorFileAccess(std::string error_path);
+		bool		checkErrorFileAccess(int error_code, std::string message, std::string error_path);
 		std::string	_response;
 		std::string	_http_version;
 		int			_status_code;
