@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/08 09:59:24 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/06 19:13:47 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/07 15:11:38 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -171,16 +171,14 @@ int	Server::handleRequest(int client_fd){
 	response.setVersion(request.getVersion());
 	if (request.getErrorCode() == -1)
 	{
-		if (response.checkPortAndServerName(getConfig()) == false)
-			return (-1);
-
 		std::string path_to_file = request.getPathToFile();
 
 		if (router.routeRequest(path_to_file, loc, this->_config.locations) == true)
 		{
 			request.setPathToFile(path_to_file);
 
-			std::cout << request.getPathToFile() << std::endl;
+			std::cout << "Allowed method: " << loc.allowed_methods["GET"] << std::endl;
+			std::cout << "New path to file after Router function: " << request.getPathToFile() << std::endl;
 
 			response.handleDirective(request.getPathToFile(), loc, request, *this);
 		}
@@ -190,6 +188,7 @@ int	Server::handleRequest(int client_fd){
 	else
 	{
 		//std::cout << "Error in parsing" << std::endl;
+		std::cout << "Error code: " << request.getErrorCode() << std::endl;
 		response.errorResponse(request.getErrorCode(), request.getErrorMsg(), getConfig().error_page_paths);
 	}
 
@@ -206,7 +205,7 @@ int	Server::sendResponse(int client_fd){
 	int	len;
 
 	len = _requests[client_fd].length();
-	//std::cout << _requests[client_fd] << std::endl;
+	std::cout << _requests[client_fd] << std::endl;
 	rc = send(client_fd, _requests[client_fd].c_str(), len, 0);
 	if (rc == -1)
 	{
@@ -215,7 +214,10 @@ int	Server::sendResponse(int client_fd){
 		return (-1);
 	}
 	else
+	{
+		_requests.erase(client_fd);
 		return (0);
+	}
 }
 
 void	Server::closeServerSocket(void){
@@ -229,7 +231,6 @@ void	Server::closeClientSocket(int client_fd){
 
 	if (client_fd > 0)
 		close(client_fd);
-	_requests.erase(client_fd);
 }
 
 int	Server::getFd(void) const{

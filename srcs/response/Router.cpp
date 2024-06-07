@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 11:15:20 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/06 11:34:43 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/07 15:04:36 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,24 +34,27 @@ bool	Router::routeRequest(std::string& path_to_file, t_locations& loc, std::map<
 	}
 	else
 	{
+		int			allowed_number_of_redir;
 		std::string old_redir;
 		std::string new_redir = handleRedirection(path_to_file, loc.redirections);
 
+		allowed_number_of_redir = 0;
 		while (path_to_file != new_redir)
 		{
-			if (old_redir == new_redir)
+			if (allowed_number_of_redir > 10)
 				return (false);
-			else
-			{
-				path_to_file = new_redir;
-				loc = recursiveRouteRequest(path_to_file, routes);
-				old_redir = loc.redirections.begin()->second;
-				//std::cout << old_redir << std::endl;
-				new_redir = handleRedirection(path_to_file, loc.redirections);
-				//std::cout << new_redir << std::endl;
-			}
+			path_to_file = new_redir;
+			//std::string old_url_path = loc.redirections.begin()->first;
+			//std::string old_url_redir = loc.redirections.begin()->second;
+			loc = recursiveRouteRequest(path_to_file, routes);
+			//std::string new_url_path = loc.redirections.begin()->first;
+			//std::string new_url_redir = loc.redirections.begin()->second;
+			//if (old_url_path == new_url_redir && old_url_redir == new_url_path)
+			//	return (false);
+			new_redir = handleRedirection(path_to_file, loc.redirections);
+			allowed_number_of_redir++;
 		}
-		//std::cout << "New path after redirection: " << path_to_file << std::endl;
+		std::cout << "New path after redirection: " << path_to_file << std::endl;
 		return (true);
 	}
 }

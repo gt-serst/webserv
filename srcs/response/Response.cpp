@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:28:16 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/07 12:48:39 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/07 15:54:13 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,18 +29,10 @@ Response::Response(void){}
 
 Response::~Response(void){}
 
-bool	Response::checkPortAndServerName(t_server_scope config){
-
-	if (config.port < 0 || config.server_name.empty() == true)
-		return (false);
-	return (true);
-}
-
 bool	Response::checkContentType(std::string path){
 
 	std::ifstream input(path, std::ios::binary);
 
-	std::cout << "Path: " << path << std::endl;
 	if (input.is_open())
 	{
 		std::string buffer;
@@ -52,11 +44,9 @@ bool	Response::checkContentType(std::string path){
 		}
 		input.close();
 		std::string type = getContentType(stack);
-		std::cout << "Type: "<< type << std::endl;
-		if (type == "text/html" || type == "text/plain" || type == "image/png" || type == "image/jpeg" || type == "image/svg+xml")
+		if (type == "text/html" || type == "text/plain" || type == "image/png" || type == "image/jpeg" || type == "image/svg+xml" || type == "image/gif" || type == "video/mp4")
 			return (true);
 	}
-	std::cout << "<<< Wrong Type >>>" << std::endl;
 	return (false);
 }
 
@@ -65,61 +55,35 @@ void	Response::handleDirective(std::string path, t_locations loc, Request& req, 
 	std::string					rooted_path;
 	std::map<int, std::string>	rooted_error_paths;
 
-	// if (req.getRequestMethod() == "POST")
-	// 	uploadFile(path, loc.root_path, serv.getConfig().upload_path, req, serv);
-
 	rooted_error_paths = serv.getConfig().error_page_paths;
-	// for (std::map<int, std::string>::iterator it = rooted_error_paths.begin(); it != rooted_error_paths.end(); ++it)
-	// {
-	// 	if (attachRootToPath(it->second, loc.root_path) == false)
-	// 		return;
-	// 	std::cout << "Rooted error_path: " << it->second << std::endl;
-	// }
 	if (rootPaths(loc, path, serv.getConfig().upload_path, rooted_error_paths, req) == true)
 	{
-		//if (attachRootToPath(path, loc.root_path, serv.getConfig().error_page_paths) == true)
-		//{
-			// in the case of a POST request we should not check if the type file because we only accept file to be uploaded on the server, and the last part of the path refers to the file name to be created so obviously it does not yet exist
-			struct stat buf;
+		struct stat buf;
 
-			rooted_path = path;
-			if (stat(path.c_str(), &buf) != 0)
+		rooted_path = path;
+		if (stat(path.c_str(), &buf) != 0)
+			errorResponse(404, "Not Found : Stat Failed", rooted_error_paths);
+		else if (getFileType(buf) == 0)
+		{
+			if (rooted_path.find_last_of("/") != rooted_path.length() - 1)
+				rooted_path.insert(rooted_path.length(), "/");
+			if (findDefaultFile(rooted_path, loc, serv.getConfig().locations, req) == true)
 			{
-				std::cout << "Rooted_path when stat failed: " << rooted_path << std::endl;
-				errorResponse(404, "Not Found", rooted_error_paths);
+				if (attachRootToPath(rooted_path, loc.root_path) == true)
+					fileRoutine(rooted_path, rooted_error_paths, loc, req);
 			}
-			else if (getFileType(buf) == 0)
-			{
-				std::cout << "Dir" << std::endl;
-				if (rooted_path.find_last_of("/") != rooted_path.length() - 1)
-					rooted_path.insert(rooted_path.length(), "/");
-				if (findDefaultFile(rooted_path, loc, serv.getConfig().locations, req) == true)
-				{
-					if (attachRootToPath(rooted_path, loc.root_path) == true)
-					{	//check if the file is readable and that the content-type is accepted
-						fileRoutine(rooted_path, rooted_error_paths, loc, req);
-					}
-				}
-				else if (isMethodAllowed(loc, req) == true)
-					runDirMethod(rooted_path, rooted_error_paths, loc, req);
-				else
-				{
-					errorResponse(405, "Method Not Allowed", rooted_error_paths);
-					perror("405 Method Not Allowed");
-				}
-			}
-			else if (getFileType(buf) == 1)
-			{
-				std::cout << "File" << std::endl;
-				//check if the file is readable and that the content-type is accepted
-				fileRoutine(rooted_path, rooted_error_paths, loc, req);
-			}
+			else if (isMethodAllowed(loc, req) == true)
+				runDirMethod(rooted_path, rooted_error_paths, loc, req);
 			else
-			{
-				errorResponse(415, "Unsupported Media Type", rooted_error_paths);
-				perror("415 Unsupported Media Type");
-			}
-		//}
+				errorResponse(405, "Method Not Allowed : Directory", rooted_error_paths);
+		}
+		else if (getFileType(buf) == 1)
+		{
+			std::cout << "File" << std::endl;
+			fileRoutine(rooted_path, rooted_error_paths, loc, req);
+		}
+		else
+			errorResponse(415, "Unsupported Media Type : Not a directory nor a file", rooted_error_paths);
 	}
 	rooted_error_paths.clear();
 }
@@ -130,7 +94,6 @@ bool	Response::rootPaths(t_locations loc, std::string& path, std::string upload_
 	{
 		if (attachRootToPath(it->second, loc.root_path) == false)
 			return (false);
-		std::cout << "Rooted error_path: " << it->second << std::endl;
 	}
 	if (req.getRequestMethod() == "POST")
 	{
@@ -138,15 +101,11 @@ bool	Response::rootPaths(t_locations loc, std::string& path, std::string upload_
 
 		if (attachRootToPath(upload_path, loc.root_path) == true)
 		{
-			//check if the file is readable and that the content-type is accepted, but for a POST method the content will be in the body, lets see how the browser will send a media type
 			rooted_upload_path = upload_path;
 			if (isMethodAllowed(loc, req) == true)
 				uploadFile(path, rooted_upload_path, rooted_error_paths, req);
 			else
-			{
-				errorResponse(405, "Method Not Allowed", rooted_error_paths);
-				perror("405 Method Not Allowed");
-			}
+				errorResponse(405, "Method Not Allowed : File", rooted_error_paths);
 		}
 		return (false);
 	}
@@ -163,9 +122,7 @@ bool	Response::attachRootToPath(std::string& path, std::string root){
 		{
 			if (root[root.length() - 1] == '/')
 				root.erase(root.length() - 1, 1);
-			std::cout << "Path: " << path << std::endl;
 			path.insert(0, root);
-			std::cout << "Path rooted: " << path << std::endl;
 			return (true);
 		}
 	}
@@ -193,11 +150,8 @@ bool	Response::findDefaultFile(std::string& path, t_locations& loc, std::map<std
 			std::string tmp = path;
 
 			tmp.append(loc.default_path[i]);
-			std::cout << tmp << std::endl;
-			// if (checkFileAccess(path, error_paths) == true)
 			if (access(tmp.c_str(), F_OK) == 0)
 			{
-				std::string	default_file;
 				std::string new_path;
 
 				new_path = req.getPathToFile();
@@ -205,9 +159,7 @@ bool	Response::findDefaultFile(std::string& path, t_locations& loc, std::map<std
 					new_path.insert(new_path.length(), "/");
 				req.setPathToFile(new_path);
 				path = req.getPathToFile().append(loc.default_path[i]);
-				default_file = loc.default_path[i].insert(0, "/");
-				std::cout << default_file << std::endl;
-				if (router.routeRequest(default_file, loc, routes) == true)
+				if (router.routeRequest(path, loc, routes) == true)
 				{
 					req.setPathToFile(path);
 					return (true);
@@ -224,23 +176,15 @@ void	Response::fileRoutine(std::string path, std::map<int, std::string> rooted_e
 	{
 		if (checkContentType(path) == true)
 		{
-			//détecter si l'extenssion du fichier demandé est un php, py etc pour lancer les bonnes CGI, itérer sur les chemins CGI pour lancer le script correspondant
 			if (findCGI(req._server.getConfig().cgi_path) == true && isMethodAllowed(loc, req) == true)
 				std::cout << "Send CGI path and run it" << std::endl;
 			else if (isMethodAllowed(loc, req) == true)
 				runFileMethod(path, rooted_error_paths, req);
 			else
-			{
-				errorResponse(405, "Method Not Allowed", rooted_error_paths);
-				perror("405 Method Not Allowed");
-			}
+				errorResponse(405, "Method Not Allowed : File", rooted_error_paths);
 		}
 		else
-		{
-			errorResponse(415, "Unsupported Media Type", rooted_error_paths);
-			perror("415 Unsupported Media Type");
-		}
-
+			errorResponse(415, "Unsupported Media Type : File", rooted_error_paths);
 	}
 }
 
@@ -269,10 +213,10 @@ void	Response::runDirMethod(std::string path, std::map<int, std::string> rooted_
 		if (loc.auto_index == true)
 			isAutoIndex(path, rooted_error_paths, loc, req);
 		else
-			errorResponse(500, "Internal Server Error", rooted_error_paths);
+			errorResponse(500, "Internal Server Error : Method Unknown", rooted_error_paths);
 	}
 	else
-		errorResponse(405, "Method Not Allowed", rooted_error_paths);
+		errorResponse(405, "Method Not Allowed : Directory", rooted_error_paths);
 }
 
 void	Response::isAutoIndex(std::string path, std::map<int, std::string> rooted_error_paths, t_locations loc, Request& req){
@@ -281,12 +225,8 @@ void	Response::isAutoIndex(std::string path, std::map<int, std::string> rooted_e
 	struct dirent	*de;
 	std::string		dir_list;
 
-	// if (access(path.c_str(), W_OK) == -1)
-	// 	errorResponse(403, "Forbidden", error_paths);
-	std::cout << "isAutoIndex function with path as dir: " << path << std::endl;
 	if (checkFileAccess(path, rooted_error_paths) == true)
 	{
-		std::cout << "Try to opendir" << std::endl;
 		if ((dr = opendir(path.c_str())) != NULL)
 		{
 			if (loc.auto_index == true)
@@ -591,7 +531,9 @@ void	Response::uploadFileResponse(void){
 void	Response::errorResponse(int error_code, std::string message, std::map<int, std::string> error_paths){
 
 	std::string error_path;
+	int	tmp;
 
+	tmp = error_code;
 	std::cout << error_code << std::endl;
 	error_path = matchErrorCodeWithPage(error_code, error_paths);
 	if (error_path.empty() == true)
@@ -602,7 +544,7 @@ void	Response::errorResponse(int error_code, std::string message, std::map<int, 
 	}
 	std::cout << "Error_path in errorResponse: " << error_path << std::endl;
 	//check if the file is readable and that the content-type is accepted
-	if (checkErrorFileAccess(error_path) == true)
+	if (checkErrorFileAccess(error_code, message, error_path) == true)
 	{
 		if (checkContentType(error_path) == true)
 		{
@@ -631,7 +573,10 @@ void	Response::errorResponse(int error_code, std::string message, std::map<int, 
 				fileNotFound();
 		}
 		else
-			errorResponse(415, "Unsupported Media Type", error_paths);
+		{
+			error_paths.clear();
+			errorResponse(error_code, message, error_paths);
+		}
 	}
 }
 
@@ -741,36 +686,14 @@ bool	Response::checkRootAccess(std::string path){
 	return (true);
 }
 
-bool	Response::checkErrorFileAccess(std::string error_path){
+bool	Response::checkErrorFileAccess(int error_code, std::string message, std::string error_path){
 
 	struct stat buf;
 
-	if (stat(error_path.c_str(), &buf) != 0)
+	if (stat(error_path.c_str(), &buf) != 0 || access(error_path.c_str(), R_OK) != 0)
 	{
-		if (errno == ENOENT)
-		{
-			createHtmlErrorPage(404, "Not Found");
-			generateResponse();
-		}
-		else
-		{
-			createHtmlErrorPage(500, "Internal Server Error");
-			generateResponse();
-		}
-		return (false);
-	}
-	if (access(error_path.c_str(), R_OK) != 0)
-	{
-		if (errno == EACCES)
-		{
-			createHtmlErrorPage(403, "Forbidden");
-			generateResponse();
-		}
-		else
-		{
-			createHtmlErrorPage(500, "Internal Server Error");
-			generateResponse();
-		}
+		createHtmlErrorPage(error_code, message);
+		generateResponse();
 		return (false);
 	}
 	return (true);
