@@ -105,9 +105,9 @@ class Request
 		std::string getIp() const;
 		int			getErrorCode() const;
 		int			getPort() const;
+		int			getLen() const;
 		std::string getQuerystr() const;
 		Server _server;
-		int getLen();
 };
 
 #endif
