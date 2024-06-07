@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/07 11:04:51 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/07 16:11:08 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/07 18:05:01 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -114,6 +114,8 @@ void	ServerManager::serverRoutine(void){
 						if (rc == 0)
 							_ready.push_back(it->first);
 					}
+					else if (rc == 1) // if still buffer to read
+						break;
 					else if (rc == -1)
 					{
 						FD_CLR(it->first, &_fd_set);

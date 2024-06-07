@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/08 09:59:24 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/07 16:10:28 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/07 18:15:31 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -138,6 +138,24 @@ int	Server::readClientSocket(int client_fd){
 		perror("Recv failed");
 		return (-1);
 	}
+	std::cout << "Printing stack" << std::endl;
+	std::cout << stack << std::endl;
+	//on return 1 tant que pas fini ou si erreur
+	//creer un state en parallele pour cette fonction
+	//Request request;
+	//creer getState
+	//if/else ou switch
+	//if State == start
+	// 	First line parsing
+	//else if state == first_line_ok
+	//	header parsing
+	//else if state == headers_ok
+	//	check headers return 0 ou en fonction
+	//else if state == parsebody/chunk/multiform
+	//	parse body + check de validité et return 1
+	// Call to first line parsing function
+	// Headers parsing
+	// Call to headers parsing function
 	_requests[client_fd] = stack;
 	return (0);
 }
