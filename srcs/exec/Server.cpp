@@ -199,6 +199,7 @@ int	Server::sendResponse(int client_fd){
 	int	len;
 
 	len = _requests[client_fd].length();
+	std::cout << "Response is : " << std::endl;
 	std::cout << _requests[client_fd] << std::endl;
 	rc = send(client_fd, _requests[client_fd].c_str(), len, 0);
 	if (rc == -1)

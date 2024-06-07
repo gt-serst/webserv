@@ -124,7 +124,7 @@ bool	Response::findIndexFile(std::string& path, t_locations& loc, std::map<std::
 			std::string tmp = path;
 
 			tmp.append(loc.default_path[i]);
-			std::cout << tmp << std::endl;
+			//std::cout << tmp << std::endl;
 			// if (checkFileAccess(path, error_paths) == true)
 			if (access(tmp.c_str(), F_OK) == 0)
 			{
@@ -137,7 +137,7 @@ bool	Response::findIndexFile(std::string& path, t_locations& loc, std::map<std::
 				req.setPathToFile(new_path);
 				path = req.getPathToFile().append(loc.default_path[i]);
 				index = loc.default_path[i].insert(0, "/");
-				std::cout << index << std::endl;
+				//std::cout << index << std::endl;
 				loc = router.routeRequest(index, routes);
 				req.setPathToFile(path);
 				return (true);
@@ -202,7 +202,7 @@ void	Response::isAutoIndex(std::string path, t_locations loc, Request& req, std:
 
 	// if (access(path.c_str(), W_OK) == -1)
 	// 	errorResponse(403, "Forbidden", error_paths);
-	std::cout << path << std::endl;
+	//std::cout << path << std::endl;
 	if (checkFileAccess(path, error_paths) == true)
 	{
 		if ((dr = opendir(path.c_str())) != NULL)

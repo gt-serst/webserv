@@ -11,14 +11,15 @@ bool Request::getBoundary()
 {
 	std::string content = getHeader("Content-Type");
 	if (content.empty())
-		return ;
+		return 0;
 	if (_headers["Content-Type"].find("multipart/form-data") != std::string::npos)
 	{
 		size_t pos = _headers["Content-Type"].find("boundary=", 0);
 		if (pos != std::string::npos)
-			_boundary = _headers["Content-Type"].substr(pos + 9, __headers["Content-Type"].size());
+			_boundary = _headers["Content-Type"].substr(pos + 9, _headers["Content-Type"].size());
 		multiform = true;
 	}
+	return 1;
 }
 
 bool Request::handle_query()
@@ -186,6 +187,12 @@ void	Request::validity_checks() //
 			_error_msg = "Body length does not match with Content-Length header";
 			return ;
 		}
+		if (_body_len > _server.getConfig().max_body_size || std::stoi(hlen) > _server.getConfig().max_body_size)
+		{
+			_error_code = 413;
+			_error_msg = "Request entity too large, the maximum size is ->  " + std::to_string(_server.getConfig().max_body_size);
+			return ;
+		}
 		if (getHeader("Content-Type").empty())
 		{
 			_error_code = 400;
@@ -344,6 +351,8 @@ Request::~Request()
 	// 	std::cout << "Error " << _error_code << " " << _error_msg << std::endl;
 	// 	return ;
 	// }
+	std::cout << "Printing full request" << std::endl;
+	std::cout << _request << std::endl;
 	std::cout << "Printing request params" << std::endl;
 	std::cout << "Method == " << _request_method << std::endl;
 	std::cout << "Path == " << _path_to_file << std::endl;
@@ -360,6 +369,7 @@ Request::~Request()
 	{
         std::cout << it->first << " = " << it->second << std::endl;
     }
+	std::cout << "Error " << _error_code << " " << _error_msg << std::endl;
 	std::cout << "Request destroyed" << std::endl;
 }
 
