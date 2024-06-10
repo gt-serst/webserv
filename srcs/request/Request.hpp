@@ -53,6 +53,15 @@ enum state //state is current state so the name is what we previsly validated ||
 	R_done
 };
 
+enum R_state
+{
+	START,
+	FIRSTLINE,
+	HEADERS,
+	BODY,
+	DONE
+}
+
 
 class Request
 {
@@ -85,7 +94,7 @@ class Request
 		void manage_chunks(char *chunk);
 		bool	handle_query();
 		bool	getBoundary();
-		void	parse_multiform(std::stringstream& ss, std::streampos startpos);
+		//void	parse_multiform(std::stringstream& ss, std::streampos startpos);
 
 	public:
 		Request();
