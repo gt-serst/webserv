@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/08 09:59:24 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/10 10:39:41 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/10 11:52:30 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -132,10 +132,13 @@ int	Server::readClientSocket(int client_fd){
 		buffer[rc] = '\0';
 		stack += buffer;
 	}
-	if (rc < 0 && errno != EWOULDBLOCK)
+	if (rc == 0 || rc == -1)
 	{
 		this->closeClientSocket(client_fd);
-		perror("Recv failed");
+		if (!rc)
+			perror("Nothing more to read");
+		else
+			perror("Recv failed");
 		return (-1);
 	}
 	std::cout << "Printing stack" << std::endl;
@@ -182,6 +185,8 @@ int	Server::handleRequest(int client_fd){
 		{
 			request.setPathToFile(path_to_file);
 
+			std::cout << "Path to file: " << request.getPathToFile() << std::endl;
+
 			response.handleDirective(request.getPathToFile(), loc, request, *this);
 		}
 		else
@@ -202,11 +207,26 @@ int	Server::sendResponse(int client_fd){
 
 	len = _requests[client_fd].length();
 	rc = send(client_fd, _requests[client_fd].c_str(), len, 0);
-	if (rc == -1)
+	// if (rc == -1)
+	// {
+	// 	this->closeClientSocket(client_fd);
+	// 	perror("Send() failed");
+	// 	return (-1);
+	// }
+	if (rc == 0 || rc == -1)
 	{
-		this->closeClientSocket(client_fd);
-		perror("Send() failed");
-		return (-1);
+		if (!rc)
+		{
+			_requests.erase(client_fd);
+			perror("Nothing more to send");
+			return (0);
+		}
+		else
+		{
+			this->closeClientSocket(client_fd);
+			perror("Send() failed");
+			return (-1);
+		}
 	}
 	else
 	{

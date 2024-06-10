@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 11:15:20 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/07 16:11:57 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/10 11:38:12 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -44,6 +44,7 @@ bool	Router::routeRequest(std::string& path_to_file, t_locations& loc, std::map<
 			new_redir = handleRedirection(path_to_file, loc.redirections);
 			allowed_number_of_redir++;
 		}
+		std::cout << "New redir: " << new_redir << std::endl;
 		return (true);
 	}
 }

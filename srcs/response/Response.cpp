@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:28:16 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/07 16:08:07 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/10 11:36:15 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -278,6 +278,8 @@ void	Response::downloadFile(std::string path, std::map<int, std::string> error_p
 
 void	Response::uploadFile(std::string path, std::string upload_path, std::map<int, std::string> rooted_error_paths, Request& req){
 
+	std::cout << "Path: " << path << std::endl;
+	std::cout << "Rooted upload path: " << upload_path << std::endl;
 	if (upload_path[upload_path.length() - 1] == '/' && path[0] == '/')
 		path.erase(0, 1);
 	path.insert(0, upload_path);
