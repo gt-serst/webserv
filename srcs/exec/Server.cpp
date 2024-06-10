@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/08 09:59:24 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/07 18:15:31 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/10 10:39:41 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -140,6 +140,7 @@ int	Server::readClientSocket(int client_fd){
 	}
 	std::cout << "Printing stack" << std::endl;
 	std::cout << stack << std::endl;
+	_requests[client_fd] += stack;
 	//on return 1 tant que pas fini ou si erreur
 	//creer un state en parallele pour cette fonction
 	//Request request;
@@ -156,7 +157,6 @@ int	Server::readClientSocket(int client_fd){
 	// Call to first line parsing function
 	// Headers parsing
 	// Call to headers parsing function
-	_requests[client_fd] = stack;
 	return (0);
 }
 
@@ -226,6 +226,7 @@ void	Server::closeClientSocket(int client_fd){
 
 	if (client_fd > 0)
 		close(client_fd);
+	_requests.erase(client_fd);
 }
 
 int	Server::getFd(void) const{
