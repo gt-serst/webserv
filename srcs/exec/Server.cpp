@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/08 09:59:24 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/10 11:52:30 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/10 16:26:35 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -119,31 +119,76 @@ int	Server::readClientSocket(int client_fd){
 	std::string	stack;
 
 	rc = recv(client_fd, buffer, sizeof(buffer) - 1, 0);
-	if (rc == 0)
+	if (rc == 0 || rc == -1)
 	{
-		this->closeClientSocket(client_fd);
-		perror("Favicon cookies read");
+		if (!rc)
+		{
+			perror("Nothing more to read");
+		}
+		else
+		{
+			this->closeClientSocket(client_fd);
+			perror("Recv failed");
+		}
 		return (-1);
 	}
 	buffer[rc] = '\0';
 	stack += buffer;
-	while (0 < (rc = recv(client_fd, buffer, sizeof(buffer) - 1, 0)))
-	{
-		buffer[rc] = '\0';
-		stack += buffer;
-	}
-	if (rc == 0 || rc == -1)
-	{
-		this->closeClientSocket(client_fd);
-		if (!rc)
-			perror("Nothing more to read");
-		else
-			perror("Recv failed");
-		return (-1);
-	}
-	std::cout << "Printing stack" << std::endl;
-	std::cout << stack << std::endl;
+	// if (rc == 0)
+	// {
+	// 	this->closeClientSocket(client_fd);
+	// 	perror("Favicon cookies read");
+	// 	return (-1);
+	// }
+	// buffer[rc] = '\0';
+	// stack += buffer;
+	// while (0 < (rc = recv(client_fd, buffer, sizeof(buffer) - 1, 0)))
+	// {
+	// 	buffer[rc] = '\0';
+	// 	stack += buffer;
+	// }
+	// if (rc == -1)
+	// {
+	// 	this->closeClientSocket(client_fd);
+	// 	perror("Recv failed");
+	// 	return (-1);
+	// }
 	_requests[client_fd] += stack;
+	//std::cout << "Printing stack" << std::endl;
+	//std::cout << _requests[client_fd] << std::endl;
+	size_t i = _requests[client_fd].find("\r\n\r\n");
+	//std::cout << i << std::endl;
+	// read the content header line by header line
+	if (i != std::string::npos)
+	{
+		size_t pos = _requests[client_fd].find("Content-Length: ");
+		if (pos != std::string::npos)
+		{
+			size_t end_of_line = _requests[client_fd].find("\r\n", pos);
+			if (end_of_line != std::string::npos)
+			{
+				// Extraire la valeur de Content-Length
+				size_t length_start = pos + 16; // "Content-Length: " est de 16 caractères
+				size_t content_length = std::stoi(_requests[client_fd].substr(length_start, end_of_line - length_start));
+
+				// Vérifier si toute la requête a été reçue
+				if (_requests[client_fd].size() >= i + content_length + 4)
+				{
+					std::cout << "La requête est complète!" << std::endl;
+					return 0; // La requête complète a été reçue
+				}
+				else
+				{
+					std::cout << "La requête n'est pas complète!" << std::endl;
+					return 1; // La requête n'est pas encore complète
+				}
+			}
+		}
+		return 0; // Content-Length non trouvé ou fin de ligne non trouvée
+	}
+	std::cout << "J'ai tout lu en une fois!" << std::endl;
+	return (1);
+
 	//on return 1 tant que pas fini ou si erreur
 	//creer un state en parallele pour cette fonction
 	//Request request;
@@ -160,7 +205,6 @@ int	Server::readClientSocket(int client_fd){
 	// Call to first line parsing function
 	// Headers parsing
 	// Call to headers parsing function
-	return (0);
 }
 
 int	Server::handleRequest(int client_fd){
@@ -207,6 +251,7 @@ int	Server::sendResponse(int client_fd){
 
 	len = _requests[client_fd].length();
 	rc = send(client_fd, _requests[client_fd].c_str(), len, 0);
+	//std::cout << "/////////////////////// MMMMH J'AI MANGÉ UNE REQUÊTE ////////////////////////" << std::endl;
 	// if (rc == -1)
 	// {
 	// 	this->closeClientSocket(client_fd);
