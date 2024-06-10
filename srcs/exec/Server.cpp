@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/08 09:59:24 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/10 16:26:35 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/10 17:24:29 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -154,8 +154,8 @@ int	Server::readClientSocket(int client_fd){
 	// 	return (-1);
 	// }
 	_requests[client_fd] += stack;
-	//std::cout << "Printing stack" << std::endl;
-	//std::cout << _requests[client_fd] << std::endl;
+	std::cout << "Printing stack" << std::endl;
+	std::cout << _requests[client_fd] << std::endl;
 	size_t i = _requests[client_fd].find("\r\n\r\n");
 	//std::cout << i << std::endl;
 	// read the content header line by header line
@@ -175,16 +175,16 @@ int	Server::readClientSocket(int client_fd){
 				if (_requests[client_fd].size() >= i + content_length + 4)
 				{
 					std::cout << "La requête est complète!" << std::endl;
-					return 0; // La requête complète a été reçue
+					return (0); // La requête complète a été reçue
 				}
 				else
 				{
 					std::cout << "La requête n'est pas complète!" << std::endl;
-					return 1; // La requête n'est pas encore complète
+					return (1); // La requête n'est pas encore complète
 				}
 			}
 		}
-		return 0; // Content-Length non trouvé ou fin de ligne non trouvée
+		return (0); // Content-Length non trouvé ou fin de ligne non trouvée
 	}
 	std::cout << "J'ai tout lu en une fois!" << std::endl;
 	return (1);
@@ -249,6 +249,8 @@ int	Server::sendResponse(int client_fd){
 	int	rc;
 	int	len;
 
+	std::cout << "Response" << std::endl;
+	std::cout << _requests[client_fd] << std::endl;
 	len = _requests[client_fd].length();
 	rc = send(client_fd, _requests[client_fd].c_str(), len, 0);
 	//std::cout << "/////////////////////// MMMMH J'AI MANGÉ UNE REQUÊTE ////////////////////////" << std::endl;
