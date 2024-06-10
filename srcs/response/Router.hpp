@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Router.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: geraudtserstevens <geraudtserstevens@st    +#+  +:+       +#+        */
+/*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 11:21:28 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/05/30 23:10:18 by geraudtsers      ###   ########.fr       */
+/*   Updated: 2024/06/06 10:53:47 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,7 +23,7 @@ class Router{
 	public:
 		Router(void);
 		~Router(void);
-		t_locations	routeRequest(std::string& path_to_file, std::map<std::string, t_locations> routes);
+		bool	routeRequest(std::string& path_to_file, t_locations& loc, std::map<std::string, t_locations> routes);
 
 	private:
 		t_locations	recursiveRouteRequest(std::string tmp, std::map<std::string, t_locations> routes);

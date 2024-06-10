@@ -64,7 +64,7 @@
             const file = fileInput.files[0];
             formData.append('file', file);
 
-            fetch('/upload-file', {
+            fetch('/upload', {
                 method: 'POST',
                 body: formData
             })
