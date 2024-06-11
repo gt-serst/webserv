@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/08 09:59:24 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/11 14:45:55 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/11 17:26:23 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -232,17 +232,18 @@ int	Server::handleRequest(int client_fd){
 	{
 		std::string path_to_file = request.getPathToFile();
 
-		if (router.routeRequest(path_to_file, loc, this->_config.locations, response) == true)
+		router.routeRequest(path_to_file, loc, this->_config.locations, response);
+		std::cout << "Redir happened: " << response.getRedir() << std::endl;
+		if (response.getRedir() == true)
+			response.generateResponse();
+		else
 		{
-			std::cout << "Redir happened: " << response.getRedir() << std::endl;
 			request.setPathToFile(path_to_file);
 
 			std::cout << "Path to file: " << request.getPathToFile() << std::endl;
 
 			response.handleDirective(request.getPathToFile(), loc, request, *this);
 		}
-		else
-			response.errorResponse(301, "The page isn't redirecting properly", getConfig().error_page_paths);
 	}
 	else
 		response.errorResponse(request.getErrorCode(), request.getErrorMsg(), getConfig().error_page_paths);

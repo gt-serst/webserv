@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:12:17 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/11 15:16:26 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/11 16:04:32 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,6 +38,7 @@ class Response{
 		Response(void);
 		~Response(void);
 		void		handleDirective(std::string path, t_locations loc, Request& req, Server& serv);
+		void		generateResponse(void);
 		void		errorResponse(int error_code, std::string message, std::map<int, std::string> error_paths);
 		void		setVersion(std::string version);
 		void		setLocation(std::string location);
@@ -69,7 +70,6 @@ class Response{
 		std::string	getContentType(std::string stack);
 		t_file_type	stringToEnum(std::string const& str);
 		void		uploadFileResponse(void);
-		void		generateResponse(void);
 		std::string	matchErrorCodeWithPage(int error_code, std::map<int, std::string> error_paths);
 		void		createHtmlErrorPage(int error_code, std::string message);
 		void		fileNotFound(void);

@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:28:16 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/11 15:23:40 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/11 17:37:56 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -62,20 +62,21 @@ void	Response::handleDirective(std::string path, t_locations loc, Request& req, 
 		struct stat buf;
 
 		rooted_path = path;
-		if (stat(path.c_str(), &buf) != 0)
+		std::cout << "Rooted path: " << rooted_path << std::endl;
+		if (stat(rooted_path.c_str(), &buf) != 0)
 			errorResponse(404, "Not Found : Stat Failed", rooted_error_paths);
 		else if (getFileType(buf) == 0)
 		{
 			if (rooted_path[rooted_path.length() - 1] != '/')
 				rooted_path.append("/");
-			if (findDefaultFile(rooted_path, loc, serv.getConfig().locations, req) == true)
+			if (findDefaultFile(rooted_path, loc, serv.getConfig().locations, req) == true && getRedir() == false)
 			{
 				if (attachRootToPath(rooted_path, loc.root_path) == true)
 					fileRoutine(rooted_path, rooted_error_paths, loc, req, serv);
 			}
-			else if (isMethodAllowed(loc, req) == true)
+			else if (isMethodAllowed(loc, req) == true && getRedir() == false)
 				runDirMethod(rooted_path, rooted_error_paths, loc, req);
-			else
+			else if (getRedir() == false)
 				errorResponse(405, "Method Not Allowed : Directory", rooted_error_paths);
 		}
 		else if (getFileType(buf) == 1)
@@ -106,10 +107,10 @@ bool	Response::rootPaths(t_locations loc, std::string& path, std::string upload_
 		{
 			rooted_upload_path = upload_path;
 
-			if (upload_path[0] != '/')
-				upload_path.insert(0, "/");
-			if (upload_path[upload_path.length() - 1] == '/')
-				upload_path.erase(upload_path.length() - 1, 1);
+			// if (rooted_upload_path[0] != '/')
+			// 	rooted_upload_path.insert(0, "/");
+			if (rooted_upload_path[rooted_upload_path.length() - 1] == '/')
+				rooted_upload_path.erase(rooted_upload_path.length() - 1, 1);
 			if (isMethodAllowed(loc, req) == true)
 			{
 				std::map<std::string, t_multi> multiform;
@@ -131,8 +132,8 @@ bool	Response::attachRootToPath(std::string& path, std::string root){
 	{
 		if (checkRootAccess(root) == true)
 		{
-			if (root[0] != '/')
-				root.insert(0, "/");
+			// if (root[0] != '/')
+			// 	root.insert(0, "/");
 			if (root[root.length() - 1] == '/')
 				root.erase(root.length() - 1, 1);
 			path.insert(0, root);
@@ -172,11 +173,12 @@ bool	Response::findDefaultFile(std::string& rooted_path, t_locations& loc, std::
 					new_path.append("/");
 				req.setPathToFile(new_path);
 				rooted_path = req.getPathToFile().append(loc.default_path[i]);
-				if (router.routeRequest(rooted_path, loc, routes, *this) == true)
-				{
+				router.routeRequest(rooted_path, loc, routes, *this);
+				if (getRedir() == true)
+					generateResponse();
+				else
 					req.setPathToFile(rooted_path);
-					return (true);
-				}
+				return (true);
 			}
 		}
 	}
@@ -410,10 +412,7 @@ void Response::autoIndexResponse(std::string rooted_path, std::string dir_list, 
 	}
 
 	this->_body += "</body>\n</html>";
-	if (this->_redir == true)
-		this->_status_code = 302;
-	else
-		this->_status_code = 200;
+	this->_status_code = 200;
 	this->_status_message = "OK";
 	this->_content_type = "text/html";
 	this->_content_len = this->_body.length();
@@ -439,20 +438,14 @@ std::string Response::getCharCount(struct stat buf) {
 
 void	Response::deleteResponse(void){
 
-	if (this->_redir == true)
-		this->_status_code = 302;
-	else
-		this->_status_code = 200;
+	this->_status_code = 200;
 	this->_status_message = "OK";
 	generateResponse();
 }
 
 void	Response::downloadFileResponse(std::string stack){
 
-	if (this->_redir == true)
-		this->_status_code = 302;
-	else
-		this->_status_code = 200;
+	this->_status_code = 200;
 	this->_status_message = "OK";
 	this->_content_type = getContentType(stack);
 	this->_content_len = stack.length();
@@ -521,10 +514,7 @@ t_file_type	Response::stringToEnum(std::string const& str){
 
 void	Response::uploadFileResponse(void){
 
-	if (this->_redir == true)
-		this->_status_code = 302;
-	else
-		this->_status_code = 201;
+	this->_status_code = 201;
 	this->_status_message = "Created";
 	generateResponse();
 }
@@ -591,13 +581,13 @@ std::string	Response::matchErrorCodeWithPage(int error_code, std::map<int, std::
 void	Response::createHtmlErrorPage(int error_code, std::string message){
 
 	int			i;
-	int			integer[] = {301, 400, 403, 404, 405, 413, 415, 500};
-	std::string	error_headers[] = {"An error occurred.", "The server could not understand the request due to invalid syntax.", "You do not have permission to access this resource on this server.", "The requested resource could not be found on this server.",
+	int			integer[] = {400, 403, 404, 405, 413, 415, 500};
+	std::string	error_headers[] = {"The server could not understand the request due to invalid syntax.", "You do not have permission to access this resource on this server.", "The requested resource could not be found on this server.",
 	"The method specified in the request is not allowed for the resource identified by the request URI.", "The request entity is larger than the server is willing or able to process.", "The media format of the requested data is not supported by the server.",
 	"The server encountered an internal error or misconfiguration and was unable to complete your request."};
 
 	i = 0;
-	while (i < 8 && error_code != integer[i])
+	while (i < 7 && error_code != integer[i])
 		i++;
 	std::string header = error_headers[i];
 
@@ -682,18 +672,27 @@ void	Response::generateResponse(void){
 	std::string	headers;
 	std::string	body;
 
-	first_line = std::string("HTTP/") +\
-			this->_http_version + std::string(" ") +\
-			std::to_string(this->_status_code) + std::string(" ") +\
-			this->_status_message;
-	if (this->_redir == true && (this->_status_message == "OK" || this->_status_message == "Created"))
+	if (this->_redir == true)
+	{
+		first_line = std::string("HTTP/") +\
+				this->_http_version + std::string(" ") +\
+				std::to_string(302) + std::string(" ") +\
+				std::string("OK");
 		headers += std::string("Location: ") + this->_location + std::string("\r\n");
-	if (this->_content_type.empty() == false)
-		headers += std::string("Content-Type: ") + this->_content_type + std::string("\r\n");
-	if (this->_content_len != -1)
-		headers += std::string("Content-Length: ") + std::to_string(this->_content_len) + std::string("\r\n");
-	if (this->_body.empty() == false)
-		body += this->_body;
+	}
+	else
+	{
+		first_line = std::string("HTTP/") +\
+				this->_http_version + std::string(" ") +\
+				std::to_string(this->_status_code) + std::string(" ") +\
+				this->_status_message;
+		if (this->_content_type.empty() == false)
+			headers += std::string("Content-Type: ") + this->_content_type + std::string("\r\n");
+		if (this->_content_len != -1)
+			headers += std::string("Content-Length: ") + std::to_string(this->_content_len) + std::string("\r\n");
+		if (this->_body.empty() == false)
+			body += this->_body;
+	}
 	this->_response = first_line + std::string("\r\n") + headers + std::string("\r\n") + body + std::string("\r\n\r\n");
 }
 
