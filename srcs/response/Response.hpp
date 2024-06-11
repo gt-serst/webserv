@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:12:17 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/11 11:57:05 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/11 15:16:26 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,14 +40,18 @@ class Response{
 		void		handleDirective(std::string path, t_locations loc, Request& req, Server& serv);
 		void		errorResponse(int error_code, std::string message, std::map<int, std::string> error_paths);
 		void		setVersion(std::string version);
-		std::string	getResponse() const;
+		void		setLocation(std::string location);
+		void		setRedir(bool redir);
+		std::string	getResponse(void) const;
+		std::string	getLocation(void) const;
+		bool		getRedir(void) const;
 
 	private:
 		bool		rootPaths(t_locations loc, std::string& path, std::string upload_path, std::map<int, std::string>& rooted_error_paths, Request& req);
 		bool		attachRootToPath(std::string& path, std::string root);
 		int			getFileType(struct stat buf);
 		bool		findDefaultFile(std::string& path, t_locations& loc, std::map<std::string, t_locations> routes, Request& req);
-		void		fileRoutine(std::string path, std::map<int, std::string> rooted_error_paths, t_locations loc, Request& req);
+		void		fileRoutine(std::string path, std::map<int, std::string> rooted_error_paths, t_locations loc, Request& req, Server& serv);
 		bool		isMethodAllowed(t_locations loc, Request& req);
 		void		runDirMethod(std::string path, std::map<int, std::string> rooted_error_paths, t_locations loc, Request& req);
 		void		isAutoIndex(std::string path, std::map<int, std::string> rooted_error_paths, t_locations loc, Request& req);
@@ -76,9 +80,11 @@ class Response{
 		std::string	_http_version;
 		int			_status_code;
 		std::string	_status_message;
+		std::string	_location;
 		std::string	_content_type;
 		int			_content_len;
 		std::string	_body;
+		bool		_redir;
 };
 
 #endif

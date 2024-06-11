@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:28:16 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/11 12:38:20 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/11 15:20:44 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -55,6 +55,7 @@ void	Response::handleDirective(std::string path, t_locations loc, Request& req, 
 	std::string					rooted_path;
 	std::map<int, std::string>	rooted_error_paths;
 
+	this->_content_len = -1;
 	rooted_error_paths = serv.getConfig().error_page_paths;
 	if (rootPaths(loc, path, serv.getConfig().upload_path, rooted_error_paths, req) == true)
 	{
@@ -70,7 +71,7 @@ void	Response::handleDirective(std::string path, t_locations loc, Request& req, 
 			if (findDefaultFile(rooted_path, loc, serv.getConfig().locations, req) == true)
 			{
 				if (attachRootToPath(rooted_path, loc.root_path) == true)
-					fileRoutine(rooted_path, rooted_error_paths, loc, req);
+					fileRoutine(rooted_path, rooted_error_paths, loc, req, serv);
 			}
 			else if (isMethodAllowed(loc, req) == true)
 				runDirMethod(rooted_path, rooted_error_paths, loc, req);
@@ -78,7 +79,7 @@ void	Response::handleDirective(std::string path, t_locations loc, Request& req, 
 				errorResponse(405, "Method Not Allowed : Directory", rooted_error_paths);
 		}
 		else if (getFileType(buf) == 1)
-			fileRoutine(rooted_path, rooted_error_paths, loc, req);
+			fileRoutine(rooted_path, rooted_error_paths, loc, req, serv);
 		else
 			errorResponse(415, "Unsupported Media Type : Not a directory nor a file", rooted_error_paths);
 	}
@@ -167,7 +168,7 @@ bool	Response::findDefaultFile(std::string& rooted_path, t_locations& loc, std::
 					new_path.append("/");
 				req.setPathToFile(new_path);
 				rooted_path = req.getPathToFile().append(loc.default_path[i]);
-				if (router.routeRequest(rooted_path, loc, routes) == true)
+				if (router.routeRequest(rooted_path, loc, routes, *this) == true)
 				{
 					req.setPathToFile(rooted_path);
 					return (true);
@@ -178,8 +179,9 @@ bool	Response::findDefaultFile(std::string& rooted_path, t_locations& loc, std::
 	return (false);
 }
 
-void	Response::fileRoutine(std::string rooted_path, std::map<int, std::string> rooted_error_paths, t_locations loc, Request& req){
+void	Response::fileRoutine(std::string rooted_path, std::map<int, std::string> rooted_error_paths, t_locations loc, Request& req, Server& serv){
 
+	(void)serv;
 	if (checkFileAccess(rooted_path, rooted_error_paths) == true)
 	{
 		if (checkContentType(rooted_path) == true)
@@ -404,7 +406,10 @@ void Response::autoIndexResponse(std::string rooted_path, std::string dir_list, 
 	}
 
 	this->_body += "</body>\n</html>";
-	this->_status_code = 200;
+	if (this->_redir == true)
+		this->_status_code = 302;
+	else
+		this->_status_code = 200;
 	this->_status_message = "OK";
 	this->_content_type = "text/html";
 	this->_content_len = this->_body.length();
@@ -430,14 +435,20 @@ std::string Response::getCharCount(struct stat buf) {
 
 void	Response::deleteResponse(void){
 
-	this->_status_code = 200;
+	if (this->_redir == true)
+		this->_status_code = 302;
+	else
+		this->_status_code = 200;
 	this->_status_message = "OK";
 	generateResponse();
 }
 
 void	Response::downloadFileResponse(std::string stack){
 
-	this->_status_code = 200;
+	if (this->_redir == true)
+		this->_status_code = 302;
+	else
+		this->_status_code = 200;
 	this->_status_message = "OK";
 	this->_content_type = getContentType(stack);
 	this->_content_len = stack.length();
@@ -506,7 +517,10 @@ t_file_type	Response::stringToEnum(std::string const& str){
 
 void	Response::uploadFileResponse(void){
 
-	this->_status_code = 201;
+	if (this->_redir == true)
+		this->_status_code = 302;
+	else
+		this->_status_code = 201;
 	this->_status_message = "Created";
 	generateResponse();
 }
@@ -660,23 +674,23 @@ bool	Response::checkErrorFileAccess(int error_code, std::string message, std::st
 
 void	Response::generateResponse(void){
 
+	std::string	first_line;
+	std::string	headers;
+	std::string	body;
+
+	first_line = std::string("HTTP/") +\
+			this->_http_version + std::string(" ") +\
+			std::to_string(this->_status_code) + std::string(" ") +\
+			this->_status_message;
+	if (this->_redir == true && (this->_status_message == "OK" || this->_status_message == "Created"))
+		headers += std::string("Location: ") + this->_location + std::string("\r\n");
+	if (this->_content_type.empty() == false)
+		headers += std::string("Content-Type: ") + this->_content_type + std::string("\r\n");
+	if (this->_content_len != -1)
+		headers += std::string("Content-Length: ") + std::to_string(this->_content_len) + std::string("\r\n");
 	if (this->_body.empty() == false)
-	{
-		this->_response = std::string("HTTP/") +\
-			this->_http_version + std::string(" ") +\
-			std::to_string(this->_status_code) + std::string(" ") +\
-			this->_status_message + std::string("\r\n") +\
-			std::string("Content-Type: ") + this->_content_type + std::string("\r\n") +\
-			std::string("Content-Length: ") + std::to_string(this->_content_len) + std::string("\r\n\r\n") +\
-			this->_body + std::string("\r\n\r\n");
-	}
-	else
-	{
-		this->_response = std::string("HTTP/") +\
-			this->_http_version + std::string(" ") +\
-			std::to_string(this->_status_code) + std::string(" ") +\
-			this->_status_message + std::string("\r\n\r\n\r\n\r\n");
-	}
+		body += this->_body;
+	this->_response = first_line + std::string("\r\n") + headers + std::string("\r\n") + body + std::string("\r\n\r\n");
 }
 
 void	Response::setVersion(std::string version){
@@ -684,7 +698,27 @@ void	Response::setVersion(std::string version){
 	_http_version = version;
 }
 
+void	Response::setLocation(std::string location){
+
+	_location = location;
+}
+
+void	Response::setRedir(bool redir){
+
+	_redir = redir;
+}
+
 std::string	Response::getResponse(void) const{
 
 	return _response;
+}
+
+std::string	Response::getLocation(void) const{
+
+	return _location;
+}
+
+bool	Response::getRedir(void) const{
+
+	return _redir;
 }
