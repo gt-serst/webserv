@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/08 09:59:24 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/10 17:24:29 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/11 14:45:55 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -232,8 +232,9 @@ int	Server::handleRequest(int client_fd){
 	{
 		std::string path_to_file = request.getPathToFile();
 
-		if (router.routeRequest(path_to_file, loc, this->_config.locations) == true)
+		if (router.routeRequest(path_to_file, loc, this->_config.locations, response) == true)
 		{
+			std::cout << "Redir happened: " << response.getRedir() << std::endl;
 			request.setPathToFile(path_to_file);
 
 			std::cout << "Path to file: " << request.getPathToFile() << std::endl;
