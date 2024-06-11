@@ -181,8 +181,11 @@ void	Response::fileRoutine(std::string path, t_locations loc, Request& req, Serv
 	if (checkFileAccess(path, serv.getConfig().error_page_paths) == true)
 	{
 		//détecter si l'extenssion du fichier demandé est un php, py etc pour lancer les bonnes CGI, itérer sur les chemins CGI pour lancer le script correspondant
-		if (findCGI(req._server.getConfig().cgi_path) == true && isMethodAllowed(loc, req) == true)
+		if (findCGI(req._server.getConfig().cgi_path, req.getPathToFile()) == true && isMethodAllowed(loc, req) == true)
+		{
 			std::cout << "Send CGI path and run it" << std::endl;
+			handleCGI(path, req.getPathToFile(), req);
+		}
 		else if (isMethodAllowed(loc, req) == true)
 			runFileMethod(path, req, serv);
 		else
@@ -193,10 +196,18 @@ void	Response::fileRoutine(std::string path, t_locations loc, Request& req, Serv
 	}
 }
 
-bool	Response::findCGI(std::map<std::string, std::string>	cgi_path){
-
+bool	Response::findCGI(std::map<std::string, std::string>	cgi_path, std::string path_to_file){
 	if (cgi_path.empty() == false)
-		return (true);
+	{
+		std::map<std::string, std::string>::iterator it = cgi_path.begin();
+		while (it != cgi_path.end())
+		{
+			if (path_to_file.compare(path_to_file.length() - it->first.length(), it->first.length(), it->first) == 0)
+				return (true);
+			it++;
+		}
+		return (false);
+	}
 	else
 		return (false);
 }

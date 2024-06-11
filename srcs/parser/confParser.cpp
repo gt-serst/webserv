@@ -105,21 +105,23 @@ static t_server_scope *isServerErrPage(int *i, std::string buffer, t_server_scop
 		return (NULL);
 	}
 	*i += 11;
-	std::map<int, std::string> result;
+	std::map<int, std::string> 	result;
+	int				error_code = 0;
 	while (buffer[*i] && buffer[*i] != '\n')
 	{
 		*i += 1;
 		int j = *i;
 		while (buffer[j] && isdigit(buffer[j]))
 			j++;
-		int error_code = stoi(buffer.substr(*i, j - *i));
+		if (j != *i)
+			error_code = stoi(buffer.substr(*i, j - *i));
 		if (j != *i && buffer[j] && buffer[j] == ' ' && error_code >= 400 && error_code < 600)
 		{
 			j++;
 			*i = j;
 			while (buffer[j] && isprint(buffer[j]) && buffer[j] != ' ')
 				j++;
-			if (buffer[j] && (buffer[j] == ' ' || buffer[j] == '\n'))
+			if (buffer[j] && j != *i && (buffer[j] == ' ' || buffer[j] == '\n'))
 			{
 				result[error_code] = buffer.substr(*i, j - *i);
 				*i = j;
@@ -260,8 +262,9 @@ static t_server_scope	*isServerMaxBodySize(int *i, std::string buffer, t_server_
 		}
 		int res = stoi(buffer.substr(*i, j - *i));
 		*i = j;
-		if (buffer[*i] != '\n' || res < 1 || res > 1000000)
+		if (buffer[*i] != '\n' || res < 1 || res > 30000000)
 		{
+			std::cerr << "ERROR : Max body size line" << std::endl;
 			freeConfig(serverConfig, *servers);
 			return (NULL);
 		}

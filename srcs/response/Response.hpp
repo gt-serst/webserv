@@ -58,7 +58,8 @@ class Response{
 		bool		isMethodAllowed(t_locations loc, Request& req);
 		void		runDirMethod(std::string path, t_locations loc, Request& req, Server& serv);
 		void		isAutoIndex(std::string path, t_locations loc, Request& req, std::map<int, std::string> error_paths);
-		bool		findCGI(std::map<std::string, std::string>	cgi_path);
+		bool		findCGI(std::map<std::string, std::string>	cgi_path, std::string path_to_file);
+		void		handleCGI(std::string rootedpath, std::string path, Request& req);
 		void		runFileMethod(std::string path, Request& req, Server& serv);
 		void		downloadFile(std::string path, std::map<int, std::string> error_paths);
 		void		uploadFile(std::string path, std::string upload_path, Request& req, Server& serv);
