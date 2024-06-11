@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:28:16 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/10 15:06:57 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/11 12:38:20 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -65,8 +65,8 @@ void	Response::handleDirective(std::string path, t_locations loc, Request& req, 
 			errorResponse(404, "Not Found : Stat Failed", rooted_error_paths);
 		else if (getFileType(buf) == 0)
 		{
-			if (rooted_path.find_last_of("/") != rooted_path.length() - 1)
-				rooted_path.insert(rooted_path.length(), "/");
+			if (rooted_path[rooted_path.length() - 1] != '/')
+				rooted_path.append("/");
 			if (findDefaultFile(rooted_path, loc, serv.getConfig().locations, req) == true)
 			{
 				if (attachRootToPath(rooted_path, loc.root_path) == true)
@@ -89,6 +89,10 @@ bool	Response::rootPaths(t_locations loc, std::string& path, std::string upload_
 
 	for (std::map<int, std::string>::iterator it = rooted_error_paths.begin(); it != rooted_error_paths.end(); ++it)
 	{
+		if (it->second[0] != '/')
+			it->second.insert(0, "/");
+		if (it->second[it->second.length() - 1] == '/')
+			it->second.erase(it->second.length() - 1, 1);
 		if (attachRootToPath(it->second, loc.root_path) == false)
 			return (false);
 	}
@@ -96,11 +100,17 @@ bool	Response::rootPaths(t_locations loc, std::string& path, std::string upload_
 	{
 		std::string rooted_upload_path;
 
+
 		if (attachRootToPath(upload_path, loc.root_path) == true)
 		{
 			rooted_upload_path = upload_path;
+
+			if (upload_path[0] != '/')
+				upload_path.insert(0, "/");
+			if (upload_path[upload_path.length() - 1] == '/')
+				upload_path.erase(upload_path.length() - 1, 1);
 			if (isMethodAllowed(loc, req) == true)
-				uploadFile(path, rooted_upload_path, rooted_error_paths, req);
+				uploadFile(path, rooted_upload_path, rooted_error_paths, req.getMultiform());
 			else
 				errorResponse(405, "Method Not Allowed : File", rooted_error_paths);
 		}
@@ -116,6 +126,8 @@ bool	Response::attachRootToPath(std::string& path, std::string root){
 	{
 		if (checkRootAccess(root) == true)
 		{
+			if (root[0] != '/')
+				root.insert(0, "/");
 			if (root[root.length() - 1] == '/')
 				root.erase(root.length() - 1, 1);
 			path.insert(0, root);
@@ -135,7 +147,7 @@ int	Response::getFileType(struct stat buf){
 		return (-1);
 }
 
-bool	Response::findDefaultFile(std::string& path, t_locations& loc, std::map<std::string, t_locations> routes, Request& req){
+bool	Response::findDefaultFile(std::string& rooted_path, t_locations& loc, std::map<std::string, t_locations> routes, Request& req){
 
 	Router		router;
 
@@ -143,7 +155,7 @@ bool	Response::findDefaultFile(std::string& path, t_locations& loc, std::map<std
 	{
 		for (int i = loc.default_path.size() - 1; i >= 0; i--)
 		{
-			std::string tmp = path;
+			std::string tmp = rooted_path;
 
 			tmp.append(loc.default_path[i]);
 			if (access(tmp.c_str(), F_OK) == 0)
@@ -151,13 +163,13 @@ bool	Response::findDefaultFile(std::string& path, t_locations& loc, std::map<std
 				std::string new_path;
 
 				new_path = req.getPathToFile();
-				if (new_path.find_last_of("/") != new_path.length() - 1)
-					new_path.insert(new_path.length(), "/");
+				if (new_path[new_path.length() - 1] != '/')
+					new_path.append("/");
 				req.setPathToFile(new_path);
-				path = req.getPathToFile().append(loc.default_path[i]);
-				if (router.routeRequest(path, loc, routes) == true)
+				rooted_path = req.getPathToFile().append(loc.default_path[i]);
+				if (router.routeRequest(rooted_path, loc, routes) == true)
 				{
-					req.setPathToFile(path);
+					req.setPathToFile(rooted_path);
 					return (true);
 				}
 			}
@@ -166,16 +178,16 @@ bool	Response::findDefaultFile(std::string& path, t_locations& loc, std::map<std
 	return (false);
 }
 
-void	Response::fileRoutine(std::string path, std::map<int, std::string> rooted_error_paths, t_locations loc, Request& req){
+void	Response::fileRoutine(std::string rooted_path, std::map<int, std::string> rooted_error_paths, t_locations loc, Request& req){
 
-	if (checkFileAccess(path, rooted_error_paths) == true)
+	if (checkFileAccess(rooted_path, rooted_error_paths) == true)
 	{
-		if (checkContentType(path) == true)
+		if (checkContentType(rooted_path) == true)
 		{
 			if (findCGI(req._server.getConfig().cgi_path) == true && isMethodAllowed(loc, req) == true)
 				std::cout << "Send CGI path and run it" << std::endl;
 			else if (isMethodAllowed(loc, req) == true)
-				runFileMethod(path, rooted_error_paths, req);
+				runFileMethod(rooted_path, rooted_error_paths, req);
 			else
 				errorResponse(405, "Method Not Allowed : File", rooted_error_paths);
 		}
@@ -202,12 +214,12 @@ bool	Response::isMethodAllowed(t_locations loc, Request& req){
 	return (false);
 }
 
-void	Response::runDirMethod(std::string path, std::map<int, std::string> rooted_error_paths, t_locations loc, Request& req){
+void	Response::runDirMethod(std::string rooted_path, std::map<int, std::string> rooted_error_paths, t_locations loc, Request& req){
 
 	if (req.getRequestMethod() == "GET")
 	{
 		if (loc.auto_index == true)
-			isAutoIndex(path, rooted_error_paths, loc, req);
+			isAutoIndex(rooted_path, rooted_error_paths, loc, req);
 		else
 			errorResponse(500, "Internal Server Error : Autoindex off", rooted_error_paths);
 	}
@@ -215,15 +227,15 @@ void	Response::runDirMethod(std::string path, std::map<int, std::string> rooted_
 		errorResponse(405, "Method Not Allowed : Directory", rooted_error_paths);
 }
 
-void	Response::isAutoIndex(std::string path, std::map<int, std::string> rooted_error_paths, t_locations loc, Request& req){
+void	Response::isAutoIndex(std::string rooted_path, std::map<int, std::string> rooted_error_paths, t_locations loc, Request& req){
 
 	::DIR			*dr;
 	struct dirent	*de;
 	std::string		dir_list;
 
-	if (checkFileAccess(path, rooted_error_paths) == true)
+	if (checkFileAccess(rooted_path, rooted_error_paths) == true)
 	{
-		if ((dr = opendir(path.c_str())) != NULL)
+		if ((dr = opendir(rooted_path.c_str())) != NULL)
 		{
 			if (loc.auto_index == true)
 			{
@@ -232,7 +244,7 @@ void	Response::isAutoIndex(std::string path, std::map<int, std::string> rooted_e
 					dir_list.append(de->d_name);
 					dir_list += '\n';
 				}
-				autoIndexResponse(path, dir_list, req);
+				autoIndexResponse(rooted_path, dir_list, req);
 				closedir(dr);
 			}
 			else
@@ -246,19 +258,19 @@ void	Response::isAutoIndex(std::string path, std::map<int, std::string> rooted_e
 	}
 }
 
-void	Response::runFileMethod(std::string path, std::map<int, std::string> rooted_error_paths, Request& req){
+void	Response::runFileMethod(std::string rooted_path, std::map<int, std::string> rooted_error_paths, Request& req){
 
 	if (req.getRequestMethod() == "GET")
-		downloadFile(path, rooted_error_paths);
+		downloadFile(rooted_path, rooted_error_paths);
 	else if (req.getRequestMethod() == "DELETE")
-		deleteFile(path, rooted_error_paths);
+		deleteFile(rooted_path, rooted_error_paths);
 	else
 		errorResponse(405, "Method Not Allowed : File", rooted_error_paths);
 }
 
-void	Response::downloadFile(std::string path, std::map<int, std::string> error_paths){
+void	Response::downloadFile(std::string rooted_path, std::map<int, std::string> rooted_error_paths){
 
-	std::ifstream input(path, std::ios::binary);
+	std::ifstream input(rooted_path, std::ios::binary);
 
 	if (input.is_open())
 	{
@@ -273,43 +285,49 @@ void	Response::downloadFile(std::string path, std::map<int, std::string> error_p
 		downloadFileResponse(stack);
 	}
 	else
-		errorResponse(404, "Not Found : Open input failed", error_paths);
+		errorResponse(404, "Not Found : Open input failed", rooted_error_paths);
 }
 
-void	Response::uploadFile(std::string path, std::string upload_path, std::map<int, std::string> rooted_error_paths, Request& req){
+void	Response::uploadFile(std::string path, std::string rooted_upload_path, std::map<int, std::string> rooted_error_paths, std::map<std::string, t_multi> multiform){
 
 	std::cout << "Path: " << path << std::endl;
-	std::cout << "Rooted upload path: " << upload_path << std::endl;
-	if (upload_path[upload_path.length() - 1] == '/' && path[0] == '/')
-		path.erase(0, 1);
-	path.insert(0, upload_path);
-	if (checkFileAccess(upload_path, rooted_error_paths) == true)
+	std::cout << "Rooted upload path: " << rooted_upload_path << std::endl;
+	for (std::map<std::string, t_multi>::iterator it = multiform.begin(); it != multiform.end(); ++it)
 	{
-		std::ofstream output(path);
-
-		if (output.is_open())
+		if (path[0] != '/')
+			path.insert(0, "/");
+		if (path[path.length() - 1] != '/')
+			path.append("/");
+		path.insert(0, rooted_upload_path);
+		if (checkFileAccess(path, rooted_error_paths) == true)
 		{
-			output << req.getBody();
-			output.close();
-			uploadFileResponse();
+			std::ofstream output(path.append(it->second.filename));
+
+			if (output.is_open())
+			{
+				output << it->second.content;
+				output.close();
+			}
+			else
+				errorResponse(404, "Not Found : Open output failed", rooted_error_paths);
 		}
-		else
-			errorResponse(404, "Not Found : Open output failed", rooted_error_paths);
+
 	}
+	uploadFileResponse();
 }
 
-void	Response::deleteFile(std::string path, std::map<int, std::string> error_paths){
+void	Response::deleteFile(std::string rooted_path, std::map<int, std::string> rooted_error_paths){
 
-	if (remove(path.c_str()) < 0)
+	if (remove(rooted_path.c_str()) < 0)
 	{
-		errorResponse(500, "Internal Server Error", error_paths);
+		errorResponse(500, "Internal Server Error", rooted_error_paths);
 		perror("500 Delete file failed");
 		return;
 	}
 	deleteResponse();
 }
 
-void Response::autoIndexResponse(std::string path, std::string dir_list, Request& req) {
+void Response::autoIndexResponse(std::string rooted_path, std::string dir_list, Request& req) {
 
 	size_t j = 0;
 	std::vector<std::string> vec_dir_list;
@@ -362,8 +380,8 @@ void Response::autoIndexResponse(std::string path, std::string dir_list, Request
 
 	for (std::vector<std::string>::iterator it = vec_dir_list.begin(); it != vec_dir_list.end(); ++it) {
 		struct stat buf;
-		std::string all_path = path + "/" + *it;
-		if (stat(all_path.c_str(), &buf) != 0) {
+		std::string whole_path = rooted_path + "/" + *it;
+		if (stat(whole_path.c_str(), &buf) != 0) {
 			perror("Stat failed");
 			continue;
 		}
@@ -374,8 +392,8 @@ void Response::autoIndexResponse(std::string path, std::string dir_list, Request
 		strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", time_info);
 
 		unrooted_path = req.getPathToFile();
-		if (unrooted_path.find_last_of("/") != unrooted_path.length() - 1)
-			unrooted_path.insert(unrooted_path.length(), "/");
+		if (unrooted_path[unrooted_path.length() - 1] != '/')
+			unrooted_path.append("/");
 
 		std::string redirect_url = unrooted_path + *it;
 		std::string txt_button = *it;
@@ -419,20 +437,12 @@ void	Response::deleteResponse(void){
 
 void	Response::downloadFileResponse(std::string stack){
 
-	//if (getContentType(stack).empty() == false)
-	//{
-		this->_status_code = 200;
-		this->_status_message = "OK";
-		this->_content_type = getContentType(stack);
-		this->_content_len = stack.length();
-		this->_body = stack;
-		generateResponse();
-	//}
-	// else
-	// {
-	// 	errorResponse(415, "Unsupported Media Type", error_paths);
-	// 	perror("415 Unsupported Media Type");
-	// }
+	this->_status_code = 200;
+	this->_status_message = "OK";
+	this->_content_type = getContentType(stack);
+	this->_content_len = stack.length();
+	this->_body = stack;
+	generateResponse();
 }
 
 std::string	Response::getContentType(std::string stack){
@@ -501,11 +511,11 @@ void	Response::uploadFileResponse(void){
 	generateResponse();
 }
 
-void	Response::errorResponse(int error_code, std::string message, std::map<int, std::string> error_paths){
+void	Response::errorResponse(int error_code, std::string message, std::map<int, std::string> rooted_error_paths){
 
 	std::string error_path;
 
-	error_path = matchErrorCodeWithPage(error_code, error_paths);
+	error_path = matchErrorCodeWithPage(error_code, rooted_error_paths);
 	if (error_path.empty() == true)
 	{
 		createHtmlErrorPage(error_code, message);
@@ -543,16 +553,16 @@ void	Response::errorResponse(int error_code, std::string message, std::map<int, 
 			}
 			else
 			{
-				error_paths.clear();
-				errorResponse(error_code, message, error_paths);
+				rooted_error_paths.clear();
+				errorResponse(error_code, message, rooted_error_paths);
 			}
 		}
 	}
 }
 
-std::string	Response::matchErrorCodeWithPage(int error_code, std::map<int, std::string> error_paths){
+std::string	Response::matchErrorCodeWithPage(int error_code, std::map<int, std::string> rooted_error_paths){
 
-	for (std::map<int, std::string>::iterator it = error_paths.begin(); it != error_paths.end(); ++it)
+	for (std::map<int, std::string>::iterator it = rooted_error_paths.begin(); it != rooted_error_paths.end(); ++it)
 	{
 		if (it->first == error_code)
 			return (it->second);
