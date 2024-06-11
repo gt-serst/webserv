@@ -115,6 +115,8 @@ class Request
 		int			getPort() const;
 		std::string getQuerystr() const;
 		Server _server;
+		std::string getIp() const;
+		int			getLen() const;
 		// int getLen();
 };
 
