@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:28:16 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/11 15:20:44 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/11 15:23:40 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -111,7 +111,11 @@ bool	Response::rootPaths(t_locations loc, std::string& path, std::string upload_
 			if (upload_path[upload_path.length() - 1] == '/')
 				upload_path.erase(upload_path.length() - 1, 1);
 			if (isMethodAllowed(loc, req) == true)
-				uploadFile(path, rooted_upload_path, rooted_error_paths, req.getMultiform());
+			{
+				std::map<std::string, t_multi> multiform;
+				uploadFile(path, rooted_upload_path, rooted_error_paths, multiform);
+				//uploadFile(path, rooted_upload_path, rooted_error_paths, req.getMultiform());
+			}
 			else
 				errorResponse(405, "Method Not Allowed : File", rooted_error_paths);
 		}
