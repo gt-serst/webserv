@@ -161,6 +161,13 @@ int	Server::readClientSocket(int client_fd){
 	// read the content header line by header line
 	if (i != std::string::npos)
 	{
+		if(_requests[client_fd].find("Transfer-Encoding: chunked") != std::string::npos)
+		{
+			if (_requests[client_fd].find("0\r\n\r\n") != std::string::npos)
+				return (0);
+			else
+				return (1);
+		}
 		size_t pos = _requests[client_fd].find("Content-Length: ");
 		if (pos != std::string::npos)
 		{

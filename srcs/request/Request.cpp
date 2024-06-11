@@ -36,17 +36,20 @@ bool Request::handle_query()
     return true;
 }
 
-void	Request::manage_chunks(char *chunk) //still need to manage errors here
+void	Request::manage_chunks(const char *chunk) //still need to manage errors here
 {
 	char ch;
 	int len = strlen(chunk);
-	for (int i = 0; i < len; i++)
+	//std::cout << len << std::endl;
+	for (int i = 0; i <= len; i++)
 	{
 		ch = chunk[i];
-		switch (state)
+		//std::cout << (int)ch << std::endl;
+ 		switch (state)
 		{
 			case R_chunked_start:
 			{
+				//std::cout << "chunk START" << std::endl;
 				if (ch >= '0' && ch <= '9')
 				{
 					state = R_chunk_size;
@@ -72,6 +75,7 @@ void	Request::manage_chunks(char *chunk) //still need to manage errors here
 			{
 				if (ch == '\r')
 				{
+					//std::cout << "chunk size CR" << std::endl;
 					state = R_chunk_cr;
 					break ;
 				}
@@ -89,6 +93,7 @@ void	Request::manage_chunks(char *chunk) //still need to manage errors here
 			}
 			case R_chunk_cr:
 			{
+				//std::cout << "chunk CR" << std::endl;
 				if (ch == '\n')
 				{
 					state = R_chunk_lf;
@@ -101,9 +106,11 @@ void	Request::manage_chunks(char *chunk) //still need to manage errors here
 			}
 			case R_chunk_lf:
 			{
+				//std::cout << "chunk LF" << std::endl;
 				if (chunk_size == 0)
 				{
 					state = R_chunk_done;
+					chunked = false;
 					return ;
 				}
 				else
@@ -289,7 +296,7 @@ Request::Request(){}
 
 Request::Request(std::string& buffer, Server& server)
 {
-	//std::cout << "Parsing request" << std::endl << std::endl;
+	std::cout << "Parsing request" << std::endl << std::endl;
 	_server = server;
 	_version = "";
 	_path_to_file = "/";
@@ -321,7 +328,7 @@ Request::Request(std::string& buffer, Server& server)
 	}
 	if (state != R_error)
 		validity_checks();
-	//std::cout << "Request parsing over" << std::endl;
+	std::cout << "Request parsing over" << std::endl;
 }
 
 Request::~Request()
@@ -367,10 +374,19 @@ void Request::setRequest(std::string& buffer)
 	pos = setHeader(ss, pos);
 	if (state == R_done || state == R_error)
 		return ;
-	if (getHeader("Transfer-Encoding").compare("chunked") == 0)
+	std::cout << "|" << getHeader("Transfer-Encoding") << "|" << std::endl;
+	if (getHeader("Transfer-Encoding").compare("chunked\r") == 0)
 	{
+		std::cout << "CHUNK" << std::endl;
+		std::string chunk;
 		state = R_chunked_start;
 		chunked = true;
+		while (chunked)
+		{
+			std::getline(ss, chunk);
+			chunk += '\n';
+			manage_chunks(chunk.c_str());
+		}
 		return ;
 	}
 	setBody(ss, pos);

@@ -80,7 +80,7 @@ class Request
 		void setBody(std::stringstream& ss, std::streampos startpos);
 		std::string	standardise(std::string str);
 		void validity_checks();
-		void manage_chunks(char *chunk);
+		void manage_chunks(const char *chunk);
 		bool	handle_query();
 
 	public:
