@@ -53,6 +53,13 @@ enum state //state is current state so the name is what we previsly validated ||
 	R_done
 };
 
+typedef struct s_multi
+{
+	std::string filename;
+	std::string content;
+	std::string type;
+}	t_multi;
+
 
 class Request
 {
@@ -68,6 +75,8 @@ class Request
 		std::string _query_str;
 		std::string _error_msg;
 		std::string _litteral_ip;
+		std::string _boundary;
+		std::map<std::string, t_multi> _multiform;
 		int _error_code;
 		int	_port;
 		int _body_len;
