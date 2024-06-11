@@ -76,13 +76,14 @@ class Request
 		std::string _error_msg;
 		std::string _litteral_ip;
 		std::string _boundary;
-		std::map<std::string, t_multi> _multiform;
+		std::map<int, t_multi> _multiform;
 		int _error_code;
 		int	_port;
 		int _body_len;
 		int state;
 		int chunk_size;
 		bool chunked;
+		bool multiform;
 
 		void parseRequestLine(char *line);
 		std::streampos setHeader(std::stringstream& ss, std::streampos startpos);
@@ -91,6 +92,9 @@ class Request
 		void validity_checks();
 		void manage_chunks(const char *chunk);
 		bool	handle_query();
+		bool	getBoundary();
+		void	parse_multiform(std::stringstream& ss, std::streampos pos);
+		bool	multiform_headers(std::stringstream& ss, std::streampos& pos, int i);
 
 	public:
 		Request();

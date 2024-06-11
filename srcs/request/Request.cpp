@@ -7,6 +7,84 @@
 //only POST should have a body
 
 //SET FUNCTIONS
+
+bool Request::multiform_headers(std::stringstream& ss, std::streampos& pos, int i)
+{
+	std::cout << "Parsing multiform headers !!" << std::endl;
+	ss.seekg(pos);
+	std::string line;
+	getline(ss, line);
+	while (line.find(":"))
+	{
+		if (line.find("Content-Disposition:")) //alors on cherche le filename
+		{
+			_multiform[i].filename = line.find("filename=");
+		}
+		else if (line.find("Content-Type:")) //on stocke le content type
+		{
+
+		}
+		getline(ss, line);
+	}
+	pos = ss.tellg();
+	std::cout << "MULTI HEADERS PARSED !!" << std::endl;
+	return false;
+}
+
+void Request::parse_multiform(std::stringstream& ss, std::streampos pos)
+{
+	std::cout << "Parsing multiform" << std::endl;
+	ss.seekg(pos);
+	std::string line;
+	getline(ss, line);
+	int i = 1;
+	// std::cout << "|" << line << "|" << std::endl;
+	// std::cout << "--" << _boundary.erase(_boundary.length() - 1, 1) << std::endl;
+ 	if(line.compare("--" + _boundary) == 0)
+	{
+		t_multi value;
+		_multiform[i] = value; 
+		pos = ss.tellg();
+		std::cout << "PTN" << std::endl;
+		if (multiform_headers(ss, pos, i))
+			return ;
+		ss.seekg(pos);
+		std::getline(ss, line);
+		std::cout << line << std::endl;
+		i++;
+	}
+	if (line.compare(_boundary + "--") == 0)
+		return ;
+	else
+		_error_code = 400; //a voir
+	//aller chercher le premier boundary dans le body
+	//gerer les headers de ce body et les stocker dans la struct
+	//CRLF
+	//caser le body
+	//CRLF
+	//repeat tant que le boundary suivant n'est pas suivi de --
+	//while (bou)
+
+}
+
+bool Request::getBoundary()
+{
+	std::string content = getHeader("Content-Type");
+	if (content.empty())
+		return 0;
+	if (_headers["Content-Type"].find("multipart/form-data") != std::string::npos)
+	{
+		size_t pos = _headers["Content-Type"].find("boundary=", 0);
+		if (pos != std::string::npos)
+		{
+			_boundary = _headers["Content-Type"].substr(pos + 9, _headers["Content-Type"].size());
+			multiform = true;
+			return 1;
+		}
+	}
+	return 0;
+}
+
 bool Request::handle_query()
 {
     _query_args.clear();
@@ -309,6 +387,8 @@ Request::Request(std::string& buffer, Server& server)
 	chunk_size = 0;
 	_body_len = -1;
 	chunked = false;
+	multiform = true;
+	_boundary = "";
 	state = R_line;
 	setRequest(buffer);
 	if (state != R_error)
@@ -344,6 +424,7 @@ Request::~Request()
 	std::cout << "Query == " << _query_str << std::endl;
 	std::cout << "Version == " << _version << std::endl;
 	std::cout << "Body == " << _body << std::endl;
+	std::cout << "Boundary == " << _boundary << std::endl;
 	if (chunked)
 		std::cout << "IS CHUNKED" << std::endl;
 	for (std::map<std::string, std::string>::const_iterator it = _headers.begin(); it != _headers.end(); ++it)
@@ -374,7 +455,7 @@ void Request::setRequest(std::string& buffer)
 	pos = setHeader(ss, pos);
 	if (state == R_done || state == R_error)
 		return ;
-	std::cout << "|" << getHeader("Transfer-Encoding") << "|" << std::endl;
+	//std::cout << "|" << getHeader("Transfer-Encoding") << "|" << std::endl;
 	if (getHeader("Transfer-Encoding").compare("chunked\r") == 0)
 	{
 		std::cout << "CHUNK" << std::endl;
@@ -389,7 +470,10 @@ void Request::setRequest(std::string& buffer)
 		}
 		return ;
 	}
-	setBody(ss, pos);
+	// if (getBoundary())
+	// 	parse_multiform(ss, pos);
+	// else
+		setBody(ss, pos);
 }
 
 void Request::parseRequestLine(char *line)
