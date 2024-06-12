@@ -20,7 +20,8 @@ EXECUTION	=	srcs/exec/ServerManager.cpp\
 REQUEST		=	srcs/request/Request.cpp
 
 RESPONSE	=	srcs/response/Response.cpp\
-				srcs/response/Router.cpp
+				srcs/response/Router.cpp\
+				srcs/response/Cgi.cpp
 
 SRCS		=	$(PARSER)\
 				$(EXECUTION)\
