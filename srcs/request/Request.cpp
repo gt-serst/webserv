@@ -10,15 +10,23 @@
 
 bool Request::multiform_headers(std::stringstream& ss, std::streampos& pos, int i)
 {
+	(void)i;
 	std::cout << "Parsing multiform headers !!" << std::endl;
 	ss.seekg(pos);
 	std::string line;
 	getline(ss, line);
-	while (line.find(":"))
+	while (line.find(":") != std::string::npos)
 	{
-		if (line.find("Content-Disposition:")) //alors on cherche le filename
+		size_t filename_pos = line.find("Content-Disposition:");
+		if (filename_pos != std::string::npos) //alors on cherche le filename
 		{
-			_multiform[i].filename = line.find("filename=");
+			filename_pos = line.find("filename=\"");
+			if (filename_pos != std::string::npos)
+			{
+				std::cout << "Filename extract << " << filename_pos << std::endl;
+				_multiform[i].filename = line.substr(filename_pos + 10, line.length() - filename_pos);
+				std::cout << _multiform[i].filename << std::endl;
+			}
 		}
 		else if (line.find("Content-Type:")) //on stocke le content type
 		{
@@ -38,8 +46,6 @@ void Request::parse_multiform(std::stringstream& ss, std::streampos pos)
 	std::string line;
 	getline(ss, line);
 	int i = 1;
-	// std::cout << "|" << line << "|" << std::endl;
-	// std::cout << "--" << _boundary.erase(_boundary.length() - 1, 1) << std::endl;
  	if(line.compare("--" + _boundary) == 0)
 	{
 		t_multi value;
@@ -57,14 +63,6 @@ void Request::parse_multiform(std::stringstream& ss, std::streampos pos)
 		return ;
 	else
 		_error_code = 400; //a voir
-	//aller chercher le premier boundary dans le body
-	//gerer les headers de ce body et les stocker dans la struct
-	//CRLF
-	//caser le body
-	//CRLF
-	//repeat tant que le boundary suivant n'est pas suivi de --
-	//while (bou)
-
 }
 
 bool Request::getBoundary()
@@ -236,12 +234,6 @@ void	Request::manage_chunks(const char *chunk) //still need to manage errors her
 
 void	Request::validity_checks() //
 {
-	if (getHeader("Host").empty())
-	{
-		_error_code = 400;
-		_error_msg = "Host header is missing";
-		return ;
-	}
 	if (_body_len != -1)
 	{
 		std::string hlen = getHeader("Content-Length");
@@ -418,24 +410,33 @@ Request::~Request()
 	// 	std::cout << "Error " << _error_code << " " << _error_msg << std::endl;
 	// 	return ;
 	// }
-	std::cout << "Printing request params" << std::endl;
+	std::cout << "//////////////Printing request params//////////////" << std::endl;
 	std::cout << "Method == " << _request_method << std::endl;
 	std::cout << "Path == " << _path_to_file << std::endl;
 	std::cout << "Query == " << _query_str << std::endl;
 	std::cout << "Version == " << _version << std::endl;
 	std::cout << "Body == " << _body << std::endl;
 	std::cout << "Boundary == " << _boundary << std::endl;
+	std::cout << "Hostname == " << _hostname << std::endl;
+	std::cout << "Port == " << _port << std::endl;
 	if (chunked)
 		std::cout << "IS CHUNKED" << std::endl;
+	std::cout << "//////////////HEADERS////////////" << std::endl;
 	for (std::map<std::string, std::string>::const_iterator it = _headers.begin(); it != _headers.end(); ++it)
 	{
 		std::cout << it->first << ": " << it->second << std::endl;
 	}
+	std::cout << "//////////////QUERY ARGS//////////////" << std::endl;
 	for (std::map<std::string, std::string>::const_iterator it = _query_args.begin(); it != _query_args.end(); ++it)
 	{
         std::cout << it->first << " = " << it->second << std::endl;
     }
-	std::cout << "Request destroyed" << std::endl;
+	std::cout << "//////////////MULTIFORM//////////////" << std::endl;
+	for (std::map<int, t_multi>::const_iterator it = _multiform.begin(); it != _multiform.end(); ++it)
+	{
+		std::cout << it->first << ": " << it->second.filename << std::endl;
+	}
+	std::cout << "//////////////Request destroyed//////////////" << std::endl;
 }
 
 void Request::setRequest(std::string& buffer)
@@ -453,9 +454,13 @@ void Request::setRequest(std::string& buffer)
 		return ;
 	std::streampos pos = ss.tellg();
 	pos = setHeader(ss, pos);
-	if (state == R_done || state == R_error)
+	if (state == R_error)
 		return ;
-	//std::cout << "|" << getHeader("Transfer-Encoding") << "|" << std::endl;
+	if (handle_headers())
+	{
+		state = R_error;
+		return ;
+	}
 	if (getHeader("Transfer-Encoding").compare("chunked\r") == 0)
 	{
 		std::cout << "CHUNK" << std::endl;
@@ -470,9 +475,9 @@ void Request::setRequest(std::string& buffer)
 		}
 		return ;
 	}
-	// if (getBoundary())
-	// 	parse_multiform(ss, pos);
-	// else
+	if (getBoundary())
+		parse_multiform(ss, pos);
+	else
 		setBody(ss, pos);
 }
 
@@ -843,6 +848,41 @@ void Request::parseRequestLine(char *line)
 void	Request::setPathToFile(const std::string& path_to_file)
 {
 	_path_to_file = path_to_file;
+}
+
+bool	Request::handle_headers()
+{
+	std::string line = getHeader("Host");
+	if (line.empty())
+	{
+		_error_code = 400;
+		_error_msg = "Host header is missing";
+		return true;
+	}
+	if (_hostname.empty() == 0  && line.compare(_hostname + "\r") == 0)
+	{
+		_error_code = 400;
+		_error_msg = "Hostname in the URI does not match the hostname in the Host header";
+		return true;
+	}
+    size_t pos = line.find(":");
+    if (pos != std::string::npos)
+    {
+        _hostname = line.substr(0, pos);
+		_port = atoi(line.substr(pos + 1, line.length()).c_str());
+		if (_server.getConfig().port != _port)
+		{
+			std::cout << "HELOOOO" << std::endl;
+			_error_code = 400;
+			_error_msg = "The port in the host header does not match the port of the request";
+			return true;
+		}
+    }
+    else
+    {
+        _hostname = line;
+    }
+	return false;
 }
 
 std::streampos Request::setHeader(std::stringstream& ss, std::streampos startpos)
