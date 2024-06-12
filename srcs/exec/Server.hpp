@@ -32,6 +32,7 @@ class Server
 		void						closeServerSocket(void);
 		void						closeClientSocket(int client_fd);
 		int							getFd(void) const;
+		int							getClientFd(void) const;
 		t_server_scope				getConfig(void) const;
 
 	private:

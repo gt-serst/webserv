@@ -207,8 +207,19 @@ void	Response::fileRoutine(std::string rooted_path, std::map<int, std::string> r
 	{
 		if (checkContentType(rooted_path) == true)
 		{
-			if (findCGI(req._server.getConfig().cgi_path) == true && isMethodAllowed(loc, req) == true)
+			const std::map<std::string, std::string>& cgi_path = req._server.getConfig().cgi_path;
+			if (findCGI(cgi_path, req.getPathToFile()) == true && isMethodAllowed(loc, req) == true)
+			{
 				std::cout << "Send CGI path and run it" << std::endl;
+				std::map<std::string, std::string>::const_iterator it = cgi_path.begin();
+				std::string path = req.getPathToFile();
+				while (it != cgi_path.end())
+				{
+					if (path.compare(path.length() - it->first.length(), it->first.length(), it->first) == 0 && !it->second.empty())
+						handleCGI(rooted_path, req.getPathToFile(), req, it->second);
+					++it;
+				}
+			}
 			else if (isMethodAllowed(loc, req) == true)
 				runFileMethod(rooted_path, rooted_error_paths, req);
 			else
@@ -219,10 +230,19 @@ void	Response::fileRoutine(std::string rooted_path, std::map<int, std::string> r
 	}
 }
 
-bool	Response::findCGI(std::map<std::string, std::string>	cgi_path){
+bool	Response::findCGI(std::map<std::string, std::string>	cgi_path, std::string path_to_file){
 
 	if (cgi_path.empty() == false)
-		return (true);
+	{
+		std::map<std::string, std::string>::iterator it = cgi_path.begin();
+		while (it != cgi_path.end())
+		{
+			if (path_to_file.compare(path_to_file.length() - it->first.length(), it->first.length(), it->first) == 0)
+				return (true);
+			it++;
+		}
+		return (false);
+	}
 	else
 		return (false);
 }
