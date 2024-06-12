@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:28:16 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/12 16:31:19 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/12 17:25:29 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -271,7 +271,7 @@ void	Response::runDirMethod(std::string rooted_path, std::map<int, std::string> 
 		if (loc.auto_index == true)
 			isAutoIndex(rooted_path, rooted_error_paths, loc, req);
 		else
-			errorResponse(500, "Internal Server Error : Autoindex off", rooted_error_paths);
+			errorResponse(404, "Not Found", rooted_error_paths);
 	}
 	else
 		errorResponse(405, "Method Not Allowed : Directory", rooted_error_paths);
