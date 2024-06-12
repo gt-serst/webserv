@@ -17,12 +17,8 @@ static std::string intToString(int number) {
 }
 
 void Response::handleCGI(std::string rootedpath, std::string path, Request& req, std::string exec_path) {
-	//std::map<std::string, std::string> cgi_path = req._server.getConfig().cgi_path;
-	//std::map<std::string, std::string>::iterator it = cgi_path.begin();
 	struct stat sb;
 
-	//while (it != cgi_path.end()) {
-	//if (path.compare(path.length() - it->first.length(), it->first.length(), it->first) == 0 && !it->second.empty()) {
 	if (stat(exec_path.c_str(), &sb) == 0 && access(exec_path.c_str(), X_OK) == 0) {
 		if (stat(rootedpath.c_str(), &sb) == 0 && access(rootedpath.c_str(), X_OK) == 0) {
 			pid_t p = fork();
@@ -104,7 +100,4 @@ void Response::handleCGI(std::string rootedpath, std::string path, Request& req,
 	} else {
 		std::cerr << "ERROR: Path to " << exec_path << " executable is not accessible." << std::endl;
 	}
-	//}
-	// ++it;
-	// }
 }
