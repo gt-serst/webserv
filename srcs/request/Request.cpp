@@ -15,22 +15,25 @@ bool Request::multiform_headers(std::stringstream& ss, std::streampos& pos, int 
 	ss.seekg(pos);
 	std::string line;
 	getline(ss, line);
+	size_t end_pos;
 	while (line.find(":") != std::string::npos)
 	{
-		size_t filename_pos = line.find("Content-Disposition:");
-		if (filename_pos != std::string::npos) //alors on cherche le filename
+		size_t start_pos = line.find("Content-Disposition:");
+		if (start_pos != std::string::npos) //alors on cherche le filename
 		{
-			filename_pos = line.find("filename=\"");
-			if (filename_pos != std::string::npos)
+			start_pos = line.find("filename=\"");
+			if (start_pos != std::string::npos)
 			{
-				std::cout << "Filename extract << " << filename_pos << std::endl;
-				_multiform[i].filename = line.substr(filename_pos + 10, line.length() - filename_pos);
-				std::cout << _multiform[i].filename << std::endl;
+				end_pos = line.find("\"", start_pos + 10);
+				// std::cout << start_pos << " " << end_pos << " " << line[end_pos - 1] << " " << line[end_pos] <<std::endl;
+				_multiform[i].filename = line.substr(start_pos + 10, end_pos - (start_pos + 10));
+				// std::cout << _multiform[i].filename << std::endl;
 			}
 		}
-		else if (line.find("Content-Type:")) //on stocke le content type
+		start_pos = line.find("Content-Type:");
+		if (start_pos != std::string::npos) //on stocke le content type
 		{
-
+			_multiform[i].type = line.substr(start_pos + 13, line.length() - (start_pos + 13) - 1);
 		}
 		getline(ss, line);
 	}
@@ -44,25 +47,35 @@ void Request::parse_multiform(std::stringstream& ss, std::streampos pos)
 	std::cout << "Parsing multiform" << std::endl;
 	ss.seekg(pos);
 	std::string line;
-	getline(ss, line);
-	int i = 1;
- 	if(line.compare("--" + _boundary) == 0)
+	int i = 0;
+	std::string bound_morph = _boundary.erase(_boundary.size() - 1);
+	_boundary += "\r";
+	while (getline(ss, line))
 	{
-		t_multi value;
-		_multiform[i] = value; 
-		pos = ss.tellg();
-		std::cout << "PTN" << std::endl;
-		if (multiform_headers(ss, pos, i))
+		// std::cout << "Main loop " << std::endl;
+		// std::cout << line << std::endl;
+		// std::cout << "--" + bound_morph + "--" << std::endl;
+		if(line.compare("--" + _boundary) == 0)
+		{
+			i++;
+			t_multi value;
+			_multiform[i] = value; 
+			pos = ss.tellg();
+			std::cout << "PTN" << std::endl;
+			if (multiform_headers(ss, pos, i))
+				return ;
+			ss.seekg(pos);
+			std::getline(ss, line);
+			std::cout << line << std::endl;
+		}
+		else if (line.compare("--" + bound_morph + "--\r") == 0)
+		{
+			std::cout << "End boundary" << std::endl;
 			return ;
-		ss.seekg(pos);
-		std::getline(ss, line);
-		std::cout << line << std::endl;
-		i++;
+		}
+		line += "\n";
+		_multiform[i].content += line;
 	}
-	if (line.compare(_boundary + "--") == 0)
-		return ;
-	else
-		_error_code = 400; //a voir
 }
 
 bool Request::getBoundary()
@@ -368,7 +381,7 @@ Request::Request(std::string& buffer, Server& server)
 {
 	std::cout << "Parsing request" << std::endl << std::endl;
 	_server = server;
-	_version = "";
+	_version = "HTTP/1.1";
 	_path_to_file = "/";
 	_hostname = "";
 	_litteral_ip = "";
@@ -434,7 +447,9 @@ Request::~Request()
 	std::cout << "//////////////MULTIFORM//////////////" << std::endl;
 	for (std::map<int, t_multi>::const_iterator it = _multiform.begin(); it != _multiform.end(); ++it)
 	{
-		std::cout << it->first << ": " << it->second.filename << std::endl;
+		std::cout << it->first << ": " << it->second.filename << " type : " << it->second.type << std::endl;
+		std::cout << "CONTENT" << std::endl;
+		std::cout << it->second.content << std::endl;
 	}
 	std::cout << "//////////////Request destroyed//////////////" << std::endl;
 }
@@ -882,6 +897,16 @@ bool	Request::handle_headers()
     {
         _hostname = line;
     }
+	line = getHeader("Content-Length");
+	if (!line.empty())
+	{
+		if (atoi(line.c_str()) > _server.getConfig().max_body_size)
+		{
+			_error_code = 400;
+			_error_msg = "The body is greater than the max body size accepted by the server";
+			return true;
+		}
+	}
 	return false;
 }
 
