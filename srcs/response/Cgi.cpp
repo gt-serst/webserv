@@ -36,8 +36,8 @@ void Response::handleCGI(std::string rootedpath, std::string path, Request& req,
 				std::string query_string = "QUERY_STRING=" + req.getQuerystr();
 				std::string content_length = "CONTENT_LENGTH=" + intToString(req.getLen());
 				std::string content_type = "CONTENT_TYPE=" + req.getHeader("Content-Type");
-				std::string remote_addr = "REMOTE_ADDR=" + req.getIp();
-				std::string remote_host = "REMOTE_HOST=" + req.getHost();
+				std::string remote_host = "REMOTE_HOST=" + req._server.getClientAddress().sin_port;
+				std::string remote_addr = "REMOTE_ADDR=" + req._server.getClientAddress().sin_addr;
 				std::string request_method = "REQUEST_METHOD=" + req.getRequestMethod();
 				std::string server_name = "SERVER_NAME=" + req.getHost();
 				std::string server_port = "SERVER_PORT=" + intToString(req._server.getConfig().port);
@@ -66,7 +66,6 @@ void Response::handleCGI(std::string rootedpath, std::string path, Request& req,
 				if (execve(exec_path.c_str(), argv, envp) == -1) {
 					std::cerr << "ERROR: Failed to execute CGI script" << std::endl;
 					perror("execve");
-					exit(EXIT_FAILURE);
 				}
 
 				// Free dynamically allocated memory
