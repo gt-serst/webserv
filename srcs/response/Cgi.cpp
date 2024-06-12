@@ -36,8 +36,8 @@ void Response::handleCGI(std::string rootedpath, std::string path, Request& req,
 				std::string query_string = "QUERY_STRING=" + req.getQuerystr();
 				std::string content_length = "CONTENT_LENGTH=" + intToString(req.getLen());
 				std::string content_type = "CONTENT_TYPE=" + req.getHeader("Content-Type");
-				std::string remote_host = "REMOTE_HOST=" + req._server.getClientAddress().sin_port;
-				std::string remote_addr = "REMOTE_ADDR=" + req._server.getClientAddress().sin_addr;
+				std::string remote_host = "REMOTE_HOST=" + intToString((int)req._server.getClientAddr().sin_port);
+				std::string remote_addr = "REMOTE_ADDR=" + intToString((int)req._server.getClientAddr().sin_addr.s_addr);
 				std::string request_method = "REQUEST_METHOD=" + req.getRequestMethod();
 				std::string server_name = "SERVER_NAME=" + req.getHost();
 				std::string server_port = "SERVER_PORT=" + intToString(req._server.getConfig().port);
