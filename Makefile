@@ -6,7 +6,7 @@
 #    By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/05/21 15:52:59 by gt-serst          #+#    #+#              #
-#    Updated: 2024/05/29 13:08:16 by gt-serst         ###   ########.fr        #
+#    Updated: 2024/06/12 14:38:44 by gt-serst         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -20,7 +20,8 @@ EXECUTION	=	srcs/exec/ServerManager.cpp\
 REQUEST		=	srcs/request/Request.cpp
 
 RESPONSE	=	srcs/response/Response.cpp\
-				srcs/response/Router.cpp
+				srcs/response/Router.cpp\
+				srcs/response/Cgi.cpp
 
 SRCS		=	$(PARSER)\
 				$(EXECUTION)\
