@@ -310,6 +310,11 @@ int	Server::getFd(void) const{
 	return _fd;
 }
 
+int	Server::getClientFd(void) const
+{
+	return (this->_requests.begin()->first);
+}
+
 t_server_scope	Server::getConfig() const{
 
 	return _config;
