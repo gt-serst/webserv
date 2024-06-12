@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:12:17 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/12 11:23:28 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/12 16:27:49 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -44,6 +44,7 @@ class Response{
 		void		setLocation(std::string location);
 		void		setRedir(bool redir);
 		std::string	getResponse(void) const;
+		int			getStatusCode(void) const;
 		std::string	getLocation(void) const;
 		bool		getRedir(void) const;
 
@@ -52,7 +53,7 @@ class Response{
 		bool		attachRootToPath(std::string& path, std::string root);
 		int			getFileType(struct stat buf);
 		bool		findDefaultFile(std::string& path, t_locations& loc, std::map<std::string, t_locations> routes, Request& req);
-		void		fileRoutine(std::string path, std::map<int, std::string> rooted_error_paths, t_locations loc, Request& req, Server& serv);
+		void		fileRoutine(std::string path, std::map<int, std::string> rooted_error_paths, t_locations loc, Request& req);
 		bool		isMethodAllowed(t_locations loc, Request& req);
 		void		runDirMethod(std::string path, std::map<int, std::string> rooted_error_paths, t_locations loc, Request& req);
 		void		isAutoIndex(std::string path, std::map<int, std::string> rooted_error_paths, t_locations loc, Request& req);

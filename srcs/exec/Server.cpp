@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/08 09:59:24 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/12 14:23:02 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/12 17:18:01 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -92,10 +92,11 @@ int	Server::listenClientConnection(void){
 
 	int					flags;
 	int					client_fd;
-	struct sockaddr_in	client_addr;
-	socklen_t			client_addr_len;
+	// struct sockaddr_in	client_addr;
+	socklen_t			client_addr_len = sizeof(_client_addr);
 
-	client_fd = accept(this->_fd, (struct sockaddr *) &(client_addr), (socklen_t *) &(client_addr_len));
+	// client_fd = accept(this->_fd, (struct sockaddr *) &(client_addr), (socklen_t *) &(client_addr_len));
+	client_fd = accept(this->_fd, (struct sockaddr *) &(_client_addr), &client_addr_len);
 
 	if (client_fd < 0)
 	{
@@ -254,6 +255,12 @@ int	Server::handleRequest(int client_fd){
 			std::cout << "Path to file: " << request.getPathToFile() << std::endl;
 
 			response.handleDirective(request.getPathToFile(), loc, request, *this);
+			if (response.getStatusCode() == -1)
+			{
+				std::cout << "/////////////////////// MMMMH J'AI MANGÉ UNE CGI ////////////////////////" << std::endl;
+				_requests.erase(client_fd);
+				return (1);
+			}
 		}
 	}
 	else
@@ -336,4 +343,9 @@ int	Server::getClientFd(void) const
 t_server_scope	Server::getConfig() const{
 
 	return _config;
+}
+
+struct sockaddr_in	Server::getClientAddr() const{
+
+	return _client_addr;
 }

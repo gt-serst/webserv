@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/07 11:04:51 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/10 12:12:51 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/12 16:30:03 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -117,9 +117,14 @@ void	ServerManager::serverRoutine(void){
 						rc = it->second->handleRequest(it->first);
 						if (rc == 0)
 							_ready.push_back(it->first);
+						else if (rc == 1)
+						{
+							FD_CLR(it->first, &_fd_set);
+							FD_CLR(it->first, &reading_set);
+							close(it->first);
+							_sockets.erase(it->first);
+						}
 					}
-					else if (rc == 1) // if still buffer to read
-						break;
 					else if (rc == -1)
 					{
 						FD_CLR(it->first, &_fd_set);
