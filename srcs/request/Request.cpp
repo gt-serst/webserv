@@ -15,21 +15,25 @@ bool Request::multiform_headers(std::stringstream& ss, std::streampos& pos, int 
 	ss.seekg(pos);
 	std::string line;
 	getline(ss, line);
-	// while (line.find(":"))
-	// {
-	// 	size_t filename_pos = line.find("Content-Disposition:");
-	// 	if (filename_pos != std::string::npos) //alors on cherche le filename
-	// 	{
-	// 		filename_pos += 10;
-	// 		size_t end_pos = line.find("\"", filename_pos);
+	while (line.find(":") != std::string::npos)
+	{
+		size_t filename_pos = line.find("Content-Disposition:");
+		if (filename_pos != std::string::npos) //alors on cherche le filename
+		{
+			filename_pos = line.find("filename=\"");
+			if (filename_pos != std::string::npos)
+			{
+				std::cout << "Filename extract << " << filename_pos << std::endl;
+				_multiform[i].filename = line.substr(filename_pos + 10, line.length() - filename_pos);
+				std::cout << _multiform[i].filename << std::endl;
+			}
+		}
+		else if (line.find("Content-Type:")) //on stocke le content type
+		{
 
-	// 	}
-	// 	else if (line.find("Content-Type:")) //on stocke le content type
-	// 	{
-
-	// 	}
-	// 	getline(ss, line);
-	// }
+		}
+		getline(ss, line);
+	}
 	pos = ss.tellg();
 	std::cout << "MULTI HEADERS PARSED !!" << std::endl;
 	return false;
@@ -406,7 +410,7 @@ Request::~Request()
 	// 	std::cout << "Error " << _error_code << " " << _error_msg << std::endl;
 	// 	return ;
 	// }
-	std::cout << "Printing request params" << std::endl;
+	std::cout << "//////////////Printing request params//////////////" << std::endl;
 	std::cout << "Method == " << _request_method << std::endl;
 	std::cout << "Path == " << _path_to_file << std::endl;
 	std::cout << "Query == " << _query_str << std::endl;
@@ -417,15 +421,22 @@ Request::~Request()
 	std::cout << "Port == " << _port << std::endl;
 	if (chunked)
 		std::cout << "IS CHUNKED" << std::endl;
+	std::cout << "//////////////HEADERS////////////" << std::endl;
 	for (std::map<std::string, std::string>::const_iterator it = _headers.begin(); it != _headers.end(); ++it)
 	{
 		std::cout << it->first << ": " << it->second << std::endl;
 	}
+	std::cout << "//////////////QUERY ARGS//////////////" << std::endl;
 	for (std::map<std::string, std::string>::const_iterator it = _query_args.begin(); it != _query_args.end(); ++it)
 	{
         std::cout << it->first << " = " << it->second << std::endl;
     }
-	std::cout << "Request destroyed" << std::endl;
+	std::cout << "//////////////MULTIFORM//////////////" << std::endl;
+	for (std::map<int, t_multi>::const_iterator it = _multiform.begin(); it != _multiform.end(); ++it)
+	{
+		std::cout << it->first << ": " << it->second.filename << std::endl;
+	}
+	std::cout << "//////////////Request destroyed//////////////" << std::endl;
 }
 
 void Request::setRequest(std::string& buffer)
@@ -464,9 +475,9 @@ void Request::setRequest(std::string& buffer)
 		}
 		return ;
 	}
-	// if (getBoundary())
-	// 	parse_multiform(ss, pos);
-	// else
+	if (getBoundary())
+		parse_multiform(ss, pos);
+	else
 		setBody(ss, pos);
 }
 
