@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:28:16 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/11 17:37:56 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/12 14:07:12 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,8 +24,20 @@
 #include <dirent.h>
 #include <sstream>
 #include <ctime>
+#include <algorithm>
 
-Response::Response(void){}
+Response::Response(void){
+
+	// _response = "";
+	// _http_version = "";
+	_status_code = -1;
+	// _status_message = "";
+	// _location = "";
+	// _content_type = "";
+	this->_content_len = -1;
+	// _body = "";
+	// _redir = false;
+}
 
 Response::~Response(void){}
 
@@ -55,7 +67,6 @@ void	Response::handleDirective(std::string path, t_locations loc, Request& req, 
 	std::string					rooted_path;
 	std::map<int, std::string>	rooted_error_paths;
 
-	this->_content_len = -1;
 	rooted_error_paths = serv.getConfig().error_page_paths;
 	if (rootPaths(loc, path, serv.getConfig().upload_path, rooted_error_paths, req) == true)
 	{
@@ -114,6 +125,10 @@ bool	Response::rootPaths(t_locations loc, std::string& path, std::string upload_
 			if (isMethodAllowed(loc, req) == true)
 			{
 				std::map<std::string, t_multi> multiform;
+				t_multi m;
+
+				m.filename = "hello.txt";
+				multiform.insert(std::make_pair("hello.txt", m));
 				uploadFile(path, rooted_upload_path, rooted_error_paths, multiform);
 				//uploadFile(path, rooted_upload_path, rooted_error_paths, req.getMultiform());
 			}
@@ -188,7 +203,7 @@ bool	Response::findDefaultFile(std::string& rooted_path, t_locations& loc, std::
 void	Response::fileRoutine(std::string rooted_path, std::map<int, std::string> rooted_error_paths, t_locations loc, Request& req, Server& serv){
 
 	(void)serv;
-	if (checkFileAccess(rooted_path, rooted_error_paths) == true)
+	if (checkFileAccess(rooted_path, rooted_error_paths, "R") == true)
 	{
 		if (checkContentType(rooted_path) == true)
 		{
@@ -241,7 +256,7 @@ void	Response::isAutoIndex(std::string rooted_path, std::map<int, std::string> r
 	struct dirent	*de;
 	std::string		dir_list;
 
-	if (checkFileAccess(rooted_path, rooted_error_paths) == true)
+	if (checkFileAccess(rooted_path, rooted_error_paths, "R") == true)
 	{
 		if ((dr = opendir(rooted_path.c_str())) != NULL)
 		{
@@ -306,8 +321,10 @@ void	Response::uploadFile(std::string path, std::string rooted_upload_path, std:
 			path.insert(0, "/");
 		if (path[path.length() - 1] != '/')
 			path.append("/");
+		if (path.compare("/") == 0 && multiform.empty() == true)
+			path.append("upload.dat");
 		path.insert(0, rooted_upload_path);
-		if (checkFileAccess(path, rooted_error_paths) == true)
+		if (checkFileAccess(path, rooted_error_paths, "W") == true)
 		{
 			std::ofstream output(path.append(it->second.filename));
 
@@ -318,15 +335,15 @@ void	Response::uploadFile(std::string path, std::string rooted_upload_path, std:
 			}
 			else
 				errorResponse(404, "Not Found : Open output failed", rooted_error_paths);
+			uploadFileResponse();
 		}
 
 	}
-	uploadFileResponse();
 }
 
 void	Response::deleteFile(std::string rooted_path, std::map<int, std::string> rooted_error_paths){
 
-	if (remove(rooted_path.c_str()) < 0)
+	if (std::remove(rooted_path.c_str()) < 0)
 	{
 		errorResponse(500, "Internal Server Error", rooted_error_paths);
 		perror("500 Delete file failed");
@@ -523,6 +540,8 @@ void	Response::errorResponse(int error_code, std::string message, std::map<int, 
 
 	std::string error_path;
 
+	std::cout << "Error code: " << error_code << std::endl;
+	std::cout << "Message: " << message << std::endl;
 	error_path = matchErrorCodeWithPage(error_code, rooted_error_paths);
 	if (error_path.empty() == true)
 	{
@@ -618,10 +637,11 @@ void	Response::fileNotFound(void){
 	generateResponse();
 }
 
-bool	Response::checkFileAccess(std::string path, std::map<int, std::string> error_paths){
+bool	Response::checkFileAccess(std::string path, std::map<int, std::string> error_paths, std::string perm){
 
 	struct stat buf;
 
+	std::cout << "Path in CheckFileAccess: " << path << std::endl;
 	if (stat(path.c_str(), &buf) != 0)
 	{
 		if (errno == ENOENT)
@@ -630,7 +650,15 @@ bool	Response::checkFileAccess(std::string path, std::map<int, std::string> erro
 			errorResponse(500, "Internal Server Error", error_paths);
 		return (false);
 	}
-	if (access(path.c_str(), R_OK) != 0)
+	if (perm == "R" && access(path.c_str(), R_OK) != 0)
+	{
+		if (errno == EACCES)
+			errorResponse(403, "Forbidden", error_paths);
+		else
+			errorResponse(500, "Internal Server Error", error_paths);
+		return (false);
+	}
+	if (perm == "W" && access(path.c_str(), W_OK) != 0)
 	{
 		if (errno == EACCES)
 			errorResponse(403, "Forbidden", error_paths);
@@ -672,11 +700,11 @@ void	Response::generateResponse(void){
 	std::string	headers;
 	std::string	body;
 
-	if (this->_redir == true)
+	if (this->_redir == true && this->_status_code < 400)
 	{
 		first_line = std::string("HTTP/") +\
 				this->_http_version + std::string(" ") +\
-				std::to_string(302) + std::string(" ") +\
+				std::to_string(307) + std::string(" ") +\
 				std::string("OK");
 		headers += std::string("Location: ") + this->_location + std::string("\r\n");
 	}

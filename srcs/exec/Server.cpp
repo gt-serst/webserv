@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/08 09:59:24 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/11 17:26:23 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/12 14:23:02 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -122,9 +122,7 @@ int	Server::readClientSocket(int client_fd){
 	if (rc == 0 || rc == -1)
 	{
 		if (!rc)
-		{
 			perror("Nothing more to read");
-		}
 		else
 		{
 			this->closeClientSocket(client_fd);
@@ -158,19 +156,28 @@ int	Server::readClientSocket(int client_fd){
 	std::cout << _requests[client_fd] << std::endl;
 	size_t i = _requests[client_fd].find("\r\n\r\n");
 	//std::cout << i << std::endl;
-	// read the content header line by header line
-	if (i != std::string::npos)
+	// read the content header
+	if (i != std::string::npos) // si fin des headers trouvé alors vérification si il y a un chunked ou un content length
 	{
 		if(_requests[client_fd].find("Transfer-Encoding: chunked") != std::string::npos)
 		{
+
+			std::cout << "Chunked detected" << std::endl;
 			if (_requests[client_fd].find("0\r\n\r\n") != std::string::npos)
+			{
+				std::cout << "La requête est complète!" << std::endl;
 				return (0);
+			}
 			else
+			{
+				std::cout << "La requête n'est pas complète!" << std::endl;
 				return (1);
+			}
 		}
 		size_t pos = _requests[client_fd].find("Content-Length: ");
 		if (pos != std::string::npos)
 		{
+			std::cout << "Content-Length detected" << std::endl;
 			size_t end_of_line = _requests[client_fd].find("\r\n", pos);
 			if (end_of_line != std::string::npos)
 			{
@@ -191,9 +198,11 @@ int	Server::readClientSocket(int client_fd){
 				}
 			}
 		}
+		std::cout << "Chunk, Content-length et EOF non trouvé" << std::endl;
 		return (0); // Content-Length non trouvé ou fin de ligne non trouvée
 	}
-	std::cout << "J'ai tout lu en une fois!" << std::endl;
+	// tous les headers ne sont pas présent car \r\n\r\n n'a pas été trouvé
+	std::cout << "Je n'ai pas tous les headers" << std::endl;
 	return (1);
 
 	//on return 1 tant que pas fini ou si erreur
@@ -221,13 +230,15 @@ int	Server::handleRequest(int client_fd){
 	Response	response;
 
 	Request request(_requests[client_fd], *this);
-
+	std::cout << std::endl;
+	std::cout << std::endl;
 	if (request.getPathToFile().find("/favicon.ico") != std::string::npos)
 	{
 		std::cout << "Favicon detected" << std::endl;
 		return (-1);
 	}
-	response.setVersion(request.getVersion());
+	response.setVersion("1.1");
+	//response.setVersion(request.getVersion());
 	if (request.getErrorCode() == -1)
 	{
 		std::string path_to_file = request.getPathToFile();
@@ -246,10 +257,15 @@ int	Server::handleRequest(int client_fd){
 		}
 	}
 	else
+	{
+		std::cout << request.getErrorCode() << std::endl;
 		response.errorResponse(request.getErrorCode(), request.getErrorMsg(), getConfig().error_page_paths);
-
+	}
 	_requests.erase(client_fd);
 	_requests.insert(std::make_pair(client_fd, response.getResponse()));
+
+	std::cout << std::endl;
+	std::cout << std::endl;
 	return (0);
 }
 
@@ -258,11 +274,13 @@ int	Server::sendResponse(int client_fd){
 	int	rc;
 	int	len;
 
+	std::cout << std::endl;
+	std::cout << std::endl;
 	std::cout << "Response" << std::endl;
 	std::cout << _requests[client_fd] << std::endl;
 	len = _requests[client_fd].length();
 	rc = send(client_fd, _requests[client_fd].c_str(), len, 0);
-	//std::cout << "/////////////////////// MMMMH J'AI MANGÉ UNE REQUÊTE ////////////////////////" << std::endl;
+	std::cout << "/////////////////////// MMMMH J'AI MANGÉ UNE REQUÊTE ////////////////////////" << std::endl;
 	// if (rc == -1)
 	// {
 	// 	this->closeClientSocket(client_fd);

@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:12:17 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/11 16:04:32 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/12 11:23:28 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -73,7 +73,7 @@ class Response{
 		std::string	matchErrorCodeWithPage(int error_code, std::map<int, std::string> error_paths);
 		void		createHtmlErrorPage(int error_code, std::string message);
 		void		fileNotFound(void);
-		bool		checkFileAccess(std::string path, std::map<int, std::string> error_paths);
+		bool		checkFileAccess(std::string path, std::map<int, std::string> error_paths, std::string perm);
 		bool		checkRootAccess(std::string path);
 		bool		checkErrorFileAccess(int error_code, std::string message, std::string error_path);
 		std::string	_response;
