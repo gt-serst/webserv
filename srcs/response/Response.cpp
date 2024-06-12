@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:28:16 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/12 14:07:12 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/12 16:31:19 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -83,7 +83,7 @@ void	Response::handleDirective(std::string path, t_locations loc, Request& req, 
 			if (findDefaultFile(rooted_path, loc, serv.getConfig().locations, req) == true && getRedir() == false)
 			{
 				if (attachRootToPath(rooted_path, loc.root_path) == true)
-					fileRoutine(rooted_path, rooted_error_paths, loc, req, serv);
+					fileRoutine(rooted_path, rooted_error_paths, loc, req);
 			}
 			else if (isMethodAllowed(loc, req) == true && getRedir() == false)
 				runDirMethod(rooted_path, rooted_error_paths, loc, req);
@@ -91,7 +91,7 @@ void	Response::handleDirective(std::string path, t_locations loc, Request& req, 
 				errorResponse(405, "Method Not Allowed : Directory", rooted_error_paths);
 		}
 		else if (getFileType(buf) == 1)
-			fileRoutine(rooted_path, rooted_error_paths, loc, req, serv);
+			fileRoutine(rooted_path, rooted_error_paths, loc, req);
 		else
 			errorResponse(415, "Unsupported Media Type : Not a directory nor a file", rooted_error_paths);
 	}
@@ -100,7 +100,9 @@ void	Response::handleDirective(std::string path, t_locations loc, Request& req, 
 
 bool	Response::rootPaths(t_locations loc, std::string& path, std::string upload_path, std::map<int, std::string>& rooted_error_paths, Request& req){
 
-	for (std::map<int, std::string>::iterator it = rooted_error_paths.begin(); it != rooted_error_paths.end(); ++it)
+	std::cout << "rootPaths" << std::endl;
+	std::cout << "Path in rootPaths: " << path << std::endl;
+	/*for (std::map<int, std::string>::iterator it = rooted_error_paths.begin(); it != rooted_error_paths.end(); ++it)
 	{
 		if (it->second[0] != '/')
 			it->second.insert(0, "/");
@@ -108,14 +110,13 @@ bool	Response::rootPaths(t_locations loc, std::string& path, std::string upload_
 			it->second.erase(it->second.length() - 1, 1);
 		if (attachRootToPath(it->second, loc.root_path) == false)
 			return (false);
-	}
+	}*/
 	if (req.getRequestMethod() == "POST")
 	{
 		std::string rooted_upload_path;
 
-
-		if (attachRootToPath(upload_path, loc.root_path) == true)
-		{
+		//if (attachRootToPath(upload_path, loc.root_path) == true)
+		//{
 			rooted_upload_path = upload_path;
 
 			// if (rooted_upload_path[0] != '/')
@@ -134,7 +135,7 @@ bool	Response::rootPaths(t_locations loc, std::string& path, std::string upload_
 			}
 			else
 				errorResponse(405, "Method Not Allowed : File", rooted_error_paths);
-		}
+		//}
 		return (false);
 	}
 	else
@@ -143,19 +144,25 @@ bool	Response::rootPaths(t_locations loc, std::string& path, std::string upload_
 
 bool	Response::attachRootToPath(std::string& path, std::string root){
 
+	std::cout << "attachRootToPath" << std::endl;
 	if (root.empty() == false)
 	{
+		std::cout << "Root in attachRoot: " << root << std::endl;
+		std::cout << "Path in attachRoot: " << path << std::endl;
+		 if (root[0] == '/')
+			 	root.erase(0, 1);
 		if (checkRootAccess(root) == true)
 		{
-			// if (root[0] != '/')
-			// 	root.insert(0, "/");
 			if (root[root.length() - 1] == '/')
 				root.erase(root.length() - 1, 1);
 			path.insert(0, root);
 			return (true);
 		}
 	}
-	return (fileNotFound(), false);
+	{
+		std::cout << "Root not found" << std::endl;
+		return (fileNotFound(), false);
+	}
 }
 
 int	Response::getFileType(struct stat buf){
@@ -200,9 +207,8 @@ bool	Response::findDefaultFile(std::string& rooted_path, t_locations& loc, std::
 	return (false);
 }
 
-void	Response::fileRoutine(std::string rooted_path, std::map<int, std::string> rooted_error_paths, t_locations loc, Request& req, Server& serv){
+void	Response::fileRoutine(std::string rooted_path, std::map<int, std::string> rooted_error_paths, t_locations loc, Request& req){
 
-	(void)serv;
 	if (checkFileAccess(rooted_path, rooted_error_paths, "R") == true)
 	{
 		if (checkContentType(rooted_path) == true)
@@ -219,6 +225,7 @@ void	Response::fileRoutine(std::string rooted_path, std::map<int, std::string> r
 						handleCGI(rooted_path, req.getPathToFile(), req, it->second);
 					++it;
 				}
+				this->_status_code = -1;
 			}
 			else if (isMethodAllowed(loc, req) == true)
 				runFileMethod(rooted_path, rooted_error_paths, req);
@@ -341,6 +348,8 @@ void	Response::uploadFile(std::string path, std::string rooted_upload_path, std:
 			path.insert(0, "/");
 		if (path[path.length() - 1] != '/')
 			path.append("/");
+		if (rooted_upload_path[0] == '/')
+			rooted_upload_path.erase(0, 1);
 		if (path.compare("/") == 0 && multiform.empty() == true)
 			path.append("upload.dat");
 		path.insert(0, rooted_upload_path);
@@ -563,6 +572,10 @@ void	Response::errorResponse(int error_code, std::string message, std::map<int, 
 	std::cout << "Error code: " << error_code << std::endl;
 	std::cout << "Message: " << message << std::endl;
 	error_path = matchErrorCodeWithPage(error_code, rooted_error_paths);
+	if (error_path[0] == '/')
+		error_path.erase(0, 1);
+	if (error_path[error_path.length() - 1] == '/')
+		error_path.erase(error_path.length() - 1, 1);
 	if (error_path.empty() == true)
 	{
 		createHtmlErrorPage(error_code, message);
@@ -611,6 +624,8 @@ std::string	Response::matchErrorCodeWithPage(int error_code, std::map<int, std::
 
 	for (std::map<int, std::string>::iterator it = rooted_error_paths.begin(); it != rooted_error_paths.end(); ++it)
 	{
+		std::cout << "Error code in map: " << it->first << std::endl;
+		std::cout << "Error code: " << error_code << std::endl;
 		if (it->first == error_code)
 			return (it->second);
 	}
@@ -705,6 +720,7 @@ bool	Response::checkErrorFileAccess(int error_code, std::string message, std::st
 
 	struct stat buf;
 
+	std::cout << "Error path in checkErrorFileAccess: " << error_path << std::endl;
 	if (stat(error_path.c_str(), &buf) != 0 || access(error_path.c_str(), R_OK) != 0)
 	{
 		createHtmlErrorPage(error_code, message);
@@ -762,6 +778,11 @@ void	Response::setRedir(bool redir){
 std::string	Response::getResponse(void) const{
 
 	return _response;
+}
+
+int	Response::getStatusCode(void) const{
+
+	return _status_code;
 }
 
 std::string	Response::getLocation(void) const{
