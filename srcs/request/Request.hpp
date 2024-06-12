@@ -95,6 +95,7 @@ class Request
 		bool	getBoundary();
 		void	parse_multiform(std::stringstream& ss, std::streampos pos);
 		bool	multiform_headers(std::stringstream& ss, std::streampos& pos, int i);
+		bool	handle_headers();
 
 	public:
 		Request();
