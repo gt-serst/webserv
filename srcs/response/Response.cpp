@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:28:16 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/12 17:25:29 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/13 10:47:07 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -125,13 +125,12 @@ bool	Response::rootPaths(t_locations loc, std::string& path, std::string upload_
 				rooted_upload_path.erase(rooted_upload_path.length() - 1, 1);
 			if (isMethodAllowed(loc, req) == true)
 			{
-				std::map<std::string, t_multi> multiform;
-				t_multi m;
-
-				m.filename = "hello.txt";
-				multiform.insert(std::make_pair("hello.txt", m));
-				uploadFile(path, rooted_upload_path, rooted_error_paths, multiform);
-				//uploadFile(path, rooted_upload_path, rooted_error_paths, req.getMultiform());
+				if (req.getMultiform().empty == false)
+					uploadMultiformFile(path, rooted_upload_path, rooted_error_paths, req.getMultiform());
+				else if (req.getQuery().empty == false)
+					uploadQueryFile(path, rooted_upload_path, rooted_error_paths, req.getQuery);
+				else
+					errorResponse(400, "Bad Request", rooted_error_paths);
 			}
 			else
 				errorResponse(405, "Method Not Allowed : File", rooted_error_paths);
@@ -338,7 +337,7 @@ void	Response::downloadFile(std::string rooted_path, std::map<int, std::string> 
 		errorResponse(404, "Not Found : Open input failed", rooted_error_paths);
 }
 
-void	Response::uploadFile(std::string path, std::string rooted_upload_path, std::map<int, std::string> rooted_error_paths, std::map<std::string, t_multi> multiform){
+void	Response::uploadQueryFile(std::string path, std::string rooted_upload_path, std::map<int, std::string> rooted_error_paths, std::map<std::string, std::string> query){
 
 	std::cout << "Path: " << path << std::endl;
 	std::cout << "Rooted upload path: " << rooted_upload_path << std::endl;
@@ -350,8 +349,36 @@ void	Response::uploadFile(std::string path, std::string rooted_upload_path, std:
 			path.append("/");
 		if (rooted_upload_path[0] == '/')
 			rooted_upload_path.erase(0, 1);
-		if (path.compare("/") == 0 && multiform.empty() == true)
-			path.append("upload.dat");
+		path.insert(0, rooted_upload_path);
+		if (checkFileAccess(path, rooted_error_paths, "W") == true)
+		{
+			std::ofstream output(path.append(it->second.filename));
+
+			if (output.is_open())
+			{
+				output << it->second.content;
+				output.close();
+			}
+			else
+				errorResponse(404, "Not Found : Open output failed", rooted_error_paths);
+			uploadFileResponse();
+		}
+
+	}
+}
+
+void	Response::uploadMultiformFile(std::string path, std::string rooted_upload_path, std::map<int, std::string> rooted_error_paths, std::map<std::string, t_multi> multiform){
+
+	std::cout << "Path: " << path << std::endl;
+	std::cout << "Rooted upload path: " << rooted_upload_path << std::endl;
+	for (std::map<std::string, t_multi>::iterator it = multiform.begin(); it != multiform.end(); ++it)
+	{
+		if (path[0] != '/')
+			path.insert(0, "/");
+		if (path[path.length() - 1] != '/')
+			path.append("/");
+		if (rooted_upload_path[0] == '/')
+			rooted_upload_path.erase(0, 1);
 		path.insert(0, rooted_upload_path);
 		if (checkFileAccess(path, rooted_error_paths, "W") == true)
 		{
