@@ -118,7 +118,8 @@ class Request
 		Server _server;
 		std::string getIp() const;
 		int			getLen() const;
-		// int getLen();
+		std::map<int, t_multi> getMulti() const;
+		std::map<std::string, std::string> getQuery_args() const;
 };
 
 #endif
