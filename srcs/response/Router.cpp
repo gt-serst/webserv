@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Router.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
+/*   By: geraudtserstevens <geraudtserstevens@st    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 11:15:20 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/12 11:01:21 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/14 00:45:42 by geraudtsers      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,10 +25,11 @@ void	Router::routeRequest(std::string& path_to_file, t_locations& loc, std::map<
 
 	std::string	tmp;
 
+	if (path_to_file[0] != '/')
+		path_to_file.insert(0, "/");
 	tmp = path_to_file;
 	loc = recursiveRouteRequest(tmp, routes);
-	//std::cout << "Path to file: " << path_to_file << std::endl;
-	//std::cout << "HandleRedirection return: " << handleRedirection(path_to_file, loc.redirections) << std::endl;
+	std::cout << "HandleRedirection return: " << handleRedirection(path_to_file, loc.redirections) << std::endl;
 	if (path_to_file == handleRedirection(path_to_file, loc.redirections))
 		resp.setRedir(false);
 	else

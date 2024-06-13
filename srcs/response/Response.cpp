@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
+/*   By: geraudtserstevens <geraudtserstevens@st    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:28:16 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/13 15:28:07 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/14 00:43:53 by geraudtsers      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -82,8 +82,9 @@ void	Response::handleDirective(std::string path, t_locations loc, Request& req, 
 				rooted_path.append("/");
 			if (findDefaultFile(rooted_path, loc, serv.getConfig().locations, req) == true && getRedir() == false)
 			{
-				if (attachRootToPath(rooted_path, loc.root_path) == true)
-					fileRoutine(rooted_path, rooted_error_paths, loc, req);
+				std::string default_path = req.getPathToFile();
+				if (attachRootToPath(default_path, loc.root_path) == true)
+					fileRoutine(default_path, rooted_error_paths, loc, req);
 			}
 			else if (isMethodAllowed(loc, req) == true && getRedir() == false)
 				runDirMethod(rooted_path, rooted_error_paths, loc, req);
@@ -148,8 +149,10 @@ bool	Response::attachRootToPath(std::string& path, std::string root){
 	{
 		std::cout << "Root in attachRoot: " << root << std::endl;
 		std::cout << "Path in attachRoot: " << path << std::endl;
-		 if (root[0] == '/')
+		if (root[0] == '/')
 				root.erase(0, 1);
+		if (path[0] != '/')
+			path.insert(0, "/");
 		if (checkRootAccess(root) == true)
 		{
 			if (root[root.length() - 1] == '/')
@@ -183,21 +186,27 @@ bool	Response::findDefaultFile(std::string& rooted_path, t_locations& loc, std::
 		for (int i = loc.default_path.size() - 1; i >= 0; i--)
 		{
 			std::string tmp = rooted_path;
- 
+
 			if (access(tmp.c_str(), F_OK) == 0)
 			{
-				std::string new_path;
+				std::string default_path;
 
-				new_path = req.getPathToFile();
-				if (new_path[new_path.length() - 1] != '/')
-					new_path.append("/");
-				req.setPathToFile(new_path);
-				rooted_path = req.getPathToFile().append(loc.default_path[i]);
-				router.routeRequest(rooted_path, loc, routes, *this);
+				default_path = req.getPathToFile();
+				if (default_path[default_path.length() - 1] != '/')
+					default_path.append("/");
+				default_path.append(loc.default_path[i]);
+				req.setPathToFile(default_path);
+				// rooted_path = req.getPathToFile().append(loc.default_path[i]);
+				// std::cout << "Rooted path: " << rooted_path << std::endl;
+				// std::cout << "Default file: " << loc.default_path[i] << std::endl;
+				router.routeRequest(default_path, loc, routes, *this);
 				if (getRedir() == true)
 					generateResponse();
 				else
-					req.setPathToFile(rooted_path);
+				{
+					std::cout << "Default path with path: "<< default_path << std::endl;
+					req.setPathToFile(default_path);
+				}
 				return (true);
 			}
 		}
