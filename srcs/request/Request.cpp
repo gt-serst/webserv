@@ -260,11 +260,11 @@ void	Request::validity_checks() //
 		std::string hlen = getHeader("Content-Length");
 		if (hlen.empty())
 		{
-			_error_code = 400;
+			_error_code = 411;
 			_error_msg = "Content-Length header is missing";
 			return ;
 		}
-		if (std::stoi(hlen) != _body_len)
+		if (atoi(hlen.c_str()) != _body_len)
 		{
 			_error_code = 400;
 			_error_msg = "Body length does not match with Content-Length header";
@@ -341,7 +341,7 @@ int ip_checker(std::string& ip)
 
     while ((pos = ip.find(".", tmp)) != std::string::npos)
 	{
-        test = std::stoi(ip.substr(tmp, pos - tmp));
+        test = atoi(ip.substr(tmp, pos - tmp).c_str());
         if (test > 255 || test < 0)
             return 1;
         tmp = pos + 1;
@@ -349,7 +349,7 @@ int ip_checker(std::string& ip)
     }
     if (valid == 3)
 	{
-        test = std::stoi(ip.substr(tmp, len - tmp));
+        test = atoi(ip.substr(tmp, len - tmp).c_str());
         if (test <= 255 && test >= 0)
             valid++;
     }
@@ -427,11 +427,6 @@ Request::Request(std::string& buffer, Server& server)
 
 Request::~Request()
 {
-	// if (state == R_error)
-	// {
-	// 	std::cout << "Error " << _error_code << " " << _error_msg << std::endl;
-	// 	return ;
-	// }
 	std::cout << "//////////////Printing request params//////////////" << std::endl;
 	std::cout << "Method == " << _request_method << std::endl;
 	std::cout << "Path == " << _path_to_file << std::endl;
@@ -494,6 +489,7 @@ void Request::setRequest(std::string& buffer)
 		while (chunked)
 		{
 			std::getline(ss, chunk);
+			//std::cout << "|" << chunk << "|" << std::endl;
 			chunk += '\n';
 			manage_chunks(chunk.c_str());
 		}
@@ -610,7 +606,7 @@ void Request::parseRequestLine(char *line)
 				}
 				break ;
 			}
-			case R_abs_literal_ip: //devoir stocker
+			case R_abs_literal_ip:
 			{
 				if (line[i] == ':')
 				{
@@ -641,7 +637,7 @@ void Request::parseRequestLine(char *line)
 				else if (!isdigit(line[i]) && line[i] != '.')
 				{
 					//std::cout << line[i] << std::endl;
-					_error_msg = "Bad request wrong ip";
+					_error_msg = "Bad request : wrong ip";
 					_error_code = 400;
 					state = R_error;
 					return ; //error 400 bad request : unsuported litteral ip
@@ -657,7 +653,7 @@ void Request::parseRequestLine(char *line)
 				}
 				else if (!allowedCharURI(line[i]))
 				{
-					_error_msg = "Bad request host";
+					_error_msg = "Bad request : host";
 					_error_code = 400;
 					state = R_error;
 					return ; //error bad request
@@ -685,7 +681,7 @@ void Request::parseRequestLine(char *line)
 				}
 				else
 				{
-					_error_msg = "Bad request host";
+					_error_msg = "Bad request : host";
 					_error_code = 400;
 					state = R_error;
 					return ; //error
@@ -696,13 +692,13 @@ void Request::parseRequestLine(char *line)
 			{
 				if (line[i] == '/' && line[i - 1] != ':')
 				{
-					_port = std::stoi(convert_charptr_string(line, start, i));
+					_port = atoi(convert_charptr_string(line, start, i).c_str());
 					start = i;
 					state = R_abs_path;
 				}
 				else if (line[i] == ' ')
 				{
-					_port = std::stoi(convert_charptr_string(line, start, i));
+					_port = atoi(convert_charptr_string(line, start, i).c_str());
 					state = R_second_space;
 				}
 				else if(!isdigit(line[i]))
@@ -747,6 +743,7 @@ void Request::parseRequestLine(char *line)
 				{
 					_error_msg = "Bad request : this server only handles HTTP requests";
 					_error_code = 501;
+					state = R_error;
 					return ;
 				}
 				else
@@ -912,7 +909,7 @@ bool	Request::handle_headers()
 		body = true;
 		if (atoi(line.c_str()) > _server.getConfig().max_body_size)
 		{
-			_error_code = 400;
+			_error_code = 413;
 			_error_msg = "The body is greater than the max body size accepted by the server";
 			return true;
 		}
