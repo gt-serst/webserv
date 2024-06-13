@@ -1045,3 +1045,8 @@ std::map<int, t_multi> Request::getMulti() const
 {
 	return _multiform;
 }
+
+std::map<std::string, std::string> Request::getQuery_args() const
+{
+	return _query_args;
+}
