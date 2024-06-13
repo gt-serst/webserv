@@ -118,6 +118,7 @@ class Request
 		Server _server;
 		std::string getIp() const;
 		int			getLen() const;
+		std::map<int, t_multi> getMulti() const;
 		// int getLen();
 };
 
