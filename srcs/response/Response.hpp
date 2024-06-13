@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:12:17 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/12 16:27:49 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/13 11:33:49 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -61,7 +61,8 @@ class Response{
 		void		handleCGI(std::string rootedpath, std::string path, Request& req, std::string exec_path);
 		void		runFileMethod(std::string path, std::map<int, std::string> rooted_error_paths, Request& req);
 		void		downloadFile(std::string path, std::map<int, std::string> error_paths);
-		void		uploadFile(std::string path, std::string upload_path, std::map<int, std::string> rooted_error_paths, std::map<std::string, t_multi> multiform);
+		void		uploadQueryFile(std::string rooted_upload_path, std::map<int, std::string> rooted_error_paths, std::map<std::string, std::string> query, std::string body);
+		void		uploadMultiformFile(std::string upload_path, std::map<int, std::string> rooted_error_paths, std::map<int, t_multi> multiform);
 		void		deleteFile(std::string path, std::map<int, std::string> error_paths);
 		void		autoIndexResponse(std::string path, std::string dir_list, Request& req);
 		std::string	getCharCount(struct stat file_info);

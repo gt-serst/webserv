@@ -59,7 +59,7 @@ void Request::parse_multiform(std::stringstream& ss, std::streampos pos)
 		{
 			i++;
 			t_multi value;
-			_multiform[i] = value; 
+			_multiform[i] = value;
 			pos = ss.tellg();
 			std::cout << "PTN" << std::endl;
 			if (multiform_headers(ss, pos, i))
@@ -842,7 +842,7 @@ void Request::parseRequestLine(char *line)
 					start = i + 1;
 					state = R_fragment;
 				}
-				else if (unreserved_char(line[i]) || line[i] == '&')
+				else if (unreserved_char(line[i]) || line[i] == '&' || line[i] == '/')
 				{
 					break ;
 				}
