@@ -149,8 +149,8 @@ bool	Response::attachRootToPath(std::string& path, std::string root){
 	{
 		std::cout << "Root in attachRoot: " << root << std::endl;
 		std::cout << "Path in attachRoot: " << path << std::endl;
-		 if (root[0] == '/')
-			 	root.erase(0, 1);
+		//  if (root[0] == '/')
+		// 	 	root.erase(0, 1);
 		if (checkRootAccess(root) == true)
 		{
 			if (root[root.length() - 1] == '/')
