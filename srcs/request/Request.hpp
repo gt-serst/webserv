@@ -119,7 +119,7 @@ class Request
 		std::string getIp() const;
 		int			getLen() const;
 		std::map<int, t_multi> getMulti() const;
-		// int getLen();
+		std::map<std::string, std::string> getQuery_args() const;
 };
 
 #endif
