@@ -1040,3 +1040,8 @@ int	Request::getLen() const
 {
 	return _body_len;
 }
+
+std::map<int, t_multi> Request::getMulti() const
+{
+	return _multiform;
+}
