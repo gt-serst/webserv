@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:28:16 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/13 11:55:07 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/13 15:28:07 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -183,8 +183,7 @@ bool	Response::findDefaultFile(std::string& rooted_path, t_locations& loc, std::
 		for (int i = loc.default_path.size() - 1; i >= 0; i--)
 		{
 			std::string tmp = rooted_path;
-
-			tmp.append(loc.default_path[i]);
+ 
 			if (access(tmp.c_str(), F_OK) == 0)
 			{
 				std::string new_path;
