@@ -10,8 +10,7 @@
 
 bool Request::multiform_headers(std::stringstream& ss, std::streampos& pos, int i)
 {
-	(void)i;
-	std::cout << "Parsing multiform headers !!" << std::endl;
+	//std::cout << "Parsing multiform headers !!" << std::endl;
 	ss.seekg(pos);
 	std::string line;
 	getline(ss, line);
@@ -38,13 +37,20 @@ bool Request::multiform_headers(std::stringstream& ss, std::streampos& pos, int 
 		getline(ss, line);
 	}
 	pos = ss.tellg();
-	std::cout << "MULTI HEADERS PARSED !!" << std::endl;
+	//std::cout << "MULTI HEADERS PARSED !!" << std::endl;
 	return false;
 }
 
 void Request::parse_multiform(std::stringstream& ss, std::streampos pos)
 {
-	std::cout << "Parsing multiform" << std::endl;
+	if (_boundary.length() > 70)
+	{
+		_error_code = 400;
+		_error_msg = "The provided boundary is longer than 70 characters";
+		state = R_error;
+		return ;
+	}
+	//std::cout << "Parsing multiform" << std::endl;
 	ss.seekg(pos);
 	std::string line;
 	int i = 0;
@@ -61,16 +67,16 @@ void Request::parse_multiform(std::stringstream& ss, std::streampos pos)
 			t_multi value;
 			_multiform[i] = value; 
 			pos = ss.tellg();
-			std::cout << "PTN" << std::endl;
+			//std::cout << "PTN" << std::endl;
 			if (multiform_headers(ss, pos, i))
 				return ;
 			ss.seekg(pos);
 			std::getline(ss, line);
-			std::cout << line << std::endl;
+			//std::cout << line << std::endl;
 		}
 		else if (line.compare("--" + bound_morph + "--\r") == 0)
 		{
-			std::cout << "End boundary" << std::endl;
+			//std::cout << "End boundary" << std::endl;
 			return ;
 		}
 		line += "\n";
@@ -109,15 +115,17 @@ bool Request::handle_query()
             return false;
         std::string key = _query_str.substr(start, equal_pos - start);
         std::string value;
-        if (amp_pos == std::string::npos)
+        if (amp_pos == std::string::npos || amp_pos + 1 > _query_str.length())
 		{
             value = _query_str.substr(equal_pos + 1);
+			std::cout << value << std::endl;
             _query_args[key] = value;
             break;
         }
 		else
 		{
             value = _query_str.substr(equal_pos + 1, amp_pos - equal_pos - 1);
+			std::cout << value << std::endl;
             _query_args[key] = value;
             start = amp_pos + 1;
         }
@@ -392,7 +400,8 @@ Request::Request(std::string& buffer, Server& server)
 	chunk_size = 0;
 	_body_len = -1;
 	chunked = false;
-	multiform = true;
+	multiform = false;
+	body = false;
 	_boundary = "";
 	state = R_line;
 	setRequest(buffer);
@@ -492,7 +501,7 @@ void Request::setRequest(std::string& buffer)
 	}
 	if (getBoundary())
 		parse_multiform(ss, pos);
-	else
+	else if (body == true)
 		setBody(ss, pos);
 }
 
@@ -756,6 +765,7 @@ void Request::parseRequestLine(char *line)
 				{
 					_error_code = 505;
 					_error_msg = "HTTP Version not supported";
+					state = R_error;
 					return ;
 				}
 				start = i;
@@ -842,7 +852,7 @@ void Request::parseRequestLine(char *line)
 					start = i + 1;
 					state = R_fragment;
 				}
-				else if (unreserved_char(line[i]) || line[i] == '&')
+				else if (unreserved_char(line[i]) || line[i] == '&' || line[i] == '/')
 				{
 					break ;
 				}
@@ -887,7 +897,6 @@ bool	Request::handle_headers()
 		_port = atoi(line.substr(pos + 1, line.length()).c_str());
 		if (_server.getConfig().port != _port)
 		{
-			std::cout << "HELOOOO" << std::endl;
 			_error_code = 400;
 			_error_msg = "The port in the host header does not match the port of the request";
 			return true;
@@ -900,6 +909,7 @@ bool	Request::handle_headers()
 	line = getHeader("Content-Length");
 	if (!line.empty())
 	{
+		body = true;
 		if (atoi(line.c_str()) > _server.getConfig().max_body_size)
 		{
 			_error_code = 400;
@@ -947,22 +957,38 @@ std::streampos Request::setHeader(std::stringstream& ss, std::streampos startpos
 
 void Request::setBody(std::stringstream& ss, std::streampos startpos)
 {
-	//std::cout << "PARSING BODY"  << std::endl;
+	std::cout << "PARSING BODY"  << std::endl;
 	ss.seekg(startpos);
-	std::string bodyContent((std::istreambuf_iterator<char>(ss)), std::istreambuf_iterator<char>());
+	std::string line;
+	while (getline(ss, line))
+	{
+		std::cout << "BODY LINE == " << line << std::endl;
+		if (line == "\r")
+		{
+			if (_body.length() != 0)
+				_body_len = _body.length();
+			state = R_done;
+			return ;
+		}
+		line += "\n";
+		_body += line;
+	}
+	std::cerr << "Body does not end with CRLF" << std::endl;
 
-	// Check if body ends with CRLF
-	if (bodyContent.size() >= 2 && bodyContent.compare(bodyContent.size() - 2, 2, "\r\n") == 0)
-	{
-		_body = bodyContent;
-		_body_len = _body.length();
-		state = R_done; //
-	}
-	else
-	{
-		std::cerr << "Body does not end with CRLF" << std::endl;
-		//set error and go next
-	}
+	// std::string bodyContent((std::istreambuf_iterator<char>(ss)), std::istreambuf_iterator<char>());
+
+	// // Check if body ends with CRLF
+	// if (bodyContent.size() >= 2 && bodyContent.compare(bodyContent.size() - 2, 2, "\r\n") == 0)
+	// {
+	// 	_body = bodyContent;
+	// 	_body_len = _body.length();
+	// 	state = R_done; //
+	// }
+	// else
+	// {
+	// 	std::cerr << "Body does not end with CRLF" << std::endl;
+	// 	//set error and go next
+	// }
 	return ;
 }
 
