@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:12:17 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/14 12:21:52 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/14 14:26:13 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,19 +37,21 @@ class Response{
 	public:
 		Response(void);
 		~Response(void);
-		void		handleDirective(std::string path, t_locations loc, Request& req, Server& serv);
+		void		handleDirective(std::string path, t_locations& loc, Request& req, Server& serv);
 		void		generateResponse(void);
 		void		errorResponse(int error_code, std::string message, std::map<int, std::string> error_paths);
 		void		setVersion(std::string version);
 		void		setLocation(std::string location);
 		void		setRedir(bool redir);
+		void		setDefaultFile(bool default_file);
 		std::string	getResponse(void) const;
-		int			getStatusCode(void) const;
 		std::string	getLocation(void) const;
 		bool		getRedir(void) const;
+		bool		getCGI(void) const;
+		bool		getDefaultFile(void) const;
 
 	private:
-		bool		rootPaths(t_locations loc, std::string& path, std::string upload_path, std::map<int, std::string> error_paths, Request& req);
+		bool		uploadMethod(t_locations loc, std::string& path, std::string upload_path, std::map<int, std::string> error_paths, Request& req);
 		bool		attachRootToPath(std::string& path, std::string root);
 		int			getFileType(struct stat buf);
 		bool		findDefaultFile(std::string& path, t_locations& loc, std::map<std::string, t_locations> routes, Request& req, std::map<int, std::string> error_paths);
@@ -77,7 +79,7 @@ class Response{
 		void		createHtmlErrorPage(int error_code, std::string message);
 		void		fileNotFound(void);
 		bool		checkFileAccess(std::string path, std::map<int, std::string> error_paths, std::string perm);
-		bool		checkRootAccess(std::string path);
+		//bool		checkRootAccess(std::string path);
 		bool		checkErrorFileAccess(int error_code, std::string message, std::string error_path);
 		std::string	_response;
 		std::string	_http_version;
@@ -88,6 +90,8 @@ class Response{
 		int			_content_len;
 		std::string	_body;
 		bool		_redir;
+		bool		_cgi;
+		bool		_default_file;
 };
 
 #endif

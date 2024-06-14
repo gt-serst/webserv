@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:28:16 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/14 12:25:54 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/14 14:36:35 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,6 +35,8 @@ Response::Response(void){
 	// _location = "";
 	// _content_type = "";
 	this->_content_len = -1;
+	this->_cgi = false;
+	this->_default_file = false;
 	// _body = "";
 	// _redir = false;
 }
@@ -62,11 +64,13 @@ bool	Response::checkContentType(std::string path){
 	return (false);
 }
 
-void	Response::handleDirective(std::string path, t_locations loc, Request& req, Server& serv){
+void	Response::handleDirective(std::string path, t_locations& loc, Request& req, Server& serv){
 
 	std::string					rooted_path;
 
-	if (rootPaths(loc, path, serv.getConfig().upload_path, serv.getConfig().error_page_paths, req) == true)
+	if (uploadMethod(loc, path, serv.getConfig().upload_path, serv.getConfig().error_page_paths, req) == true)
+		return;
+	if (attachRootToPath(path, loc.root_path) == true)
 	{
 		struct stat buf;
 
@@ -76,27 +80,17 @@ void	Response::handleDirective(std::string path, t_locations loc, Request& req, 
 			errorResponse(404, "Not Found : Stat Failed", serv.getConfig().error_page_paths);
 		else if (getFileType(buf) == 0)
 		{
-			std::string tmp;
-
-			tmp = req.getPathToFile();
 			if (rooted_path[rooted_path.length() - 1] != '/')
 			{
 				setRedir(true);
 				setLocation(req.getPathToFile().append("/"));
 				generateResponse();
 			}
-			else if (findDefaultFile(rooted_path, loc, serv.getConfig().locations, req, serv.getConfig().error_page_paths) == true && getRedir() == false)
-			{
-				if (tmp != req.getPathToFile())
-				{
-					std::string default_path = req.getPathToFile();
-					if (attachRootToPath(default_path, loc.root_path) == true)
-						fileRoutine(default_path, serv.getConfig().error_page_paths, loc, req);
-				}
-			}
-			else if (isMethodAllowed(loc, req) == true && getRedir() == false)
+			else if (findDefaultFile(rooted_path, loc, serv.getConfig().locations, req, serv.getConfig().error_page_paths) == true || getRedir() == true)
+				return;
+			else if (isMethodAllowed(loc, req) == true)
 				runDirMethod(rooted_path, serv.getConfig().error_page_paths, loc, req);
-			else if (getRedir() == false)
+			else
 				errorResponse(405, "Method Not Allowed : Directory", serv.getConfig().error_page_paths);
 		}
 		else if (getFileType(buf) == 1)
@@ -106,7 +100,7 @@ void	Response::handleDirective(std::string path, t_locations loc, Request& req, 
 	}
 }
 
-bool	Response::rootPaths(t_locations loc, std::string& path, std::string upload_path, std::map<int, std::string> error_paths, Request& req){
+bool	Response::uploadMethod(t_locations loc, std::string& path, std::string upload_path, std::map<int, std::string> error_paths, Request& req){
 
 	std::cout << "rootPaths" << std::endl;
 	std::cout << "Path in rootPaths: " << path << std::endl;
@@ -127,10 +121,9 @@ bool	Response::rootPaths(t_locations loc, std::string& path, std::string upload_
 		}
 		else
 			errorResponse(405, "Method Not Allowed : File", error_paths);
-		return (false);
+		return (true);
 	}
-	else
-		return (attachRootToPath(path, loc.root_path));
+	return (false);
 }
 
 bool	Response::attachRootToPath(std::string& path, std::string root){
@@ -144,13 +137,10 @@ bool	Response::attachRootToPath(std::string& path, std::string root){
 				root.erase(0, 1);
 		if (path[0] != '/')
 			path.insert(0, "/");
-		if (checkRootAccess(root) == true)
-		{
-			if (root[root.length() - 1] == '/')
-				root.erase(root.length() - 1, 1);
-			path.insert(0, root);
-			return (true);
-		}
+		if (root[root.length() - 1] == '/')
+			root.erase(root.length() - 1, 1);
+		path.insert(0, root);
+		return (true);
 	}
 	{
 		std::cout << "Root not found" << std::endl;
@@ -203,7 +193,10 @@ bool	Response::findDefaultFile(std::string& rooted_path, t_locations& loc, std::
 					if (getRedir() == true)
 						generateResponse();
 					else
+					{
+						this->_default_file = true;
 						req.setPathToFile(default_path);
+					}
 				}
 				else
 					errorResponse(403, "Forbidden", error_paths);
@@ -232,7 +225,7 @@ void	Response::fileRoutine(std::string rooted_path, std::map<int, std::string> e
 						handleCGI(rooted_path, req.getPathToFile(), req, it->second);
 					++it;
 				}
-				this->_status_code = -1;
+				this->_cgi = true;
 			}
 			else if (isMethodAllowed(loc, req) == true)
 				runFileMethod(rooted_path, error_paths, req);
@@ -739,7 +732,7 @@ bool	Response::checkFileAccess(std::string path, std::map<int, std::string> erro
 	return (true);
 }
 
-bool	Response::checkRootAccess(std::string path){
+/*bool	Response::checkRootAccess(std::string path){
 
 	struct stat buf;
 
@@ -749,7 +742,7 @@ bool	Response::checkRootAccess(std::string path){
 		return (false);
 	}
 	return (true);
-}
+}*/
 
 bool	Response::checkErrorFileAccess(int error_code, std::string message, std::string error_path){
 
@@ -812,14 +805,14 @@ void	Response::setRedir(bool redir){
 	_redir = redir;
 }
 
+void	Response::setDefaultFile(bool default_file){
+
+	_default_file = default_file;
+}
+
 std::string	Response::getResponse(void) const{
 
 	return _response;
-}
-
-int	Response::getStatusCode(void) const{
-
-	return _status_code;
 }
 
 std::string	Response::getLocation(void) const{
@@ -830,4 +823,14 @@ std::string	Response::getLocation(void) const{
 bool	Response::getRedir(void) const{
 
 	return _redir;
+}
+
+bool	Response::getCGI(void) const{
+
+	return _cgi;
+}
+
+bool	Response::getDefaultFile(void) const{
+
+	return _default_file;
 }

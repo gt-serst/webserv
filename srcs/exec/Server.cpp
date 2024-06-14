@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/08 09:59:24 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/14 12:27:48 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/14 14:25:59 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -214,7 +214,12 @@ int	Server::handleRequest(int client_fd){
 			std::cout << "Path to file: " << request.getPathToFile() << std::endl;
 
 			response.handleDirective(request.getPathToFile(), loc, request, *this);
-			if (response.getStatusCode() == -1)
+			if (response.getDefaultFile() == true)
+			{
+				response.setDefaultFile(false);
+				response.handleDirective(request.getPathToFile(), loc, request, *this);
+			}
+			else if (response.getCGI() == true)
 			{
 				std::cout << "/////////////////////// MMMMH J'AI MANGÉ UNE CGI ////////////////////////" << std::endl;
 				_requests.erase(client_fd);
