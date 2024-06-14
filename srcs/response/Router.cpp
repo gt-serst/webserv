@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 11:15:20 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/12 11:01:21 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/14 12:29:03 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,33 +25,18 @@ void	Router::routeRequest(std::string& path_to_file, t_locations& loc, std::map<
 
 	std::string	tmp;
 
+	if (path_to_file[0] != '/')
+		path_to_file.insert(0, "/");
 	tmp = path_to_file;
 	loc = recursiveRouteRequest(tmp, routes);
-	//std::cout << "Path to file: " << path_to_file << std::endl;
-	//std::cout << "HandleRedirection return: " << handleRedirection(path_to_file, loc.redirections) << std::endl;
+	std::cout << "HandleRedirection return: " << handleRedirection(path_to_file, loc.redirections) << std::endl;
 	if (path_to_file == handleRedirection(path_to_file, loc.redirections))
 		resp.setRedir(false);
 	else
 	{
-		//int			allowed_number_of_redir;
-		//std::string old_redir;
 		std::string new_redir = handleRedirection(path_to_file, loc.redirections);
 		resp.setLocation(new_redir);
 		resp.setRedir(true);
-
-		/*allowed_number_of_redir = 0;
-		while (path_to_file != new_redir)
-		{
-			if (allowed_number_of_redir > 10)
-				return (false);
-			path_to_file = new_redir;
-			loc = recursiveRouteRequest(path_to_file, routes);
-			new_redir = handleRedirection(path_to_file, loc.redirections);
-			allowed_number_of_redir++;
-		}
-		resp.setLocation(new_redir);
-		std::cout << "Location header in response:" << resp.getLocation() << std::endl;
-		return (resp.setRedir(true), true);*/
 	}
 }
 

@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:12:17 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/13 11:33:49 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/14 12:21:52 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -49,20 +49,20 @@ class Response{
 		bool		getRedir(void) const;
 
 	private:
-		bool		rootPaths(t_locations loc, std::string& path, std::string upload_path, std::map<int, std::string>& rooted_error_paths, Request& req);
+		bool		rootPaths(t_locations loc, std::string& path, std::string upload_path, std::map<int, std::string> error_paths, Request& req);
 		bool		attachRootToPath(std::string& path, std::string root);
 		int			getFileType(struct stat buf);
-		bool		findDefaultFile(std::string& path, t_locations& loc, std::map<std::string, t_locations> routes, Request& req);
-		void		fileRoutine(std::string path, std::map<int, std::string> rooted_error_paths, t_locations loc, Request& req);
+		bool		findDefaultFile(std::string& path, t_locations& loc, std::map<std::string, t_locations> routes, Request& req, std::map<int, std::string> error_paths);
+		void		fileRoutine(std::string path, std::map<int, std::string> error_paths, t_locations loc, Request& req);
 		bool		isMethodAllowed(t_locations loc, Request& req);
-		void		runDirMethod(std::string path, std::map<int, std::string> rooted_error_paths, t_locations loc, Request& req);
-		void		isAutoIndex(std::string path, std::map<int, std::string> rooted_error_paths, t_locations loc, Request& req);
+		void		runDirMethod(std::string path, std::map<int, std::string> error_paths, t_locations loc, Request& req);
+		void		isAutoIndex(std::string path, std::map<int, std::string> error_paths, t_locations loc, Request& req);
 		bool		findCGI(std::map<std::string, std::string>	cgi_path, std::string path_to_file);
 		void		handleCGI(std::string rootedpath, std::string path, Request& req, std::string exec_path);
-		void		runFileMethod(std::string path, std::map<int, std::string> rooted_error_paths, Request& req);
+		void		runFileMethod(std::string path, std::map<int, std::string> error_paths, Request& req);
 		void		downloadFile(std::string path, std::map<int, std::string> error_paths);
-		void		uploadQueryFile(std::string rooted_upload_path, std::map<int, std::string> rooted_error_paths, std::map<std::string, std::string> query, std::string body);
-		void		uploadMultiformFile(std::string upload_path, std::map<int, std::string> rooted_error_paths, std::map<int, t_multi> multiform);
+		void		uploadQueryFile(std::string upload_path, std::map<int, std::string> error_paths, std::map<std::string, std::string> query, std::string body);
+		void		uploadMultiformFile(std::string upload_path, std::map<int, std::string> error_paths, std::map<int, t_multi> multiform);
 		void		deleteFile(std::string path, std::map<int, std::string> error_paths);
 		void		autoIndexResponse(std::string path, std::string dir_list, Request& req);
 		std::string	getCharCount(struct stat file_info);
