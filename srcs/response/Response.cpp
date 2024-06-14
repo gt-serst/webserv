@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:28:16 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/14 14:36:35 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/14 16:11:57 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -58,7 +58,8 @@ bool	Response::checkContentType(std::string path){
 		}
 		input.close();
 		std::string type = getContentType(stack);
-		if (type == "text/html" || type == "text/plain" || type == "image/png" || type == "image/jpeg" || type == "image/svg+xml" || type == "image/gif" || type == "video/mp4")
+		if (type == "text/html" || type == "text/plain" || type == "image/png" || type == "image/jpeg"
+				|| type == "image/svg+xml" || type == "image/gif" || type == "video/mp4")
 			return (true);
 	}
 	return (false);
@@ -68,6 +69,7 @@ void	Response::handleDirective(std::string path, t_locations& loc, Request& req,
 
 	std::string					rooted_path;
 
+	// Catch POST method early because it depends on upload_path, not uri (=path)
 	if (uploadMethod(loc, path, serv.getConfig().upload_path, serv.getConfig().error_page_paths, req) == true)
 		return;
 	if (attachRootToPath(path, loc.root_path) == true)
@@ -78,23 +80,32 @@ void	Response::handleDirective(std::string path, t_locations& loc, Request& req,
 		std::cout << "Rooted path: " << rooted_path << std::endl;
 		if (stat(rooted_path.c_str(), &buf) != 0)
 			errorResponse(404, "Not Found : Stat Failed", serv.getConfig().error_page_paths);
+		// Path points towards a directory
 		else if (getFileType(buf) == 0)
 		{
+			// If directory but without / at the end if the uri, redirect the uri with the / at the end
 			if (rooted_path[rooted_path.length() - 1] != '/')
 			{
 				setRedir(true);
 				setLocation(req.getPathToFile().append("/"));
 				generateResponse();
 			}
-			else if (findDefaultFile(rooted_path, loc, serv.getConfig().locations, req, serv.getConfig().error_page_paths) == true || getRedir() == true)
-				return;
 			else if (isMethodAllowed(loc, req) == true)
-				runDirMethod(rooted_path, serv.getConfig().error_page_paths, loc, req);
+			{
+				// If default file found, return and recall the routine, If redirection found return and generate response
+				if ((findDefaultFile(rooted_path, loc, serv.getConfig().locations, req, serv.getConfig().error_page_paths) == true || getRedir() == true))
+					return;
+				// Else lets see if autoindex is activated
+				else
+					runDirMethod(rooted_path, serv.getConfig().error_page_paths, loc, req);
+			}
 			else
 				errorResponse(405, "Method Not Allowed : Directory", serv.getConfig().error_page_paths);
 		}
+		// Path points towards a file
 		else if (getFileType(buf) == 1)
 			fileRoutine(rooted_path, serv.getConfig().error_page_paths, loc, req);
+		// Do not know what type of file it is
 		else
 			errorResponse(415, "Unsupported Media Type : Not a directory nor a file", serv.getConfig().error_page_paths);
 	}
@@ -663,10 +674,16 @@ std::string	Response::matchErrorCodeWithPage(int error_code, std::map<int, std::
 void	Response::createHtmlErrorPage(int error_code, std::string message){
 
 	int			i;
-	int			integer[] = {400, 403, 404, 405, 413, 415, 500, 505};
-	std::string	error_headers[] = {"The server could not understand the request due to invalid syntax.", "You do not have permission to access this resource on this server.", "The requested resource could not be found on this server.",
-	"The method specified in the request is not allowed for the resource identified by the request URI.", "The request entity is larger than the server is willing or able to process.", "The media format of the requested data is not supported by the server.",
-	"The server encountered an internal error or misconfiguration and was unable to complete your request.", "The server does not support the HTTP protocol version used in the request."};
+	int			integer[] = {400, 403, 404, 405, 413, 414, 415, 500, 505};
+	std::string	error_headers[] = {"The server could not understand the request due to invalid syntax.",
+	"You do not have permission to access this resource on this server.",
+	"The requested resource could not be found on this server.",
+	"The method specified in the request is not allowed for the resource identified by the request URI.",
+	"The request entity is larger than the server is willing or able to process.",
+	"The requested URI is too long for the server to process.",
+	"The media format of the requested data is not supported by the server.",
+	"The server encountered an internal error or misconfiguration and was unable to complete your request.",
+	"The server does not support the HTTP protocol version used in the request."};
 
 	i = 0;
 	while (i < 7 && error_code != integer[i])
