@@ -397,8 +397,10 @@ Request::Request(std::string& buffer, Server& server)
 	_query_str = "";
 	_error_code = -1;
 	_error_msg = "";
+	_port = 80;
 	chunk_size = 0;
 	_body_len = -1;
+	_fragment = "";
 	chunked = false;
 	multiform = false;
 	body = false;
@@ -436,6 +438,7 @@ Request::~Request()
 	std::cout << "Boundary == " << _boundary << std::endl;
 	std::cout << "Hostname == " << _hostname << std::endl;
 	std::cout << "Port == " << _port << std::endl;
+	std::cout << "Fragment == " << _fragment << std::endl;
 	if (chunked)
 		std::cout << "IS CHUNKED" << std::endl;
 	std::cout << "//////////////HEADERS////////////" << std::endl;
@@ -825,7 +828,7 @@ void Request::parseRequestLine(char *line)
 				if (i == len)
 				{
 					//std::cout << "First line parsing succesfull" << std::endl;
-					return ; //good
+					return ;
 				}
 				else
 				{
@@ -861,6 +864,24 @@ void Request::parseRequestLine(char *line)
 					return ; //error
 				}
 				break ;
+			}
+			case R_fragment:
+			{
+				if (line[i] == ' ')
+				{
+					_fragment = convert_charptr_string(line, start, i);
+					start = 0;
+					state = R_second_space;
+				}
+				else if (unreserved_char(line[i]))
+					break;
+				else
+				{
+					_error_code = 400;
+					_error_msg = "Bad request : fragment format";
+					state = R_error;
+					return ;
+				}
 			}
 		}
 	}
@@ -959,9 +980,11 @@ void Request::setBody(std::stringstream& ss, std::streampos startpos)
 	std::string line;
 	while (getline(ss, line))
 	{
-		std::cout << "BODY LINE == " << line << std::endl;
+		//std::cout << "BODY LINE == " << line << std::endl;
+		//std::cout << "line 0 " << (int)line[0] << std::endl;
 		if (line == "\r")
 		{
+			//std::cout << "BODY DONE FLAG" << std::endl;
 			if (_body.length() != 0)
 				_body_len = _body.length();
 			state = R_done;
@@ -970,7 +993,10 @@ void Request::setBody(std::stringstream& ss, std::streampos startpos)
 		line += "\n";
 		_body += line;
 	}
-	std::cerr << "Body does not end with CRLF" << std::endl;
+	_error_code = 400;
+	_error_msg = "Bad request : body does not end with CRLF";
+	state = R_error;
+
 
 	// std::string bodyContent((std::istreambuf_iterator<char>(ss)), std::istreambuf_iterator<char>());
 

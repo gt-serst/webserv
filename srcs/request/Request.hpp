@@ -76,6 +76,7 @@ class Request
 		std::string _error_msg;
 		std::string _litteral_ip;
 		std::string _boundary;
+		std::string _fragment;
 		std::map<int, t_multi> _multiform;
 		int _error_code;
 		int	_port;
