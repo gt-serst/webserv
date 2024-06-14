@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Router.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: geraudtserstevens <geraudtserstevens@st    +#+  +:+       +#+        */
+/*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 11:15:20 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/14 00:45:42 by geraudtsers      ###   ########.fr       */
+/*   Updated: 2024/06/14 12:29:03 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,25 +34,9 @@ void	Router::routeRequest(std::string& path_to_file, t_locations& loc, std::map<
 		resp.setRedir(false);
 	else
 	{
-		//int			allowed_number_of_redir;
-		//std::string old_redir;
 		std::string new_redir = handleRedirection(path_to_file, loc.redirections);
 		resp.setLocation(new_redir);
 		resp.setRedir(true);
-
-		/*allowed_number_of_redir = 0;
-		while (path_to_file != new_redir)
-		{
-			if (allowed_number_of_redir > 10)
-				return (false);
-			path_to_file = new_redir;
-			loc = recursiveRouteRequest(path_to_file, routes);
-			new_redir = handleRedirection(path_to_file, loc.redirections);
-			allowed_number_of_redir++;
-		}
-		resp.setLocation(new_redir);
-		std::cout << "Location header in response:" << resp.getLocation() << std::endl;
-		return (resp.setRedir(true), true);*/
 	}
 }
 

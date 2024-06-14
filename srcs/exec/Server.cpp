@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/08 09:59:24 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/12 17:18:01 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/14 12:27:48 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -92,10 +92,8 @@ int	Server::listenClientConnection(void){
 
 	int					flags;
 	int					client_fd;
-	// struct sockaddr_in	client_addr;
 	socklen_t			client_addr_len = sizeof(_client_addr);
 
-	// client_fd = accept(this->_fd, (struct sockaddr *) &(client_addr), (socklen_t *) &(client_addr_len));
 	client_fd = accept(this->_fd, (struct sockaddr *) &(_client_addr), &client_addr_len);
 
 	if (client_fd < 0)
@@ -133,32 +131,11 @@ int	Server::readClientSocket(int client_fd){
 	}
 	buffer[rc] = '\0';
 	stack += buffer;
-	// if (rc == 0)
-	// {
-	// 	this->closeClientSocket(client_fd);
-	// 	perror("Favicon cookies read");
-	// 	return (-1);
-	// }
-	// buffer[rc] = '\0';
-	// stack += buffer;
-	// while (0 < (rc = recv(client_fd, buffer, sizeof(buffer) - 1, 0)))
-	// {
-	// 	buffer[rc] = '\0';
-	// 	stack += buffer;
-	// }
-	// if (rc == -1)
-	// {
-	// 	this->closeClientSocket(client_fd);
-	// 	perror("Recv failed");
-	// 	return (-1);
-	// }
 	_requests[client_fd] += stack;
 	std::cout << "Printing stack" << std::endl;
 	std::cout << _requests[client_fd] << std::endl;
 	size_t i = _requests[client_fd].find("\r\n\r\n");
-	//std::cout << i << std::endl;
-	// read the content header
-	if (i != std::string::npos) // si fin des headers trouvé alors vérification si il y a un chunked ou un content length
+	if (i != std::string::npos) // Si fin des headers trouvé alors vérification si il y a un chunked ou un content length
 	{
 		if(_requests[client_fd].find("Transfer-Encoding: chunked") != std::string::npos)
 		{
@@ -202,26 +179,9 @@ int	Server::readClientSocket(int client_fd){
 		std::cout << "Chunk, Content-length et EOF non trouvé" << std::endl;
 		return (0); // Content-Length non trouvé ou fin de ligne non trouvée
 	}
-	// tous les headers ne sont pas présent car \r\n\r\n n'a pas été trouvé
+	// Tous les headers ne sont pas présent car \r\n\r\n n'a pas été trouvé
 	std::cout << "Je n'ai pas tous les headers" << std::endl;
 	return (1);
-
-	//on return 1 tant que pas fini ou si erreur
-	//creer un state en parallele pour cette fonction
-	//Request request;
-	//creer getState
-	//if/else ou switch
-	//if State == start
-	// 	First line parsing
-	//else if state == first_line_ok
-	//	header parsing
-	//else if state == headers_ok
-	//	check headers return 0 ou en fonction
-	//else if state == parsebody/chunk/multiform
-	//	parse body + check de validité et return 1
-	// Call to first line parsing function
-	// Headers parsing
-	// Call to headers parsing function
 }
 
 int	Server::handleRequest(int client_fd){
@@ -238,8 +198,7 @@ int	Server::handleRequest(int client_fd){
 		std::cout << "Favicon detected" << std::endl;
 		return (-1);
 	}
-	response.setVersion("1.1");
-	//response.setVersion(request.getVersion());
+	response.setVersion(request.getVersion());
 	if (request.getErrorCode() == -1)
 	{
 		std::string path_to_file = request.getPathToFile();
@@ -288,12 +247,6 @@ int	Server::sendResponse(int client_fd){
 	len = _requests[client_fd].length();
 	rc = send(client_fd, _requests[client_fd].c_str(), len, 0);
 	std::cout << "/////////////////////// MMMMH J'AI MANGÉ UNE REQUÊTE ////////////////////////" << std::endl;
-	// if (rc == -1)
-	// {
-	// 	this->closeClientSocket(client_fd);
-	// 	perror("Send() failed");
-	// 	return (-1);
-	// }
 	if (rc == 0 || rc == -1)
 	{
 		if (!rc)
