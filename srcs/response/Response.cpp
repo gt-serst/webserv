@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:28:16 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/14 16:11:57 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/14 16:35:09 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -83,7 +83,7 @@ void	Response::handleDirective(std::string path, t_locations& loc, Request& req,
 		// Path points towards a directory
 		else if (getFileType(buf) == 0)
 		{
-			// If directory but without / at the end if the uri, redirect the uri with the / at the end
+			// If directory but non / terminating, redirect the uri with / terminating
 			if (rooted_path[rooted_path.length() - 1] != '/')
 			{
 				setRedir(true);
