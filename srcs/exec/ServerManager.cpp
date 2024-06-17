@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/07 11:04:51 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/14 12:28:35 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/17 15:16:04 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -124,12 +124,6 @@ void	ServerManager::serverRoutine(void){
 							close(it->first);
 							_sockets.erase(it->first);
 						}
-					}
-					else if (rc == -1)
-					{
-						FD_CLR(it->first, &_fd_set);
-						FD_CLR(it->first, &reading_set);
-						_sockets.erase(it->first);
 					}
 					rc = 0;
 					break;

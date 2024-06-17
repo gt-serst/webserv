@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/08 09:59:24 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/17 12:03:08 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/17 15:14:36 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -121,13 +121,16 @@ int	Server::readClientSocket(int client_fd){
 	if (rc == 0 || rc == -1)
 	{
 		if (!rc)
+		{
 			perror("Nothing more to read");
+			return (0);
+		}
 		else
 		{
 			this->closeClientSocket(client_fd);
 			perror("Recv failed");
+			return (-1);
 		}
-		return (-1);
 	}
 	buffer[rc] = '\0';
 	stack += buffer;
@@ -227,7 +230,7 @@ int	Server::handleRequest(int client_fd){
 			{
 				// If CGI is runned in the response process, we do not have to send a response in the client socket because script already done it
 				std::cout << "/////////////////////// MMMMH J'AI MANGÉ UNE CGI ////////////////////////" << std::endl;
-				_requests.erase(client_fd);
+				//_requests.erase(client_fd);
 				return (1);
 			}
 		}
@@ -312,4 +315,9 @@ t_server_scope	Server::getConfig() const{
 struct sockaddr_in	Server::getClientAddr() const{
 
 	return _client_addr;
+}
+
+std::map<int, std::string>	Server::getRequests(void){
+
+	return _requests;
 }
