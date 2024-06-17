@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:12:17 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/14 14:26:13 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/17 11:48:41 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -81,6 +81,7 @@ class Response{
 		bool		checkFileAccess(std::string path, std::map<int, std::string> error_paths, std::string perm);
 		//bool		checkRootAccess(std::string path);
 		bool		checkErrorFileAccess(int error_code, std::string message, std::string error_path);
+		void		cleanPath(std::string& str);
 		std::string	_response;
 		std::string	_http_version;
 		int			_status_code;
