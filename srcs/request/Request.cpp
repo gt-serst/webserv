@@ -485,7 +485,7 @@ void Request::setRequest(std::string& buffer)
 	}
 	if (getHeader("Transfer-Encoding").compare("chunked\r") == 0)
 	{
-		std::cout << "CHUNK" << std::endl;
+		//std::cout << "CHUNK" << std::endl;
 		std::string chunk;
 		state = R_chunked_start;
 		chunked = true;
