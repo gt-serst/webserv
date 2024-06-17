@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:28:16 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/17 12:04:03 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/17 14:40:12 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -235,7 +235,7 @@ void	Response::fileRoutine(std::string rooted_path, std::map<int, std::string> e
 				while (it != cgi_path.end())
 				{
 					if (path.compare(path.length() - it->first.length(), it->first.length(), it->first) == 0 && !it->second.empty())
-						handleCGI(rooted_path, req.getPathToFile(), req, it->second);
+						handleCGI(rooted_path, req.getPathToFile(), req, it->second, *this);
 					++it;
 				}
 				this->_cgi = true;
