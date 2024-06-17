@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/07 11:04:51 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/12 16:30:03 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/14 12:28:35 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -56,7 +56,7 @@ void	ServerManager::initServer(t_server_scope *servers, int nb_servers){
 		int		fd;
 		Server	server(servers[i]);
 
-		// initialize server fd socket and set them
+		// Initialize server fd socket and set them
 		if (server.createServerSocket() != -1)
 		{
 			fd = server.getFd();
@@ -80,7 +80,7 @@ void	ServerManager::serverRoutine(void){
 		rc = 0;
 		while (rc == 0)
 		{
-			// after each loop fds information are kept from the previous loop and select is relaunched
+			// After each loop fds information are kept from the previous loop and select is relaunched
 			timeout.tv_sec  = 1;
 			timeout.tv_usec = 0;
 			std::memcpy(&reading_set, &_fd_set, sizeof(_fd_set));
@@ -94,7 +94,7 @@ void	ServerManager::serverRoutine(void){
 		{
 			for (std::vector<int>::iterator it = _ready.begin(); it != _ready.end(); ++it)
 			{
-				// client socket is set and ready to send the response to the browser
+				// Client socket is set and ready to send the response to the browser
 				if (FD_ISSET(*it, &writing_set))
 				{
 					_sockets[*it]->sendResponse(*it);
@@ -108,7 +108,7 @@ void	ServerManager::serverRoutine(void){
 			}
 			for (std::map<int, Server*>::iterator it = _sockets.begin(); it != _sockets.end(); ++it)
 			{
-				// client socket is set and ready to send the request to the server
+				// Client socket is set and ready to send the request to the server
 				if (FD_ISSET(it->first, &reading_set))
 				{
 					int rc = it->second->readClientSocket(it->first);
@@ -137,7 +137,7 @@ void	ServerManager::serverRoutine(void){
 			}
 			for (std::map<int, Server>::iterator it = _servers.begin(); it != _servers.end(); ++it)
 			{
-				// server socket is set and ready to listen to a client
+				// Server socket is set and ready to listen to a client
 				if (FD_ISSET(it->first, &reading_set))
 				{
 					int client_fd = it->second.listenClientConnection();
@@ -156,7 +156,7 @@ void	ServerManager::serverRoutine(void){
 		}
 		else
 		{
-			// select failed because his return code is lower than 0
+			// Select failed because his return code is lower than 0
 			for (std::map<int, Server*>::iterator it = _sockets.begin() ; it != _sockets.end() ; it++)
 				it->second->closeClientSocket(it->first);
 			_sockets.clear();

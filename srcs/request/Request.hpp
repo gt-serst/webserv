@@ -76,6 +76,7 @@ class Request
 		std::string _error_msg;
 		std::string _litteral_ip;
 		std::string _boundary;
+		std::string _fragment;
 		std::map<int, t_multi> _multiform;
 		int _error_code;
 		int	_port;
@@ -84,6 +85,7 @@ class Request
 		int chunk_size;
 		bool chunked;
 		bool multiform;
+		bool body;
 
 		void parseRequestLine(char *line);
 		std::streampos setHeader(std::stringstream& ss, std::streampos startpos);
@@ -118,7 +120,8 @@ class Request
 		Server _server;
 		std::string getIp() const;
 		int			getLen() const;
-		// int getLen();
+		std::map<int, t_multi> getMulti() const;
+		std::map<std::string, std::string> getQuery_args() const;
 };
 
 #endif
