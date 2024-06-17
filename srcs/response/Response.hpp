@@ -60,7 +60,7 @@ class Response{
 		void		runDirMethod(std::string path, std::map<int, std::string> error_paths, t_locations loc, Request& req);
 		void		isAutoIndex(std::string path, std::map<int, std::string> error_paths, t_locations loc, Request& req);
 		bool		findCGI(std::map<std::string, std::string>	cgi_path, std::string path_to_file);
-		void		handleCGI(std::string rootedpath, std::string path, Request& req, std::string exec_path);
+		void		handleCGI(std::string rootedpath, std::string path, Request& req, std::string exec_path, Response& res);
 		void		runFileMethod(std::string path, std::map<int, std::string> error_paths, Request& req);
 		void		downloadFile(std::string path, std::map<int, std::string> error_paths);
 		void		uploadQueryFile(std::string upload_path, std::map<int, std::string> error_paths, std::map<std::string, std::string> query, std::string body);
