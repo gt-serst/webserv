@@ -56,6 +56,7 @@ bool	Response::checkContentType(std::string path){
 		}
 		input.close();
 		std::string type = getContentType(stack);
+		std::cout << "Type: " << type << std::endl;
 		if (type == "text/html" || type == "text/plain" || type == "image/png" || type == "image/jpeg" || type == "image/svg+xml" || type == "image/gif" || type == "video/mp4")
 			return (true);
 	}
