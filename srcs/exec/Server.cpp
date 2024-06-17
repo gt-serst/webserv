@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/08 09:59:24 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/17 11:08:09 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/17 12:03:08 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -207,6 +207,7 @@ int	Server::handleRequest(int client_fd){
 
 		router.routeRequest(path_to_file, loc, this->_config.locations, response);
 		std::cout << "Redir happened: " << response.getRedir() << std::endl;
+		// If redir generate a redir response and the browser will resend a GET request with the new path to take
 		if (response.getRedir() == true)
 			response.generateResponse();
 		else
@@ -218,11 +219,13 @@ int	Server::handleRequest(int client_fd){
 			response.handleDirective(request.getPathToFile(), loc, request, *this);
 			if (response.getDefaultFile() == true)
 			{
+				// When a default file is found we relaunch all the routine, router and response process
 				response.setDefaultFile(false);
 				response.handleDirective(request.getPathToFile(), loc, request, *this);
 			}
 			else if (response.getCGI() == true)
 			{
+				// If CGI is runned in the response process, we do not have to send a response in the client socket because script already done it
 				std::cout << "/////////////////////// MMMMH J'AI MANGÉ UNE CGI ////////////////////////" << std::endl;
 				_requests.erase(client_fd);
 				return (1);
@@ -231,6 +234,7 @@ int	Server::handleRequest(int client_fd){
 	}
 	else
 	{
+		// Catch error from the request parser
 		std::cout << request.getErrorCode() << std::endl;
 		response.errorResponse(request.getErrorCode(), request.getErrorMsg(), getConfig().error_page_paths);
 	}

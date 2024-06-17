@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:28:16 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/17 11:50:44 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/17 12:04:03 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -747,18 +747,6 @@ bool	Response::checkFileAccess(std::string path, std::map<int, std::string> erro
 	}
 	return (true);
 }
-
-/*bool	Response::checkRootAccess(std::string path){
-
-	struct stat buf;
-
-	if (stat(path.c_str(), &buf) != 0 || access(path.c_str(), R_OK) != 0)
-	{
-		fileNotFound();
-		return (false);
-	}
-	return (true);
-}*/
 
 bool	Response::checkErrorFileAccess(int error_code, std::string message, std::string error_path){
 
