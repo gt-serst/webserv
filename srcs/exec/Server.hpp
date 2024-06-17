@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/08 09:43:45 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/17 15:14:08 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/17 15:33:23 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,7 +35,8 @@ class Server
 		int							getClientFd(void) const;
 		t_server_scope				getConfig(void) const;
 		struct sockaddr_in			getClientAddr(void) const;
-		std::map<int, std::string>	getRequests(void);
+		std::map<int, std::string>	getRequests(void) const;
+		void						setRequests(std::map<int, std::string> requests);
 
 	private:
 		int							_fd;

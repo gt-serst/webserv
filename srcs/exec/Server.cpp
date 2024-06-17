@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/08 09:59:24 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/17 15:14:36 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/17 15:33:41 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -317,7 +317,12 @@ struct sockaddr_in	Server::getClientAddr() const{
 	return _client_addr;
 }
 
-std::map<int, std::string>	Server::getRequests(void){
+std::map<int, std::string>	Server::getRequests(void) const{
 
 	return _requests;
+}
+
+void	Server::setRequests(std::map<int, std::string> requests){
+
+	_requests = requests;
 }
