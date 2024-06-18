@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:28:16 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/17 15:16:22 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/18 18:01:39 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,20 +28,17 @@
 
 Response::Response(void){
 
-	// _response = "";
-	// _http_version = "";
 	_status_code = -1;
-	// _status_message = "";
-	// _location = "";
-	// _content_type = "";
 	this->_content_len = -1;
 	this->_cgi = false;
 	this->_default_file = false;
-	// _body = "";
-	// _redir = false;
+	//std::cout << "Response created" << std::endl;
 }
 
-Response::~Response(void){}
+Response::~Response(void){
+
+	//std::cout << "Response destroyed" << std::endl;
+}
 
 bool	Response::checkContentType(std::string path){
 
@@ -67,7 +64,7 @@ bool	Response::checkContentType(std::string path){
 
 void	Response::handleDirective(std::string path, t_locations& loc, Request& req, Server& serv){
 
-	std::string					rooted_path;
+	std::string	rooted_path;
 
 	// Catch POST method early because it depends on upload_path, not uri (=path)
 	if (uploadMethod(loc, path, serv.getConfig().upload_path, serv.getConfig().error_page_paths, req) == true)
@@ -77,7 +74,7 @@ void	Response::handleDirective(std::string path, t_locations& loc, Request& req,
 		struct stat buf;
 
 		rooted_path = path;
-		std::cout << "Rooted path: " << rooted_path << std::endl;
+		std::cout << rooted_path << std::endl;
 		if (stat(rooted_path.c_str(), &buf) != 0)
 			errorResponse(404, "Not Found : Stat Failed", serv.getConfig().error_page_paths);
 		// Path points towards a directory
@@ -121,8 +118,6 @@ void	Response::cleanPath(std::string& str){
 
 bool	Response::uploadMethod(t_locations loc, std::string& path, std::string upload_path, std::map<int, std::string> error_paths, Request& req){
 
-	std::cout << "rootPaths" << std::endl;
-	std::cout << "Path in rootPaths: " << path << std::endl;
 	if (req.getRequestMethod() == "POST")
 	{
 		cleanPath(upload_path);
@@ -131,8 +126,6 @@ bool	Response::uploadMethod(t_locations loc, std::string& path, std::string uplo
 			const std::map<std::string, std::string>& cgi_path = req._server.getConfig().cgi_path;
 			if (findCGI(cgi_path, req.getPathToFile()) == true)
 			{
-				std::cout << "Send CGI path and run it" << std::endl;
-				std::cout << "------------rooted_path= '" << path << "'-------------" << std::endl;
 				std::map<std::string, std::string>::const_iterator it = cgi_path.begin();
 				std::string _path = req.getPathToFile();
 				while (it != cgi_path.end())
@@ -162,21 +155,15 @@ bool	Response::uploadMethod(t_locations loc, std::string& path, std::string uplo
 
 bool	Response::attachRootToPath(std::string& path, std::string root){
 
-	std::cout << "attachRootToPath" << std::endl;
 	if (root.empty() == false)
 	{
-		std::cout << "Root in attachRoot: " << root << std::endl;
-		std::cout << "Path in attachRoot: " << path << std::endl;
 		cleanPath(root);
 		if (path[0] != '/')
 			path.insert(0, "/");
 		path.insert(0, root);
 		return (true);
 	}
-	{
-		std::cout << "Root not found" << std::endl;
 		return (fileNotFound(), false);
-	}
 }
 
 int	Response::getFileType(struct stat buf){
@@ -191,28 +178,24 @@ int	Response::getFileType(struct stat buf){
 
 bool	Response::findDefaultFile(std::string& rooted_path, t_locations& loc, std::map<std::string, t_locations> routes, Request& req, std::map<int, std::string> error_paths){
 
-	Router		router;
+	Router	router;
 
 	if(loc.default_path.empty() == false)
 	{
 		for (int i = loc.default_path.size() - 1; i >= 0; i--)
 		{
-			std::cout << "Default_path:" << loc.default_path[i] << std::endl;
-			struct stat buf;
-			std::string tmp;
-			std::string rooted_default_path;
+			struct stat	buf;
+			std::string	tmp;
+			std::string	rooted_default_path;
 
 			tmp = rooted_path;
 			if (tmp[tmp.length() - 1] != '/')
 				tmp.append("/");
 			rooted_default_path = tmp.append(loc.default_path[i]);
-			std::cout << rooted_default_path << std::endl;
 			if (stat(rooted_default_path.c_str(), &buf) == 0)
 			{
-				std::cout << "File exists" << std::endl;
 				if (access(rooted_default_path.c_str(), R_OK) == 0)
 				{
-					std::cout << "File accessible" << std::endl;
 					std::string default_path;
 
 					default_path = req.getPathToFile();
@@ -240,25 +223,29 @@ bool	Response::findDefaultFile(std::string& rooted_path, t_locations& loc, std::
 
 void	Response::fileRoutine(std::string rooted_path, std::map<int, std::string> error_paths, t_locations loc, Request& req){
 
-	if (checkFileAccess(rooted_path, error_paths, "R") == true)
+	const std::map<std::string, std::string>& cgi_path = req._server.getConfig().cgi_path;
+	if (findCGI(cgi_path, req.getPathToFile()) == true)
+	{
+		if (isMethodAllowed(loc, req) == true)
+		{
+			std::map<std::string, std::string>::const_iterator it = cgi_path.begin();
+			std::string path = req.getPathToFile();
+			while (it != cgi_path.end())
+			{
+				if (path.compare(path.length() - it->first.length(), it->first.length(), it->first) == 0 && !it->second.empty())
+					handleCGI(rooted_path, req.getPathToFile(), req, it->second, *this);
+				++it;
+			}
+			this->_cgi = true;
+		}
+		else
+			errorResponse(405, "Method Not Allowed : File", error_paths);
+	}
+	else if (checkFileAccess(rooted_path, error_paths, "R") == true)
 	{
 		if (checkContentType(rooted_path) == true)
 		{
-			const std::map<std::string, std::string>& cgi_path = req._server.getConfig().cgi_path;
-			if (findCGI(cgi_path, req.getPathToFile()) == true && isMethodAllowed(loc, req) == true)
-			{
-				std::cout << "Send CGI path and run it" << std::endl;
-				std::map<std::string, std::string>::const_iterator it = cgi_path.begin();
-				std::string path = req.getPathToFile();
-				while (it != cgi_path.end())
-				{
-					if (path.compare(path.length() - it->first.length(), it->first.length(), it->first) == 0 && !it->second.empty())
-						handleCGI(rooted_path, req.getPathToFile(), req, it->second, *this);
-					++it;
-				}
-				this->_cgi = true;
-			}
-			else if (isMethodAllowed(loc, req) == true)
+			if (isMethodAllowed(loc, req) == true)
 				runFileMethod(rooted_path, error_paths, req);
 			else
 				errorResponse(405, "Method Not Allowed : File", error_paths);
@@ -371,8 +358,6 @@ void	Response::downloadFile(std::string rooted_path, std::map<int, std::string> 
 
 void	Response::uploadQueryFile(std::string upload_path, std::map<int, std::string> error_paths, std::map<std::string, std::string> query, std::string body){
 
-	std::cout << "QueryFile" << std::endl;
-	std::cout << "Rooted upload path: " << upload_path << std::endl;
 	for (std::map<std::string, std::string>::iterator it = query.begin(); it != query.end(); ++it)
 	{
 		if (checkFileAccess(upload_path, error_paths, "W") == true)
@@ -400,8 +385,6 @@ void	Response::uploadQueryFile(std::string upload_path, std::map<int, std::strin
 
 void	Response::uploadMultiformFile(std::string upload_path, std::map<int, std::string> error_paths, std::map<int, t_multi> multiform){
 
-	std::cout << "MultiformFile" << std::endl;
-	std::cout << "Rooted upload path: " << upload_path << std::endl;
 	for (std::map<int, t_multi>::iterator it = multiform.begin(); it != multiform.end(); ++it)
 	{
 		if (checkFileAccess(upload_path, error_paths, "W") == true)
@@ -411,8 +394,6 @@ void	Response::uploadMultiformFile(std::string upload_path, std::map<int, std::s
 			if (it->second.filename[0] != '/')
 				it->second.filename.insert(0, "/");
 			whole_path = upload_path + it->second.filename;
-
-			std::cout << "Whole_path: " << whole_path << std::endl;
 
 			std::ofstream output(whole_path);
 
@@ -434,7 +415,6 @@ void	Response::deleteFile(std::string rooted_path, std::map<int, std::string> er
 	if (std::remove(rooted_path.c_str()) < 0)
 	{
 		errorResponse(500, "Internal Server Error", error_paths);
-		perror("500 Delete file failed");
 		return;
 	}
 	deleteResponse();
@@ -495,7 +475,6 @@ void Response::autoIndexResponse(std::string rooted_path, std::string dir_list, 
 		struct stat buf;
 		std::string whole_path = rooted_path + "/" + *it;
 		if (stat(whole_path.c_str(), &buf) != 0) {
-			perror("Stat failed");
 			continue;
 		}
 
@@ -628,8 +607,6 @@ void	Response::errorResponse(int error_code, std::string message, std::map<int, 
 
 	std::string error_path;
 
-	std::cout << "Error code: " << error_code << std::endl;
-	std::cout << "Message: " << message << std::endl;
 	error_path = matchErrorCodeWithPage(error_code, error_paths);
 	cleanPath(error_path);
 	if (error_path.empty() == true)
@@ -680,8 +657,6 @@ std::string	Response::matchErrorCodeWithPage(int error_code, std::map<int, std::
 
 	for (std::map<int, std::string>::iterator it = error_paths.begin(); it != error_paths.end(); ++it)
 	{
-		std::cout << "Error code in map: " << it->first << std::endl;
-		std::cout << "Error code: " << error_code << std::endl;
 		if (it->first == error_code)
 			return (it->second);
 	}
@@ -770,7 +745,6 @@ bool	Response::checkErrorFileAccess(int error_code, std::string message, std::st
 
 	struct stat buf;
 
-	std::cout << "Error path in checkErrorFileAccess: " << error_path << std::endl;
 	if (stat(error_path.c_str(), &buf) != 0 || access(error_path.c_str(), R_OK) != 0)
 	{
 		createHtmlErrorPage(error_code, message);

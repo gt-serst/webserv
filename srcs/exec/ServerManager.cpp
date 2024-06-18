@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/07 11:04:51 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/18 16:30:48 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/18 17:03:34 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -103,7 +103,6 @@ void	ServerManager::serverRoutine(void){
 					close(*it);
 					_sockets.erase(*it);
 					_ready.erase(it);
-					std::cout << "JE CLOSE MA VIE" << std::endl;
 					break;
 				}
 			}

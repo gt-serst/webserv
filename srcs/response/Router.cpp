@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 11:15:20 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/18 16:25:21 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/18 17:10:05 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,9 +17,15 @@
 #include <string>
 #include <map>
 
-Router::Router(void){}
+Router::Router(void){
 
-Router::~Router(void){}
+	//std::cout << "Router created" << std::endl;
+}
+
+Router::~Router(void){
+
+	//std::cout << "Router destroyed" << std::endl;
+}
 
 void	Router::routeRequest(std::string& path_to_file, t_locations& loc, std::map<std::string, t_locations> routes, Response& resp){
 
@@ -29,10 +35,8 @@ void	Router::routeRequest(std::string& path_to_file, t_locations& loc, std::map<
 		path_to_file.insert(0, "/");
 	tmp = path_to_file;
 	loc = recursiveRouteRequest(tmp, routes);
-	std::cout << "HandleRedirection return: " << handleRedirection(path_to_file, loc.redirections) << std::endl;
-	// No redir is found
 	if (path_to_file == handleRedirection(path_to_file, loc.redirections))
-		resp.setRedir(false);
+		resp.setRedir(false); // No redir is found
 	else
 	{
 		// Redir is found, keep the new url in memory, we will use it in the redirect response
