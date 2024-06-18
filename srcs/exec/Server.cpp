@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/08 09:59:24 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/18 16:18:34 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/18 16:29:05 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -231,7 +231,7 @@ int	Server::handleRequest(int client_fd){
 			{
 				// If CGI is runned in the response process, we do not have to send a response in the client socket because script already done it
 				std::cout << "/////////////////////// MMMMH J'AI MANGÉ UNE CGI ////////////////////////" << std::endl;
-				//_requests.erase(client_fd);
+				_requests.erase(client_fd);
 				return (1);
 			}
 		}
