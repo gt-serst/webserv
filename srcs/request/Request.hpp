@@ -85,7 +85,7 @@ class Request
 		int chunk_size;
 		bool chunked;
 		bool multiform;
-		bool body;
+		//bool body;
 
 		void parseRequestLine(char *line);
 		std::streampos setHeader(std::stringstream& ss, std::streampos startpos);
