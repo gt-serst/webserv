@@ -264,7 +264,7 @@ void	Request::validity_checks()
 			_error_msg = "Content-Length header is missing";
 			return ;
 		}
-		if (atoi(hlen.c_str()) != _body_len)
+		if (ft_atoi(hlen.c_str()) != _body_len)
 		{
 			_error_code = 400;
 			_error_msg = "Body length does not match with Content-Length header";
@@ -341,7 +341,7 @@ int ip_checker(std::string& ip)
 
     while ((pos = ip.find(".", tmp)) != std::string::npos)
 	{
-        test = atoi(ip.substr(tmp, pos - tmp).c_str());
+        test = ft_atoi(ip.substr(tmp, pos - tmp).c_str());
         if (test > 255 || test < 0)
             return 1;
         tmp = pos + 1;
@@ -349,7 +349,7 @@ int ip_checker(std::string& ip)
     }
     if (valid == 3)
 	{
-        test = atoi(ip.substr(tmp, len - tmp).c_str());
+        test = ft_atoi(ip.substr(tmp, len - tmp).c_str());
         if (test <= 255 && test >= 0)
             valid++;
     }
@@ -697,13 +697,13 @@ void Request::parseRequestLine(char *line)
 			{
 				if (line[i] == '/' && line[i - 1] != ':')
 				{
-					_port = atoi(convert_charptr_string(line, start, i).c_str());
+					_port = ft_atoi(convert_charptr_string(line, start, i).c_str());
 					start = i;
 					state = R_abs_path;
 				}
 				else if (line[i] == ' ')
 				{
-					_port = atoi(convert_charptr_string(line, start, i).c_str());
+					_port = ft_atoi(convert_charptr_string(line, start, i).c_str());
 					state = R_second_space;
 				}
 				else if(!isdigit(line[i]))
@@ -914,7 +914,7 @@ bool	Request::handle_headers()
     if (pos != std::string::npos)
     {
         _hostname = line.substr(0, pos);
-		_port = atoi(line.substr(pos + 1, line.length()).c_str());
+		_port = ft_atoi(line.substr(pos + 1, line.length()).c_str());
 		if (_server.getConfig().port != _port)
 		{
 			_error_code = 400;
@@ -935,7 +935,7 @@ bool	Request::handle_headers()
 			_error_msg = "A request cant have both the transfer encoding and the content length headers";
 			return true;
 		}
-		if (atoi(line.c_str()) > _server.getConfig().max_body_size)
+		if (ft_atoi(line.c_str()) > _server.getConfig().max_body_size)
 		{
 			_error_code = 413;
 			_error_msg = "The body is greater than the max body size accepted by the server";
