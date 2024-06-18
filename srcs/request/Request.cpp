@@ -720,10 +720,10 @@ void Request::parseRequestLine(char *line)
 					start = i + 1;
 					state = R_uri_query;
 				}
-				else if (line[i] == '#')// on verra si c'est utile
+				else if (line[i] == '#')
 				{
 					start = i + 1;
-					state = R_fragment ; //manage fragment
+					state = R_fragment ;
 				}
 				else if (line[i] == ' ')
 				{
@@ -976,11 +976,14 @@ void Request::setBody(std::stringstream& ss, std::streampos startpos)
 {
 	std::cout << "PARSING BODY"  << std::endl;
 	ss.seekg(startpos);
+	std::cout << "Startpos == " << startpos << std::endl;
 	std::string line;
+	// getline(ss,line);
+	// std::cout << (int)line[0] << std::endl;
 	while (getline(ss, line))
 	{
-		//std::cout << "BODY LINE == " << line << std::endl;
-		//std::cout << "line 0 " << (int)line[0] << std::endl;
+		std::cout << "BODY LINE == " << line << std::endl;
+		std::cout << "line 0 " << (int)line[0] << std::endl;
 		if (line == "\r")
 		{
 			//std::cout << "BODY DONE FLAG" << std::endl;
@@ -992,9 +995,11 @@ void Request::setBody(std::stringstream& ss, std::streampos startpos)
 		line += "\n";
 		_body += line;
 	}
-	_error_code = 400;
-	_error_msg = "Bad request : body does not end with CRLF";
-	state = R_error;
+	// if (line[0] == '\0')
+	// 	return ;
+	// _error_code = 400;
+	// _error_msg = "Bad request : body does not end with CRLF";
+	// state = R_error;
 
 
 	// std::string bodyContent((std::istreambuf_iterator<char>(ss)), std::istreambuf_iterator<char>());
