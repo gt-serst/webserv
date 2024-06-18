@@ -439,6 +439,8 @@ Request::~Request()
 	std::cout << "Hostname == " << _hostname << std::endl;
 	std::cout << "Port == " << _port << std::endl;
 	std::cout << "Fragment == " << _fragment << std::endl;
+	std::cout << "Body len == " << _body_len << std::endl;
+	std::cout << "Body last char == " << (int)_body[_body_len - 1] << std::endl;
 	if (chunked)
 		std::cout << "IS CHUNKED" << std::endl;
 	std::cout << "//////////////HEADERS////////////" << std::endl;
@@ -927,6 +929,12 @@ bool	Request::handle_headers()
 	line = getHeader("Content-Length");
 	if (!line.empty())
 	{
+		if (!getHeader("Transfer-Encoding").empty())
+		{
+			_error_code = 400;
+			_error_msg = "A request cant have both the transfer encoding and the content length headers";
+			return true;
+		}
 		if (atoi(line.c_str()) > _server.getConfig().max_body_size)
 		{
 			_error_code = 413;
@@ -984,17 +992,21 @@ void Request::setBody(std::stringstream& ss, std::streampos startpos)
 	{
 		std::cout << "BODY LINE == " << line << std::endl;
 		std::cout << "line 0 " << (int)line[0] << std::endl;
-		if (line == "\r")
-		{
-			//std::cout << "BODY DONE FLAG" << std::endl;
-			if (_body.length() != 0)
-				_body_len = _body.length();
-			state = R_done;
-			return ;
-		}
-		line += "\n";
+		// if (line == "\r")
+		// {
+		// 	std::cout << "BODY DONE FLAG" << std::endl;
+		// 	if (_body.length() != 0)
+		// 		_body_len = _body.length();
+		// 	state = R_done;
+		// 	return ;
+		// }
+		if (!ss.eof())
+			line += "\n";
 		_body += line;
 	}
+	if (_body.length() != 0)
+		_body_len = _body.length();
+	state = R_done;
 	// if (line[0] == '\0')
 	// 	return ;
 	// _error_code = 400;
