@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/08 09:59:24 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/18 12:07:59 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/18 16:18:34 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,6 +16,7 @@
 #include "../request/Request.hpp"
 #include "../response/Router.hpp"
 #include "../response/Response.hpp"
+#include "../webserv.hpp"
 #include <string>
 #include <vector>
 #include <map>
@@ -50,19 +51,19 @@ int	Server::createServerSocket(void){
 
 	this->_fd = socket(AF_INET, SOCK_STREAM, 0);
 	if (this->_fd < 0)
-		perror("Socket() failed");
+		std::cerr << "Socket() failed" << std::endl;
 
 	int reuse = 1;
 	rc = setsockopt(this->_fd, SOL_SOCKET, SO_REUSEPORT, &reuse, sizeof(reuse));
 	if (rc < 0)
 	{
-		perror("Setsockopt() failed");
+		std::cerr << "Setsockopt() failed" << std::endl;
 		return (-1);
 	}
 	flags = fcntl(this->_fd, F_GETFL, 0);
 	if (flags < 0)
 	{
-		perror("Fcntl() failed");
+		std::cerr << "Fcntl() failed" << std::endl;
 		return (-1);
 	}
 	fcntl(this->_fd, F_SETFL, flags | O_NONBLOCK);
@@ -75,14 +76,14 @@ int	Server::createServerSocket(void){
 	rc = bind(this->_fd, (struct sockaddr *) &(_server_addr), sizeof(_server_addr));
 	if (rc < 0)
 	{
-		perror("Bind() failed");
+		std::cerr << "Bind() failed" << std::endl;
 		return (-1);
 	}
 	int	connection_backlog = 1000;
 	rc = listen(this->_fd, connection_backlog);
 	if (rc < 0)
 	{
-		perror("Listen() failed");
+		std::cerr << "Listen() failed" << std::endl;
 		return (-1);
 	}
 	return (this->_fd);
@@ -98,13 +99,13 @@ int	Server::listenClientConnection(void){
 
 	if (client_fd < 0)
 	{
-		perror("Accept() failed");
+		std::cerr << "Accept() failed" << std::endl;
 		return (-1);
 	}
 	flags = fcntl(client_fd, F_GETFL, 0);
 	if (flags < 0)
 	{
-		perror("Fcntl() failed");
+		std::cerr << "Fcntl() failed" << std::endl;
 		return (-1);
 	}
 	fcntl(client_fd, F_GETFL, 0);
@@ -122,13 +123,13 @@ int	Server::readClientSocket(int client_fd){
 	{
 		if (!rc)
 		{
-			perror("Nothing more to read");
+			std::cout << "Client close connection" << std::endl;
 			return (0);
 		}
 		else
 		{
 			this->closeClientSocket(client_fd);
-			perror("Recv failed");
+			std::cerr << "Recv() failed" << std::endl;
 			return (-1);
 		}
 	}
@@ -164,7 +165,7 @@ int	Server::readClientSocket(int client_fd){
 			{
 				// Extraire la valeur de Content-Length
 				size_t length_start = pos + 16; // "Content-Length: " est de 16 caractères
-				size_t content_length = std::stoi(_requests[client_fd].substr(length_start, end_of_line - length_start));
+				size_t content_length = ft_atoi(_requests[client_fd].substr(length_start, end_of_line - length_start).c_str());
 
 				// Vérifier si toute la requête a été reçue
 				if (_requests[client_fd].size() >= i + content_length + 4)
@@ -266,13 +267,13 @@ int	Server::sendResponse(int client_fd){
 		if (!rc)
 		{
 			_requests.erase(client_fd);
-			perror("Nothing more to send");
+			std::cout << "Client close connection" << std::endl;
 			return (0);
 		}
 		else
 		{
 			this->closeClientSocket(client_fd);
-			perror("Send() failed");
+			std::cerr << "Send() failed" << std::endl;
 			return (-1);
 		}
 	}
