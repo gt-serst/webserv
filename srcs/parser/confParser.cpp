@@ -3,16 +3,7 @@
 static void		freeConfig(t_server_scope *serverConfig, int servers)
 {
 	(void)servers;
-	/*for (unsigned int i = 0; i <= *servers; i++)
-	  {
-	  std::map<std::string, t_locations>::iterator it = serverConfig[*servers].locations;
-	  while (it != serverConfig[*servers].locations.end())
-	  {
-	  if (it->second.root_path.empty() == 0)
-	  delete it->second.root_path;
-	  ++it;
-	  }
-	  }*/
+	//clear all maps?
 	delete[] serverConfig;
 }
 
@@ -25,46 +16,6 @@ static bool		isServer(int i, std::string buffer)
 	}
 	return (true);
 }
-
-/*static t_server_scope	*isServerName(int *i, std::string buffer, t_server_scope *serverConfig, int *servers)
-  {
-  if (buffer.substr(*i, 12) == "server_name\t")
-  {
-  int count = 0;
- *i += 12;
- while (buffer[*i] && buffer[*i] != '\n')
- {
- int	j = *i;
- while (buffer[j] && isprint(buffer[j]) && buffer[j] != ' ')
- j++;
- if (j != *i && buffer[j] && (buffer[j] == '\n' || buffer[j] == ' '))
- {
- count++;
- std::string *temp = NULL;
- temp = new std::string[count];
- if (count > 1)
- {
- for (int k = 0; k < count; k++)
- temp[k] = serverConfig[*servers].server_name[k];
- delete[] serverConfig[*servers].server_name;
- }
- temp[count - 1] = buffer.substr(*i, j - *i);
- serverConfig[*servers].server_name = temp;
- *i = j + 1;
- std::cout << "server_name : " << serverConfig[*servers].server_name[count - 1] << std::endl;
-//return (serverConfig);
-}
-else
-{
-freeConfig(serverConfig, *servers);
-return (NULL);
-}
-}
-return (serverConfig);
-}
-freeConfig(serverConfig, *servers);
-return (NULL);
-}*/
 
 static t_server_scope *isServerName(int *i, std::string buffer, t_server_scope *serverConfig, int *servers)
 {
@@ -223,27 +174,6 @@ static t_server_scope	*isServerCGI(int *i, std::string buffer, t_server_scope *s
 	freeConfig(serverConfig, *servers);
 	return (NULL);
 }
-
-/*static t_server_scope *isServerCGI(int *i, std::string buffer, t_server_scope *serverConfig, int *servers)
-  {
-  if (buffer.substr(*i, 6) != "CGI\t\t\t")
-  {
-  freeConfig(serverConfig, *servers);
-  return (NULL);
-  }
- *i += 6;
- int j = *i;
- while (buffer[j] && buffer[j] != '\n' && buffer[j] != ' ' && isprint(buffer[j]))
- j++;
- if (j != *i && buffer[j] && buffer[j] == '\n')
- {
- serverConfig[*servers].cgi_path = buffer.substr(*i, j - *i);
- *i = j + 1;
- return (serverConfig);
- }
- freeConfig(serverConfig, *servers);
- return (NULL);
- }*/
 
 static t_server_scope	*isServerMaxBodySize(int *i, std::string buffer, t_server_scope *serverConfig, int *servers)
 {

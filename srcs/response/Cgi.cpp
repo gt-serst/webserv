@@ -35,7 +35,7 @@ static std::string intToString(int number) {
 
 void Response::handleCGI(std::string rootedpath, std::string path, Request& req, std::string exec_path, Response& res) {
 	struct stat sb;
-	std::cout << "-------------------CGI LAUNCHED--------------------" << std::endl;
+	std::cout << "----------CGI----------" << std::endl;
 	if (stat(exec_path.c_str(), &sb) == 0 && access(exec_path.c_str(), X_OK) == 0) {
 		if (stat(rootedpath.c_str(), &sb) == 0 && access(rootedpath.c_str(), X_OK) == 0) {
 			int pipefd[2];
@@ -56,21 +56,18 @@ void Response::handleCGI(std::string rootedpath, std::string path, Request& req,
 					std::cerr << "ERROR: CGI: dup2() failed" << std::endl;
 					perror("dup2()");
 					CgiError(req, res, 502, "CGI dup2() error");
-					//exit(EXIT_FAILURE);
 				}
 				if (dup2(client_fd, STDOUT_FILENO) == -1) {
 					std::cerr << "ERROR: CGI: dup2() failed" << std::endl;
 					perror("dup2()");
 					CgiError(req, res, 502, "CGI dup2() error");
 					return ;
-					//exit(EXIT_FAILURE);
 				}
 				if (dup2(client_fd, STDERR_FILENO) == -1) {
 					std::cerr << "ERROR: CGI: dup2() failed" << std::endl;
 					perror("dup2()");
 					CgiError(req, res, 502, "CGI dup2() error");
 					return ;
-					//exit(EXIT_FAILURE);
 				}
 
 				std::string path_info = "PATH_INFO=" + path;
@@ -144,7 +141,7 @@ void Response::handleCGI(std::string rootedpath, std::string path, Request& req,
 				FD_ZERO(&rfds);
 				FD_SET(client_fd, &rfds);
 				tv.tv_sec = 1;
-				tv.tv_usec = 500;
+				tv.tv_usec = 0;
 
 				retval = select(0, NULL, NULL, NULL, &tv);
 				if (retval == -1) {
@@ -154,7 +151,6 @@ void Response::handleCGI(std::string rootedpath, std::string path, Request& req,
 					return ;
 				} else if (retval == 0) {
 					std::cerr << "ERROR: CGI: timeout" << std::endl;
-					//CgiError(req, res, 504, "CGI timeout");
 					kill(p, SIGKILL);
 					return ;
 				}
