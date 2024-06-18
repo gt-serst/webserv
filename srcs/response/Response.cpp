@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:28:16 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/14 16:35:09 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/17 15:16:22 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -111,16 +111,21 @@ void	Response::handleDirective(std::string path, t_locations& loc, Request& req,
 	}
 }
 
+void	Response::cleanPath(std::string& str){
+
+	if (str[0] == '/')
+		str.erase(0, 1);
+	if (str[str.length() - 1] == '/')
+		str.erase(str.length() - 1, 1);
+}
+
 bool	Response::uploadMethod(t_locations loc, std::string& path, std::string upload_path, std::map<int, std::string> error_paths, Request& req){
 
 	std::cout << "rootPaths" << std::endl;
 	std::cout << "Path in rootPaths: " << path << std::endl;
 	if (req.getRequestMethod() == "POST")
 	{
-		if (upload_path[0] == '/')
-			upload_path.erase(0, 1);
-		if (upload_path[upload_path.length() - 1] == '/')
-			upload_path.erase(upload_path.length() - 1, 1);
+		cleanPath(upload_path);
 		if (isMethodAllowed(loc, req) == true)
 		{
 			if (req.getMulti().empty() == false)
@@ -144,12 +149,9 @@ bool	Response::attachRootToPath(std::string& path, std::string root){
 	{
 		std::cout << "Root in attachRoot: " << root << std::endl;
 		std::cout << "Path in attachRoot: " << path << std::endl;
-		if (root[0] == '/')
-				root.erase(0, 1);
+		cleanPath(root);
 		if (path[0] != '/')
 			path.insert(0, "/");
-		if (root[root.length() - 1] == '/')
-			root.erase(root.length() - 1, 1);
 		path.insert(0, root);
 		return (true);
 	}
@@ -233,7 +235,7 @@ void	Response::fileRoutine(std::string rooted_path, std::map<int, std::string> e
 				while (it != cgi_path.end())
 				{
 					if (path.compare(path.length() - it->first.length(), it->first.length(), it->first) == 0 && !it->second.empty())
-						handleCGI(rooted_path, req.getPathToFile(), req, it->second);
+						handleCGI(rooted_path, req.getPathToFile(), req, it->second, *this);
 					++it;
 				}
 				this->_cgi = true;
@@ -611,10 +613,7 @@ void	Response::errorResponse(int error_code, std::string message, std::map<int, 
 	std::cout << "Error code: " << error_code << std::endl;
 	std::cout << "Message: " << message << std::endl;
 	error_path = matchErrorCodeWithPage(error_code, error_paths);
-	if (error_path[0] == '/')
-		error_path.erase(0, 1);
-	if (error_path[error_path.length() - 1] == '/')
-		error_path.erase(error_path.length() - 1, 1);
+	cleanPath(error_path);
 	if (error_path.empty() == true)
 	{
 		createHtmlErrorPage(error_code, message);
@@ -748,18 +747,6 @@ bool	Response::checkFileAccess(std::string path, std::map<int, std::string> erro
 	}
 	return (true);
 }
-
-/*bool	Response::checkRootAccess(std::string path){
-
-	struct stat buf;
-
-	if (stat(path.c_str(), &buf) != 0 || access(path.c_str(), R_OK) != 0)
-	{
-		fileNotFound();
-		return (false);
-	}
-	return (true);
-}*/
 
 bool	Response::checkErrorFileAccess(int error_code, std::string message, std::string error_path){
 

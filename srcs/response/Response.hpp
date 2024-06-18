@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:12:17 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/14 14:26:13 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/17 14:40:29 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -60,7 +60,7 @@ class Response{
 		void		runDirMethod(std::string path, std::map<int, std::string> error_paths, t_locations loc, Request& req);
 		void		isAutoIndex(std::string path, std::map<int, std::string> error_paths, t_locations loc, Request& req);
 		bool		findCGI(std::map<std::string, std::string>	cgi_path, std::string path_to_file);
-		void		handleCGI(std::string rootedpath, std::string path, Request& req, std::string exec_path);
+		void		handleCGI(std::string rootedpath, std::string path, Request& req, std::string exec_path, Response& res);
 		void		runFileMethod(std::string path, std::map<int, std::string> error_paths, Request& req);
 		void		downloadFile(std::string path, std::map<int, std::string> error_paths);
 		void		uploadQueryFile(std::string upload_path, std::map<int, std::string> error_paths, std::map<std::string, std::string> query, std::string body);
@@ -79,8 +79,8 @@ class Response{
 		void		createHtmlErrorPage(int error_code, std::string message);
 		void		fileNotFound(void);
 		bool		checkFileAccess(std::string path, std::map<int, std::string> error_paths, std::string perm);
-		//bool		checkRootAccess(std::string path);
 		bool		checkErrorFileAccess(int error_code, std::string message, std::string error_path);
+		void		cleanPath(std::string& str);
 		std::string	_response;
 		std::string	_http_version;
 		int			_status_code;

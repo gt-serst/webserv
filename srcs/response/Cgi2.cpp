@@ -12,7 +12,6 @@
 #include <map>
 #include <cstring>
 #include <signal.h>
-#include <fcntl.h>
 
 static std::string intToString(int number) {
 	std::ostringstream oss;
@@ -20,21 +19,17 @@ static std::string intToString(int number) {
 	return oss.str();
 }
 
-void Response::handleCGI(std::string rootedpath, std::string path, Request& req, std::string exec_path, Response& res) {
+void Response::handleCGI(std::string rootedpath, std::string path, Request& req, std::string exec_path) {
 	struct stat sb;
 
 	if (stat(exec_path.c_str(), &sb) == 0 && access(exec_path.c_str(), X_OK) == 0) {
 		if (stat(rootedpath.c_str(), &sb) == 0 && access(rootedpath.c_str(), X_OK) == 0) {
 			pid_t p = fork();
-			int client_fd = req._server.getClientFd();
+			int	client_fd = req._server.getClientFd();
 			if (p == 0) { // Child process
 				std::cout << "CHILD" << std::endl;
-				// Redirect stdout to client_fd
+				//Redirect stdout to client_fd
 				if (dup2(client_fd, STDOUT_FILENO) == -1) {
-					std::cerr << "ERROR: CGI: dup2() failed" << std::endl;
-					exit(EXIT_FAILURE);
-				}
-				if (dup2(client_fd, STDERR_FILENO) == -1) {
 					std::cerr << "ERROR: CGI: dup2() failed" << std::endl;
 					exit(EXIT_FAILURE);
 				}
@@ -88,23 +83,23 @@ void Response::handleCGI(std::string rootedpath, std::string path, Request& req,
 				return;
 			} else { // Parent process
 				std::cout << "PARENT" << std::endl;
-				int status;
-				int retval;
-				fd_set rfds;
-				struct timeval tv;
-				FD_ZERO(&rfds);
-				FD_SET(client_fd, &rfds);
-				tv.tv_sec = 1; // Timeout after 1.5 seconds
-				tv.tv_usec = 500;
-
-				retval = select(client_fd + 1, NULL, NULL, NULL, &tv);
-				if (retval == -1) {
+				int 		status;
+				int		retval;
+				fd_set		rfds;
+				struct timeval	tv;
+				//FD_ZERO(&rfds);
+				//FD_SET(STDOUT_FILENO, &rfds);
+				//FD_SET(client_fd, &rfds);
+				tv.tv_sec = 2;
+				tv.tv_usec = 0;
+				retval = select(0, NULL, NULL, NULL, &tv);
+				if (retval == -1)
+				{
 					std::cerr << "ERROR: CGI: select() failed" << std::endl;
 					perror("select()");
-				} else if (retval == 0) {
-					std::cerr << "ERROR: CGI: timeout" << std::endl;
-					kill(p, SIGKILL);
 				}
+				else if (retval == 0)
+					kill(0, 15);
 				pid_t result = waitpid(p, &status, 0);
 				if (result == -1) {
 					std::cerr << "ERROR: CGI: waitpid() failed" << std::endl;
@@ -125,4 +120,3 @@ void Response::handleCGI(std::string rootedpath, std::string path, Request& req,
 		std::cerr << "ERROR: CGI: Path to " << exec_path << " executable is not accessible." << std::endl;
 	}
 }
-
