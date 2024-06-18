@@ -389,7 +389,7 @@ Request::Request(std::string& buffer, Server& server)
 {
 	std::cout << "Parsing request" << std::endl << std::endl;
 	_server = server;
-	_version = "HTTP/1.1";
+	_version = "1.1";
 	_path_to_file = "/";
 	_hostname = "";
 	_litteral_ip = "";
@@ -397,7 +397,7 @@ Request::Request(std::string& buffer, Server& server)
 	_query_str = "";
 	_error_code = -1;
 	_error_msg = "";
-	_port = 80;
+	_port = server.getConfig().port;
 	chunk_size = 0;
 	_body_len = -1;
 	_fragment = "";
