@@ -35,13 +35,29 @@ static std::string intToString(int number) {
 
 void Response::handleCGI(std::string rootedpath, std::string path, Request& req, std::string exec_path, Response& res) {
 	struct stat sb;
-
+	std::cout << "-------------------CGI LAUNCHED--------------------" << std::endl;
 	if (stat(exec_path.c_str(), &sb) == 0 && access(exec_path.c_str(), X_OK) == 0) {
 		if (stat(rootedpath.c_str(), &sb) == 0 && access(rootedpath.c_str(), X_OK) == 0) {
+			int pipefd[2];
+			if (pipe(pipefd) == -1) {
+				std::cerr << "ERROR: CGI: pipe() failed" << std::endl;
+				perror("pipe()");
+				CgiError(req, res, 502, "CGI pipe() error");
+				return ;
+			}
 			pid_t p = fork();
 			int client_fd = req._server.getClientFd();
 			if (p == 0) { // Child process
 				      // Redirect stdout to client_fd
+				close(pipefd[1]);
+
+				// Redirect stdin to the read end of the pipe
+				if (dup2(pipefd[0], STDIN_FILENO) == -1) {
+					std::cerr << "ERROR: CGI: dup2() failed" << std::endl;
+					perror("dup2()");
+					CgiError(req, res, 502, "CGI dup2() error");
+					//exit(EXIT_FAILURE);
+				}
 				if (dup2(client_fd, STDOUT_FILENO) == -1) {
 					std::cerr << "ERROR: CGI: dup2() failed" << std::endl;
 					perror("dup2()");
@@ -67,7 +83,7 @@ void Response::handleCGI(std::string rootedpath, std::string path, Request& req,
 				std::string request_method = "REQUEST_METHOD=" + req.getRequestMethod();
 				std::string server_name = "SERVER_NAME=" + req.getHost();
 				std::string server_port = "SERVER_PORT=" + intToString(req._server.getConfig().port);
-				std::string server_protocol = "SERVER_PROTOCOL=HTTP/1.1";
+				std::string server_protocol = "SERVER_PROTOCOL=HTTP/" + req.getVersion();
 
 				char *envp[] = {
 					strdup(path_info.c_str()),
@@ -111,12 +127,26 @@ void Response::handleCGI(std::string rootedpath, std::string path, Request& req,
 				int retval;
 				fd_set rfds;
 				struct timeval tv;
+
+				close(pipefd[0]);
+				// Write the request body to the pipe
+				if (req.getRequestMethod() == "POST")
+				{
+					if (write(pipefd[1], req.getBody().c_str(), req.getBody().size()) == -1) {
+						std::cerr << "ERROR: CGI: write() failed" << std::endl;
+						perror("write()");
+						CgiError(req, res, 502, "CGI write() error");
+					}
+				}
+
+				// Close the write end of the pipe
+				close(pipefd[1]);
 				FD_ZERO(&rfds);
 				FD_SET(client_fd, &rfds);
 				tv.tv_sec = 1;
 				tv.tv_usec = 500;
 
-				retval = select(client_fd + 1, NULL, NULL, NULL, &tv);
+				retval = select(0, NULL, NULL, NULL, &tv);
 				if (retval == -1) {
 					std::cerr << "ERROR: CGI: select() failed" << std::endl;
 					perror("select()");
@@ -124,7 +154,7 @@ void Response::handleCGI(std::string rootedpath, std::string path, Request& req,
 					return ;
 				} else if (retval == 0) {
 					std::cerr << "ERROR: CGI: timeout" << std::endl;
-					CgiError(req, res, 504, "CGI timeout");
+					//CgiError(req, res, 504, "CGI timeout");
 					kill(p, SIGKILL);
 					return ;
 				}
