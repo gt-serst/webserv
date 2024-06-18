@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/08 09:59:24 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/17 15:33:41 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/18 12:07:59 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -218,7 +218,7 @@ int	Server::handleRequest(int client_fd){
 			request.setPathToFile(path_to_file);
 
 			std::cout << "Path to file: " << request.getPathToFile() << std::endl;
-
+			std::cout << "Body: |" << request.getBody() << "|" << std::endl;
 			response.handleDirective(request.getPathToFile(), loc, request, *this);
 			if (response.getDefaultFile() == true)
 			{
