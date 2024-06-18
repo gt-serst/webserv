@@ -112,7 +112,7 @@ static t_server_scope *isServerErrPage(int *i, std::string buffer, t_server_scop
 		int j = *i;
 		while (buffer[j] && isdigit(buffer[j]))
 			j++;
-		int error_code = stoi(buffer.substr(*i, j - *i));
+		int error_code = ft_atoi(buffer.substr(*i, j - *i).c_str());
 		if (j != *i && buffer[j] && buffer[j] == ' ' && error_code >= 400 && error_code < 600)
 		{
 			j++;
@@ -154,7 +154,7 @@ static t_server_scope	*isServerHost(int *i, std::string buffer, t_server_scope *
 			freeConfig(serverConfig, *servers);
 			return (NULL);
 		}
-		int res = stoi(buffer.substr(*i, j - *i));
+		int res = ft_atoi(buffer.substr(*i, j - *i).c_str());
 		*i = j;
 		if (buffer[*i] != '\n' || res < 0 || res > 65353)
 		{
@@ -258,7 +258,7 @@ static t_server_scope	*isServerMaxBodySize(int *i, std::string buffer, t_server_
 			freeConfig(serverConfig, *servers);
 			return (NULL);
 		}
-		int res = stoi(buffer.substr(*i, j - *i));
+		int res = ft_atoi(buffer.substr(*i, j - *i).c_str());
 		*i = j;
 		if (buffer[*i] != '\n' || res < 1 || res > 1000000)
 		{

@@ -1,6 +1,7 @@
 #ifndef CONFPARSER_HPP
 # define CONFPARSER_HPP
 
+# include "../webserv.hpp"
 # include <string>
 # include <iostream>
 # include <fstream>
