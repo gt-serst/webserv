@@ -14,6 +14,19 @@
 #include <signal.h>
 #include <fcntl.h>
 
+static void	CgiError(Request& req, Response& res, int errorCode, std::string errorString)
+{
+	int	client_fd = req._server.getClientFd();
+	std::map<int, std::string> _req = req._server.getRequests();
+	res.errorResponse(errorCode, errorString, req._server.getConfig().error_page_paths);
+	res.generateResponse();
+	_req.erase(client_fd);
+	_req.insert(std::make_pair(client_fd, res.getResponse()));
+	req._server.setRequests(_req);
+	req._server.sendResponse(client_fd);
+	_req.clear();
+}
+
 static std::string intToString(int number) {
 	std::ostringstream oss;
 	oss << number;
@@ -28,15 +41,20 @@ void Response::handleCGI(std::string rootedpath, std::string path, Request& req,
 			pid_t p = fork();
 			int client_fd = req._server.getClientFd();
 			if (p == 0) { // Child process
-				std::cout << "CHILD" << std::endl;
-				// Redirect stdout to client_fd
+				      // Redirect stdout to client_fd
 				if (dup2(client_fd, STDOUT_FILENO) == -1) {
 					std::cerr << "ERROR: CGI: dup2() failed" << std::endl;
-					exit(EXIT_FAILURE);
+					perror("dup2()");
+					CgiError(req, res, 502, "CGI dup2() error");
+					return ;
+					//exit(EXIT_FAILURE);
 				}
 				if (dup2(client_fd, STDERR_FILENO) == -1) {
 					std::cerr << "ERROR: CGI: dup2() failed" << std::endl;
-					exit(EXIT_FAILURE);
+					perror("dup2()");
+					CgiError(req, res, 502, "CGI dup2() error");
+					return ;
+					//exit(EXIT_FAILURE);
 				}
 
 				std::string path_info = "PATH_INFO=" + path;
@@ -73,7 +91,7 @@ void Response::handleCGI(std::string rootedpath, std::string path, Request& req,
 				};
 				if (execve(exec_path.c_str(), argv, envp) == -1) {
 					std::cerr << "ERROR: CGI: Failed to execute CGI script" << std::endl;
-					perror("execve");
+					perror("execve()");
 				}
 
 				// Free dynamically allocated memory
@@ -85,29 +103,37 @@ void Response::handleCGI(std::string rootedpath, std::string path, Request& req,
 				}
 			} else if (p == -1) { // Fork failed
 				std::cerr << "ERROR: CGI: fork() failed to open a new process" << std::endl;
-				return;
+				perror("fork()");
+				CgiError(req, res, 502, "CGI fork() error");
+				return ;
 			} else { // Parent process
-				std::cout << "PARENT" << std::endl;
 				int status;
 				int retval;
 				fd_set rfds;
 				struct timeval tv;
 				FD_ZERO(&rfds);
 				FD_SET(client_fd, &rfds);
-				tv.tv_sec = 1; // Timeout after 1.5 seconds
+				tv.tv_sec = 1;
 				tv.tv_usec = 500;
 
 				retval = select(client_fd + 1, NULL, NULL, NULL, &tv);
 				if (retval == -1) {
 					std::cerr << "ERROR: CGI: select() failed" << std::endl;
 					perror("select()");
+					CgiError(req, res, 502, "CGI select() error");
+					return ;
 				} else if (retval == 0) {
 					std::cerr << "ERROR: CGI: timeout" << std::endl;
+					CgiError(req, res, 504, "CGI timeout");
 					kill(p, SIGKILL);
+					return ;
 				}
 				pid_t result = waitpid(p, &status, 0);
 				if (result == -1) {
 					std::cerr << "ERROR: CGI: waitpid() failed" << std::endl;
+					perror("waitpid()");
+					CgiError(req, res, 502, "CGI waitpid()");
+					return ;
 				} else {
 					if (WIFEXITED(status)) {
 						std::cout << "Child exited with status " << WEXITSTATUS(status) << std::endl;
@@ -120,9 +146,11 @@ void Response::handleCGI(std::string rootedpath, std::string path, Request& req,
 			}
 		} else {
 			std::cerr << "ERROR: CGI: Path to " << rootedpath << " executable is not accessible." << std::endl;
+			CgiError(req, res, 502, "CGI executable path not accessible");
 		}
 	} else {
 		std::cerr << "ERROR: CGI: Path to " << exec_path << " executable is not accessible." << std::endl;
+		CgiError(req, res, 502, "CGI executable path not accessible");
 	}
 }
 
