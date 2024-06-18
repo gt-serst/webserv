@@ -146,7 +146,7 @@ void Response::handleCGI(std::string rootedpath, std::string path, Request& req,
 				tv.tv_sec = 1;
 				tv.tv_usec = 500;
 
-				retval = select(client_fd + 1, NULL, NULL, NULL, &tv);
+				retval = select(0, NULL, NULL, NULL, &tv);
 				if (retval == -1) {
 					std::cerr << "ERROR: CGI: select() failed" << std::endl;
 					perror("select()");
