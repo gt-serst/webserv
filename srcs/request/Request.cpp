@@ -253,7 +253,7 @@ void	Request::manage_chunks(const char *chunk) //still need to manage errors her
 	state = R_error;
 }
 
-void	Request::validity_checks() //
+void	Request::validity_checks()
 {
 	if (_body_len != -1)
 	{
@@ -280,7 +280,7 @@ void	Request::validity_checks() //
 			return ;
 		}
 	}
-}
+}//si body sans tout les headers necessaires alors renvoyer erreur
 
 int hexDigitToInt(char ch)
 {
@@ -403,7 +403,7 @@ Request::Request(std::string& buffer, Server& server)
 	_fragment = "";
 	chunked = false;
 	multiform = false;
-	body = false;
+	//body = false;
 	_boundary = "";
 	state = R_line;
 	setRequest(buffer);
@@ -500,7 +500,7 @@ void Request::setRequest(std::string& buffer)
 	}
 	if (getBoundary())
 		parse_multiform(ss, pos);
-	else if (body == true)
+	else
 		setBody(ss, pos);
 }
 
@@ -927,7 +927,6 @@ bool	Request::handle_headers()
 	line = getHeader("Content-Length");
 	if (!line.empty())
 	{
-		body = true;
 		if (atoi(line.c_str()) > _server.getConfig().max_body_size)
 		{
 			_error_code = 413;
