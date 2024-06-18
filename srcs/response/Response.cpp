@@ -128,7 +128,25 @@ bool	Response::uploadMethod(t_locations loc, std::string& path, std::string uplo
 		cleanPath(upload_path);
 		if (isMethodAllowed(loc, req) == true)
 		{
-			if (req.getMulti().empty() == false)
+			const std::map<std::string, std::string>& cgi_path = req._server.getConfig().cgi_path;
+			if (findCGI(cgi_path, req.getPathToFile()) == true)
+			{
+				std::cout << "Send CGI path and run it" << std::endl;
+				std::cout << "------------rooted_path= '" << path << "'-------------" << std::endl;
+				std::map<std::string, std::string>::const_iterator it = cgi_path.begin();
+				std::string _path = req.getPathToFile();
+				while (it != cgi_path.end())
+				{
+					if (path.compare(_path.length() - it->first.length(), it->first.length(), it->first) == 0 && !it->second.empty())
+					{
+						if (attachRootToPath(path, loc.root_path) == true)
+							handleCGI(path, req.getPathToFile(), req, it->second, *this);
+					}
+					++it;
+				}
+				this->_cgi = true;
+			}
+			else if (req.getMulti().empty() == false)
 				uploadMultiformFile(upload_path, error_paths, req.getMulti());
 			else if (req.getQuery_args().empty() == false)
 				uploadQueryFile(upload_path, error_paths, req.getQuery_args(), req.getBody());
