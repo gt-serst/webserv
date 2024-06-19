@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Multiplicator page</title>
+    <style>
+        html { color-scheme: light dark; }
+        body { width: 35em; margin: 0 auto;
+               font-family: Tahoma, Verdana, Arial, sans-serif; }
+    </style>
+</head>
+<body>
+<h1>Multiplicator</h1>
+<p>This multiplicator uses the CGI to call a script and returns the answer.</p>
+<br >
+<form action="/cgi/simple_cgi.sh">
+<div><label>Multiplicand 1: <input name="m" size="5"></label></div>
+<div><label>Multiplicand 2: <input name="n" size="5"></label></div>
+<div><input type="submit" value="Multiply!"></div>
+</form>
+</body>
+</html>

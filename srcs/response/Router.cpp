@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 11:15:20 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/17 12:03:30 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/18 17:10:05 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,9 +17,15 @@
 #include <string>
 #include <map>
 
-Router::Router(void){}
+Router::Router(void){
 
-Router::~Router(void){}
+	//std::cout << "Router created" << std::endl;
+}
+
+Router::~Router(void){
+
+	//std::cout << "Router destroyed" << std::endl;
+}
 
 void	Router::routeRequest(std::string& path_to_file, t_locations& loc, std::map<std::string, t_locations> routes, Response& resp){
 
@@ -29,10 +35,8 @@ void	Router::routeRequest(std::string& path_to_file, t_locations& loc, std::map<
 		path_to_file.insert(0, "/");
 	tmp = path_to_file;
 	loc = recursiveRouteRequest(tmp, routes);
-	std::cout << "HandleRedirection return: " << handleRedirection(path_to_file, loc.redirections) << std::endl;
-	// No redir is found
 	if (path_to_file == handleRedirection(path_to_file, loc.redirections))
-		resp.setRedir(false);
+		resp.setRedir(false); // No redir is found
 	else
 	{
 		// Redir is found, keep the new url in memory, we will use it in the redirect response
@@ -45,8 +49,6 @@ void	Router::routeRequest(std::string& path_to_file, t_locations& loc, std::map<
 t_locations	Router::recursiveRouteRequest(std::string tmp, std::map<std::string, t_locations> routes){
 
 	// Each loop recall the same function but each step a part fo the path is cutted until the default path /
-	if (tmp.empty() == true)
-		perror("Router failed");
 	for (std::map<std::string, t_locations>::iterator it = routes.begin(); it != routes.end(); ++it)
 	{
 		// Comparison between the cutted path and each location in the config file
@@ -54,8 +56,6 @@ t_locations	Router::recursiveRouteRequest(std::string tmp, std::map<std::string,
 			return (it->second);
 	}
 	// If code arrive here and do not find the default path / in the loop before an error occurs
-	if (tmp.compare("/") == 0)
-		perror("Router failed");
 	return (recursiveRouteRequest(removeLastPath(tmp), routes));
 }
 

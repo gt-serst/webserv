@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/08 09:59:24 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/18 16:18:34 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/19 11:01:13 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -136,30 +136,21 @@ int	Server::readClientSocket(int client_fd){
 	buffer[rc] = '\0';
 	stack += buffer;
 	_requests[client_fd] += stack;
-	std::cout << "Printing stack" << std::endl;
-	std::cout << _requests[client_fd] << std::endl;
+	// Vérification pour des requêtes envoyées en plusieurs parties
 	size_t i = _requests[client_fd].find("\r\n\r\n");
 	if (i != std::string::npos) // Si fin des headers trouvé alors vérification si il y a un chunked ou un content length
 	{
 		if(_requests[client_fd].find("Transfer-Encoding: chunked") != std::string::npos)
 		{
 
-			std::cout << "Chunked detected" << std::endl;
 			if (_requests[client_fd].find("0\r\n\r\n") != std::string::npos)
-			{
-				std::cout << "La requête est complète!" << std::endl;
-				return (0);
-			}
+				return (0); // La requête complète a été reçue
 			else
-			{
-				std::cout << "La requête n'est pas complète!" << std::endl;
-				return (1);
-			}
+				return (1); // La requête n'est pas encore complète
 		}
 		size_t pos = _requests[client_fd].find("Content-Length: ");
 		if (pos != std::string::npos)
 		{
-			std::cout << "Content-Length detected" << std::endl;
 			size_t end_of_line = _requests[client_fd].find("\r\n", pos);
 			if (end_of_line != std::string::npos)
 			{
@@ -169,22 +160,14 @@ int	Server::readClientSocket(int client_fd){
 
 				// Vérifier si toute la requête a été reçue
 				if (_requests[client_fd].size() >= i + content_length + 4)
-				{
-					std::cout << "La requête est complète!" << std::endl;
 					return (0); // La requête complète a été reçue
-				}
 				else
-				{
-					std::cout << "La requête n'est pas complète!" << std::endl;
 					return (1); // La requête n'est pas encore complète
-				}
 			}
 		}
-		std::cout << "Chunk, Content-length et EOF non trouvé" << std::endl;
 		return (0); // Content-Length non trouvé ou fin de ligne non trouvée
 	}
 	// Tous les headers ne sont pas présent car \r\n\r\n n'a pas été trouvé
-	std::cout << "Je n'ai pas tous les headers" << std::endl;
 	return (1);
 }
 
@@ -195,31 +178,21 @@ int	Server::handleRequest(int client_fd){
 	Response	response;
 
 	Request request(_requests[client_fd], *this);
-	std::cout << std::endl;
-	std::cout << std::endl;
 	response.setVersion(request.getVersion());
 	if (request.getPathToFile().find("/favicon.ico") != std::string::npos)
-	{
 		response.errorResponse(404, "Not Found", getConfig().error_page_paths);
-
-		// std::cout << "Favicon detected" << std::endl;
-		// return (-1);
-	}
 	else if (request.getErrorCode() == -1)
 	{
 		std::string path_to_file = request.getPathToFile();
 
 		router.routeRequest(path_to_file, loc, this->_config.locations, response);
-		std::cout << "Redir happened: " << response.getRedir() << std::endl;
-		// If redir generate a redir response and the browser will resend a GET request with the new path to take
+		// If redir, generate a redir response and the browser will resend a GET request with the new direction
 		if (response.getRedir() == true)
 			response.generateResponse();
 		else
 		{
 			request.setPathToFile(path_to_file);
 
-			std::cout << "Path to file: " << request.getPathToFile() << std::endl;
-			std::cout << "Body: |" << request.getBody() << "|" << std::endl;
 			response.handleDirective(request.getPathToFile(), loc, request, *this);
 			if (response.getDefaultFile() == true)
 			{
@@ -230,23 +203,18 @@ int	Server::handleRequest(int client_fd){
 			else if (response.getCGI() == true)
 			{
 				// If CGI is runned in the response process, we do not have to send a response in the client socket because script already done it
-				std::cout << "/////////////////////// MMMMH J'AI MANGÉ UNE CGI ////////////////////////" << std::endl;
-				//_requests.erase(client_fd);
+				_requests.erase(client_fd);
 				return (1);
 			}
 		}
 	}
 	else
-	{
 		// Catch error from the request parser
-		std::cout << request.getErrorCode() << std::endl;
 		response.errorResponse(request.getErrorCode(), request.getErrorMsg(), getConfig().error_page_paths);
-	}
+
 	_requests.erase(client_fd);
 	_requests.insert(std::make_pair(client_fd, response.getResponse()));
 
-	std::cout << std::endl;
-	std::cout << std::endl;
 	return (0);
 }
 
@@ -255,13 +223,8 @@ int	Server::sendResponse(int client_fd){
 	int	rc;
 	int	len;
 
-	std::cout << std::endl;
-	std::cout << std::endl;
-	std::cout << "Response" << std::endl;
-	std::cout << _requests[client_fd] << std::endl;
 	len = _requests[client_fd].length();
 	rc = send(client_fd, _requests[client_fd].c_str(), len, 0);
-	std::cout << "/////////////////////// MMMMH J'AI MANGÉ UNE REQUÊTE ////////////////////////" << std::endl;
 	if (rc == 0 || rc == -1)
 	{
 		if (!rc)
