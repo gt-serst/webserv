@@ -88,7 +88,7 @@ void	ServerManager::serverRoutine(void){
 			for (std::vector<int>::iterator it = _ready.begin(); it < _ready.end(); ++it)
 				FD_SET(*it, &writing_set);
 
-			// std::cout << "select" << std::endl;
+			std::cout << "select" << std::endl;
 			// for (int fd = 0; fd < FD_SETSIZE; fd++) {
 			// 	if (FD_ISSET(fd, &reading_set)) {
 			// 		printf("fd %d is set\n", fd);
@@ -138,7 +138,7 @@ void	ServerManager::serverRoutine(void){
 					// 	}
 					// }
 					rc = 0;
-					// std::cout << "break" << std::endl;
+					std::cout << "break" << std::endl;
 					break;
 				}
 			}
@@ -147,6 +147,7 @@ void	ServerManager::serverRoutine(void){
 				// Server socket is set and ready to listen to a client
 				if (FD_ISSET(it->first, &reading_set))
 				{
+					std::cout << "Ready to listen for client connection" << std::endl;
 					int client_fd = it->second.listenClientConnection();
 
 					if (client_fd != -1)

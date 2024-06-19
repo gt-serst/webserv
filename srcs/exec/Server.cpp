@@ -47,7 +47,7 @@ Server::~Server(void){
 int	Server::createServerSocket(void){
 
 	int					rc;
-	int					flags;
+	//int					flags;
 
 	this->_fd = socket(AF_INET, SOCK_STREAM, 0);
 	if (this->_fd < 0)
@@ -60,13 +60,13 @@ int	Server::createServerSocket(void){
 		std::cerr << "Setsockopt() failed" << std::endl;
 		return (-1);
 	}
-	flags = fcntl(this->_fd, F_GETFL, 0);
+	/*flags = fcntl(this->_fd, F_GETFL, 0);
 	if (flags < 0)
 	{
 		std::cerr << "Fcntl() failed" << std::endl;
 		return (-1);
 	}
-	fcntl(this->_fd, F_SETFL, flags | O_NONBLOCK);
+	fcntl(this->_fd, F_SETFL, flags | O_NONBLOCK);*/
 
 	std::memset((char *)&_server_addr, 0, sizeof(_server_addr));
 	_server_addr.sin_family = AF_INET;
@@ -91,7 +91,7 @@ int	Server::createServerSocket(void){
 
 int	Server::listenClientConnection(void){
 
-	int					flags;
+	//int					flags;
 	int					client_fd;
 	socklen_t			client_addr_len = sizeof(_client_addr);
 
@@ -102,13 +102,15 @@ int	Server::listenClientConnection(void){
 		std::cerr << "Accept() failed" << std::endl;
 		return (-1);
 	}
-	flags = fcntl(client_fd, F_GETFL, 0);
+	fcntl(client_fd, F_SETFL, O_NONBLOCK);
+	_requests.insert(std::make_pair(client_fd, ""));
+	/*flags = fcntl(client_fd, F_SETFL, O_NONBLOCK);
 	if (flags < 0)
 	{
 		std::cerr << "Fcntl() failed" << std::endl;
 		return (-1);
 	}
-	fcntl(client_fd, F_GETFL, 0);
+	fcntl(client_fd, F_GETFL, 0);*/
 	return (client_fd);
 }
 
@@ -119,7 +121,7 @@ int	Server::readClientSocket(int client_fd){
 
 	rc = recv(client_fd, buffer, sizeof(buffer) - 1, 0);
 	std::cout << "Rc: " << rc << std::endl;
-	//std::cout << "Buffer: " << buffer << std::endl;
+	std::cout << "Buffer: " << buffer << std::endl;
 	if (rc == 0 || rc == -1)
 	{
 		this->closeClientSocket(client_fd);
@@ -132,7 +134,7 @@ int	Server::readClientSocket(int client_fd){
 	_requests[client_fd] += std::string(buffer);
 	//std::cout << "Stack: " << stack << std::endl;
 	std::cout << "Size: " << _requests[client_fd].size() << std::endl;
-	//std::cout << "Request: " << _requests[client_fd] << std::endl;
+	std::cout << "Request: " << _requests[client_fd] << std::endl;
 	// Vérification pour des requêtes envoyées en plusieurs parties
 	size_t i = _requests[client_fd].find("\r\n\r\n");
 	if (i != std::string::npos) // Si fin des headers trouvé alors vérification si il y a un chunked ou un content length
