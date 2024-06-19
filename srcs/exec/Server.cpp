@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/08 09:59:24 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/19 11:01:13 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/19 13:54:34 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -136,6 +136,7 @@ int	Server::readClientSocket(int client_fd){
 	buffer[rc] = '\0';
 	stack += buffer;
 	_requests[client_fd] += stack;
+	//std::cout << _requests[client_fd] << std::endl;
 	// Vérification pour des requêtes envoyées en plusieurs parties
 	size_t i = _requests[client_fd].find("\r\n\r\n");
 	if (i != std::string::npos) // Si fin des headers trouvé alors vérification si il y a un chunked ou un content length
@@ -144,9 +145,15 @@ int	Server::readClientSocket(int client_fd){
 		{
 
 			if (_requests[client_fd].find("0\r\n\r\n") != std::string::npos)
+			{
+				std::cout << "La requête complète a été reçue" << std::endl;
 				return (0); // La requête complète a été reçue
+			}
 			else
+			{
+				std::cout << "La requête n'est pas encore complète" << std::endl;
 				return (1); // La requête n'est pas encore complète
+			}
 		}
 		size_t pos = _requests[client_fd].find("Content-Length: ");
 		if (pos != std::string::npos)
@@ -160,14 +167,22 @@ int	Server::readClientSocket(int client_fd){
 
 				// Vérifier si toute la requête a été reçue
 				if (_requests[client_fd].size() >= i + content_length + 4)
+				{
+					std::cout << "La requête complète a été reçue" << std::endl;
 					return (0); // La requête complète a été reçue
+				}
 				else
+				{
+					std::cout << "La requête n'est pas encore complète" << std::endl;
 					return (1); // La requête n'est pas encore complète
+				}
 			}
 		}
+		std::cout << "Content-Length non trouvé ou fin de ligne non trouvée" << std::endl;
 		return (0); // Content-Length non trouvé ou fin de ligne non trouvée
 	}
 	// Tous les headers ne sont pas présent car \r\n\r\n n'a pas été trouvé
+	std::cout << "Tous les headers ne sont pas présent" << std::endl;
 	return (1);
 }
 
