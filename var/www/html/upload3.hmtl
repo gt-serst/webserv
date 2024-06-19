@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Upload and Management</title>
+    <script>
+        function fetchFiles() {
+            fetch('/cgi/list_files.sh')
+                .then(response => response.json())
+                .then(data => {
+                    const fileList = document.getElementById('fileList');
+                    fileList.innerHTML = '';
+                    data.files.forEach(file => {
+                        const listItem = document.createElement('li');
+                        const downloadLink = document.createElement('a');
+                        const deleteButton = document.createElement('button');
+
+                        downloadLink.href = `/upload/${file}`;
+                        downloadLink.textContent = file;
+                        downloadLink.download = file;
+
+                        deleteButton.textContent = 'Delete';
+                        deleteButton.onclick = () => deleteFile(file);
+
+                        listItem.appendChild(downloadLink);
+                        listItem.appendChild(deleteButton);
+                        fileList.appendChild(listItem);
+                    });
+                });
+        }
+
+        function deleteFile(file) {
+            fetch(`/upload/${file}`, { method: 'DELETE' })
+                .then(response => {
+                    if (response.ok) {
+                        fetchFiles();
+                    } else {
+                        alert('Failed to delete file');
+                    }
+                });
+        }
+
+        window.onload = fetchFiles;
+    </script>
+</head>
+<body>
+    <h1>File Upload and Management</h1>
+
+    <h2>Upload a File</h2>
+    <form action="/upload" method="post" enctype="multipart/form-data">
+        <input type="file" name="file" required>
+        <input type="submit" value="Upload">
+    </form>
+
+    <h2>Uploaded Files</h2>
+    <ul id="fileList"></ul>
+</body>
+</html>
+
