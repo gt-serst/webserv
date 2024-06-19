@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:12:17 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/19 11:11:21 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/19 11:34:09 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,7 +26,7 @@ typedef enum e_file_type
 	E_JPEG,
 	E_SVG,
 	E_GIF,
-	E_HTML,
+	// E_HTML,
 	E_DEFAULT
 }	t_file_type;
 
