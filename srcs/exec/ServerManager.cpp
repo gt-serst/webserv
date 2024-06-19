@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/07 11:04:51 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/19 15:14:58 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/19 17:08:39 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -88,12 +88,6 @@ void	ServerManager::serverRoutine(void){
 			for (std::vector<int>::iterator it = _ready.begin(); it < _ready.end(); ++it)
 				FD_SET(*it, &writing_set);
 
-			std::cout << "select" << std::endl;
-			// for (int fd = 0; fd < FD_SETSIZE; fd++) {
-			// 	if (FD_ISSET(fd, &reading_set)) {
-			// 		printf("fd %d is set\n", fd);
-			// 	}
-			// }
 			rc = select(_max_fd + 1, &reading_set, &writing_set, NULL, &timeout);
 		}
 		if (rc > 0)
@@ -120,7 +114,6 @@ void	ServerManager::serverRoutine(void){
 					int rc = it->second->readClientSocket(it->first);
 					if (rc == 0)
 					{
-						std::cout << "Ready to handle request" << std::endl;
 						rc = it->second->handleRequest(it->first);
 						if (rc == 0)
 							_ready.push_back(it->first);
@@ -132,13 +125,7 @@ void	ServerManager::serverRoutine(void){
 							_sockets.erase(it->first);
 						}
 					}
-					// for (int fd = 0; fd < FD_SETSIZE; fd++) {
-					// 	if (FD_ISSET(fd, &reading_set)) {
-					// 		printf("fd %d is set\n", fd);
-					// 	}
-					// }
 					rc = 0;
-					std::cout << "break" << std::endl;
 					break;
 				}
 			}
