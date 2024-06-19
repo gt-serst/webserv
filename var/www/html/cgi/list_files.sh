@@ -1,6 +1,6 @@
 #!/bin/bash
 
-UPLOAD_DIR="/Users/fbonaert/Desktop/programmation/Ecole/projets/webserv/var/www/html/upload"
+UPLOAD_DIR="/Users/gt-serst/webserv/var/www/html/upload"
 
 
 if [ ! -d "$UPLOAD_DIR" ]; then
