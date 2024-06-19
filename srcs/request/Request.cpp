@@ -100,14 +100,14 @@ bool Request::handle_query()
         if (amp_pos == std::string::npos || amp_pos + 1 > _query_str.length())
 		{
             value = _query_str.substr(equal_pos + 1);
-			std::cout << value << std::endl;
+			//std::cout << value << std::endl;
             _query_args[key] = value;
             break;
         }
 		else
 		{
             value = _query_str.substr(equal_pos + 1, amp_pos - equal_pos - 1);
-			std::cout << value << std::endl;
+			//std::cout << value << std::endl;
             _query_args[key] = value;
             start = amp_pos + 1;
         }
@@ -404,39 +404,45 @@ Request::Request(std::string& buffer, Server& server)
 
 Request::~Request()
 {
-	std::cout << "//////////////Printing request params//////////////" << std::endl;
-	std::cout << "Method == " << _request_method << std::endl;
-	std::cout << "Path == " << _path_to_file << std::endl;
-	std::cout << "Query == " << _query_str << std::endl;
-	std::cout << "Version == " << _version << std::endl;
-	std::cout << "Body == " << _body << std::endl;
-	std::cout << "Boundary == " << _boundary << std::endl;
-	std::cout << "Hostname == " << _hostname << std::endl;
-	std::cout << "Port == " << _port << std::endl;
-	std::cout << "Fragment == " << _fragment << std::endl;
-	std::cout << "Body len == " << _body_len << std::endl;
-	std::cout << "Body last char == " << (int)_body[_body_len - 1] << std::endl;
-	std::cout << "CLIENT ADDRESS == " << (int)_server.getClientAddr().sin_addr.s_addr << std::endl;
-	std::cout << "Error msg == " << _error_msg << std::endl;
-	if (chunked)
-		std::cout << "IS CHUNKED" << std::endl;
-	std::cout << "//////////////HEADERS////////////" << std::endl;
-	for (std::map<std::string, std::string>::const_iterator it = _headers.begin(); it != _headers.end(); ++it)
-	{
-		std::cout << it->first << ": " << it->second << std::endl;
-	}
-	std::cout << "//////////////QUERY ARGS//////////////" << std::endl;
-	for (std::map<std::string, std::string>::const_iterator it = _query_args.begin(); it != _query_args.end(); ++it)
-	{
-        std::cout << it->first << " = " << it->second << std::endl;
-    }
-	std::cout << "//////////////MULTIFORM//////////////" << std::endl;
-	for (std::map<int, t_multi>::const_iterator it = _multiform.begin(); it != _multiform.end(); ++it)
-	{
-		std::cout << it->first << ": " << it->second.filename << " type : " << it->second.type << std::endl;
-		std::cout << "CONTENT" << std::endl;
-		std::cout << it->second.content << std::endl;
-	}
+	// std::cout << "//////////////Printing request params//////////////" << std::endl;
+	// std::cout << "Method == " << _request_method << std::endl;
+	// std::cout << "Path == " << _path_to_file << std::endl;
+	// std::cout << "Query == " << _query_str << std::endl;
+	// std::cout << "Version == " << _version << std::endl;
+	// std::cout << "Body == " << _body << std::endl;
+	// std::cout << "Boundary == " << _boundary << std::endl;
+	// std::cout << "Hostname == " << _hostname << std::endl;
+	// std::cout << "Port == " << _port << std::endl;
+	// std::cout << "Fragment == " << _fragment << std::endl;
+	// std::cout << "Body len == " << _body_len << std::endl;
+	// std::cout << "Body last char == " << (int)_body[_body_len - 1] << std::endl;
+	// std::cout << "CLIENT ADDRESS == " << (int)_server.getClientAddr().sin_addr.s_addr << std::endl;
+	// std::cout << "Error msg == " << _error_msg << std::endl;
+	// if (chunked)
+	// 	std::cout << "IS CHUNKED" << std::endl;
+	// std::cout << "//////////////HEADERS////////////" << std::endl;
+	// for (std::map<std::string, std::string>::const_iterator it = _headers.begin(); it != _headers.end(); ++it)
+	// {
+	// 	std::cout << it->first << ": " << it->second << std::endl;
+	// }
+	// std::cout << "//////////////QUERY ARGS//////////////" << std::endl;
+	// for (std::map<std::string, std::string>::const_iterator it = _query_args.begin(); it != _query_args.end(); ++it)
+	// {
+    //     std::cout << it->first << " = " << it->second << std::endl;
+    // }
+	// std::cout << "//////////////MULTIFORM//////////////" << std::endl;
+	// for (std::map<int, t_multi>::const_iterator it = _multiform.begin(); it != _multiform.end(); ++it)
+	// {
+	// 	std::cout << it->first << ": " << it->second.filename << " type : " << it->second.type << std::endl;
+	// 	std::cout << "CONTENT" << std::endl;
+	// 	std::cout << it->second.content << std::endl;
+	// }
+	// if (_error_code != -1)
+	// {
+	// 	std::cout << "ERROR IN REQUEST PARSING" << std::endl;
+	// 	std::cout << "ERROR CODE == " << _error_code << std::endl;
+	// 	std::cout << "ERROR MSG == " << _error_msg << std::endl;
+	// }
 	std::cout << "//////////////Request destroyed//////////////" << std::endl;
 }
 
