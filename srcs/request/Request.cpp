@@ -443,6 +443,21 @@ Request::~Request()
 	// 	std::cout << "ERROR CODE == " << _error_code << std::endl;
 	// 	std::cout << "ERROR MSG == " << _error_msg << std::endl;
 	// }
+	_version.clear();
+	_path_to_file.clear();
+	_hostname.clear();
+	_litteral_ip.clear();
+	_body.clear();
+	_query_str.clear();
+	_error_code = -1;
+	_error_msg.clear();
+	_port = _server.getConfig().port;
+	chunk_size = 0;
+	_body_len = -1;
+	_fragment.clear();
+	chunked = false;
+	multiform = false;
+	_boundary.clear();
 	std::cout << "//////////////Request destroyed//////////////" << std::endl;
 }
 
@@ -506,19 +521,19 @@ void Request::parseRequestLine(char *line)
 		{
 			case R_line:
 			{
-				if (strncmp(line, "GET", 3) == 0)
+				if (std::strncmp(line, "GET", 3) == 0)
 				{
 					_request_method = "GET";
 					i += 2;
 					state = R_method;
 				}
-				else if (strncmp(line, "POST", 4) == 0)
+				else if (std::strncmp(line, "POST", 4) == 0)
 				{
 					_request_method = "POST";
 					i += 3;
 					state = R_method;
 				}
-				else if (strncmp(line, "DELETE", 6) == 0)
+				else if (std::strncmp(line, "DELETE", 6) == 0)
 				{
 					_request_method = "DELETE";
 					i += 5;
