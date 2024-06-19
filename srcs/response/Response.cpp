@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:28:16 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/18 18:01:39 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/19 11:15:48 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -56,7 +56,7 @@ bool	Response::checkContentType(std::string path){
 		input.close();
 		std::string type = getContentType(stack);
 		if (type == "text/html" || type == "text/plain" || type == "image/png" || type == "image/jpeg"
-				|| type == "image/svg+xml" || type == "image/gif" || type == "video/mp4")
+				|| type == "image/svg+xml" || type == "image/gif")
 			return (true);
 	}
 	return (false);
@@ -163,7 +163,7 @@ bool	Response::attachRootToPath(std::string& path, std::string root){
 		path.insert(0, root);
 		return (true);
 	}
-		return (fileNotFound(), false);
+	return (fileNotFound(), false);
 }
 
 int	Response::getFileType(struct stat buf){
@@ -504,6 +504,7 @@ void Response::autoIndexResponse(std::string rooted_path, std::string dir_list, 
 }
 
 void Response::insertHtmlIndexLine(std::string redirect_url, std::string txt_button, std::string creation_date, std::string char_count) {
+
 	this->_body += "<div class=\"file-info\">\n"
 				   "    <button onclick=\"window.location.href='" + redirect_url + "'\">" + txt_button + "</button>\n"
 				   "    <div class=\"creation-date\">" + creation_date + "</div>\n"
@@ -545,18 +546,6 @@ std::string	Response::getContentType(std::string stack){
 	std::string			octets;
 	bool				text = true;
 
-	if (stack.compare(0, 15, "<!DOCTYPE html>") == 0)
-		return ("text/html");
-	for (size_t i = 0; i < stack.length(); i++)
-	{
-		if (!isprint(stack[i]) && !isspace(stack[i]))
-		{
-			text = false;
-			break;
-		}
-	}
-	if (text == true)
-		return ("text/plain");
 	ss << stack;
 	ss.read(&bytes[0], bytes.size());
 	for (size_t i = 0; i < bytes.size(); i++)
@@ -572,15 +561,25 @@ std::string	Response::getContentType(std::string stack){
 			return ("image/svg+xml");
 		case E_GIF:
 			return ("image/gif");
-		case E_PDF:
-			return ("application/pdf");
-		case E_ZIP:
-			return ("application/zip");
-		case E_MP4:
-			return ("video/mp4");
+		case E_HTML:
+			return ("text/html");
 		default:
-			return ("");
+			break;
 	}
+
+	for (size_t i = 0; i < stack.length(); i++)
+	{
+		if (!isprint(stack[i]) && !isspace(stack[i]))
+		{
+			text = false;
+			break;
+		}
+	}
+
+	if (text)
+		return ("text/plain");
+
+	return ("application/octet-stream");
 }
 
 t_file_type	Response::stringToEnum(std::string const& str){
@@ -589,11 +588,9 @@ t_file_type	Response::stringToEnum(std::string const& str){
 	if (str.compare(0, 5, "ff d8") == 0) return (E_JPEG);
 	if (str.compare(0, 23, "3c 3f 78 6d 6c 20 76 65") == 0) return (E_SVG);
 	if (str.compare(0, 17, "47 49 46 38 39 61") == 0) return (E_GIF);
-	if (str.compare(0, 11, "25 50 44 46") == 0) return (E_PDF);
-	if (str.compare(0, 18, "50 4b 3 4 14 0 8 0") == 0) return (E_ZIP);
-	if (str.compare(0, 20, "0 0 0 20 66 74 79 70") == 0) return (E_MP4);
+	if (str.compare(0, 15, "3c 21 44 4f 43 54 59 50 45 20 68 74 6d 6c 3e") == 0) return E_HTML;
 	else
-		return (E_UNSUP);
+		return (E_DEFAULT);
 }
 
 void	Response::uploadFileResponse(void){
@@ -713,7 +710,6 @@ bool	Response::checkFileAccess(std::string path, std::map<int, std::string> erro
 
 	struct stat buf;
 
-	std::cout << "Path in CheckFileAccess: " << path << std::endl;
 	if (stat(path.c_str(), &buf) != 0)
 	{
 		if (errno == ENOENT)
