@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:28:16 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/19 11:15:48 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/19 11:34:02 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -561,11 +561,14 @@ std::string	Response::getContentType(std::string stack){
 			return ("image/svg+xml");
 		case E_GIF:
 			return ("image/gif");
-		case E_HTML:
-			return ("text/html");
+		// case E_HTML:
+		// 	return ("text/html");
 		default:
 			break;
 	}
+
+	if (stack.compare(0, 15, "<!DOCTYPE html>") == 0)
+		return ("text/html");
 
 	for (size_t i = 0; i < stack.length(); i++)
 	{
@@ -588,7 +591,7 @@ t_file_type	Response::stringToEnum(std::string const& str){
 	if (str.compare(0, 5, "ff d8") == 0) return (E_JPEG);
 	if (str.compare(0, 23, "3c 3f 78 6d 6c 20 76 65") == 0) return (E_SVG);
 	if (str.compare(0, 17, "47 49 46 38 39 61") == 0) return (E_GIF);
-	if (str.compare(0, 15, "3c 21 44 4f 43 54 59 50 45 20 68 74 6d 6c 3e") == 0) return E_HTML;
+	// if (str.compare(0, 15, "3c 21 44 4f 43 54 59 50 45 20 68 74 6d 6c 3e") == 0) return E_HTML;
 	else
 		return (E_DEFAULT);
 }
