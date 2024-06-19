@@ -1,16 +1,8 @@
 #include "Request.hpp"
 #include "../exec/Server.hpp"
 
-//on devra check si on recoit bien toute la requete en un seul bloc
-//si pas un fera un precheck pour l'envoyer ici en un coup
-
-//only POST should have a body
-
-//SET FUNCTIONS
-
 bool Request::multiform_headers(std::stringstream& ss, std::streampos& pos, int i)
 {
-	//std::cout << "Parsing multiform headers !!" << std::endl;
 	ss.seekg(pos);
 	std::string line;
 	getline(ss, line);
@@ -18,26 +10,23 @@ bool Request::multiform_headers(std::stringstream& ss, std::streampos& pos, int 
 	while (line.find(":") != std::string::npos)
 	{
 		size_t start_pos = line.find("Content-Disposition:");
-		if (start_pos != std::string::npos) //alors on cherche le filename
+		if (start_pos != std::string::npos)
 		{
 			start_pos = line.find("filename=\"");
 			if (start_pos != std::string::npos)
 			{
 				end_pos = line.find("\"", start_pos + 10);
-				// std::cout << start_pos << " " << end_pos << " " << line[end_pos - 1] << " " << line[end_pos] <<std::endl;
 				_multiform[i].filename = line.substr(start_pos + 10, end_pos - (start_pos + 10));
-				// std::cout << _multiform[i].filename << std::endl;
 			}
 		}
 		start_pos = line.find("Content-Type:");
-		if (start_pos != std::string::npos) //on stocke le content type
+		if (start_pos != std::string::npos)
 		{
 			_multiform[i].type = line.substr(start_pos + 13, line.length() - (start_pos + 13) - 1);
 		}
 		getline(ss, line);
 	}
 	pos = ss.tellg();
-	//std::cout << "MULTI HEADERS PARSED !!" << std::endl;
 	return false;
 }
 
@@ -50,7 +39,6 @@ void Request::parse_multiform(std::stringstream& ss, std::streampos pos)
 		state = R_error;
 		return ;
 	}
-	//std::cout << "Parsing multiform" << std::endl;
 	ss.seekg(pos);
 	std::string line;
 	int i = 0;
@@ -58,25 +46,19 @@ void Request::parse_multiform(std::stringstream& ss, std::streampos pos)
 	_boundary += "\r";
 	while (getline(ss, line))
 	{
-		// std::cout << "Main loop " << std::endl;
-		// std::cout << line << std::endl;
-		// std::cout << "--" + bound_morph + "--" << std::endl;
 		if(line.compare("--" + _boundary) == 0)
 		{
 			i++;
 			t_multi value;
 			_multiform[i] = value;
 			pos = ss.tellg();
-			//std::cout << "PTN" << std::endl;
 			if (multiform_headers(ss, pos, i))
 				return ;
 			ss.seekg(pos);
 			std::getline(ss, line);
-			//std::cout << line << std::endl;
 		}
 		else if (line.compare("--" + bound_morph + "--\r") == 0)
 		{
-			//std::cout << "End boundary" << std::endl;
 			return ;
 		}
 		line += "\n";
@@ -118,14 +100,14 @@ bool Request::handle_query()
         if (amp_pos == std::string::npos || amp_pos + 1 > _query_str.length())
 		{
             value = _query_str.substr(equal_pos + 1);
-			std::cout << value << std::endl;
+			//std::cout << value << std::endl;
             _query_args[key] = value;
             break;
         }
 		else
 		{
             value = _query_str.substr(equal_pos + 1, amp_pos - equal_pos - 1);
-			std::cout << value << std::endl;
+			//std::cout << value << std::endl;
             _query_args[key] = value;
             start = amp_pos + 1;
         }
@@ -133,20 +115,17 @@ bool Request::handle_query()
     return true;
 }
 
-void	Request::manage_chunks(const char *chunk) //still need to manage errors here
+void	Request::manage_chunks(const char *chunk)
 {
 	char ch;
 	int len = strlen(chunk);
-	//std::cout << len << std::endl;
 	for (int i = 0; i <= len; i++)
 	{
 		ch = chunk[i];
-		//std::cout << (int)ch << std::endl;
  		switch (state)
 		{
 			case R_chunked_start:
 			{
-				//std::cout << "chunk START" << std::endl;
 				if (ch >= '0' && ch <= '9')
 				{
 					state = R_chunk_size;
@@ -164,7 +143,7 @@ void	Request::manage_chunks(const char *chunk) //still need to manage errors her
 				{
 					state = R_error;
 					_error_msg = "Chunk syntax";
-					_error_code = 400; //for now
+					_error_code = 400;
 					return ;
 				}
 			}
@@ -172,7 +151,6 @@ void	Request::manage_chunks(const char *chunk) //still need to manage errors her
 			{
 				if (ch == '\r')
 				{
-					//std::cout << "chunk size CR" << std::endl;
 					state = R_chunk_cr;
 					break ;
 				}
@@ -190,7 +168,6 @@ void	Request::manage_chunks(const char *chunk) //still need to manage errors her
 			}
 			case R_chunk_cr:
 			{
-				//std::cout << "chunk CR" << std::endl;
 				if (ch == '\n')
 				{
 					state = R_chunk_lf;
@@ -198,12 +175,11 @@ void	Request::manage_chunks(const char *chunk) //still need to manage errors her
 				}
 				state = R_error;
 				_error_msg = "Chunk syntax";
-				_error_code = 400; //for now
+				_error_code = 400;
 				return ;
 			}
 			case R_chunk_lf:
 			{
-				//std::cout << "chunk LF" << std::endl;
 				if (chunk_size == 0)
 				{
 					state = R_chunk_done;
@@ -280,7 +256,7 @@ void	Request::validity_checks()
 			return ;
 		}
 	}
-}//si body sans tout les headers necessaires alors renvoyer erreur
+}
 
 int hexDigitToInt(char ch)
 {
@@ -328,7 +304,7 @@ std::string	Request::standardise(std::string str)
 				return str;
 			}
 	}
-	return toLowerCase(str); //should lowercase the string
+	return toLowerCase(str);
 }
 
 int ip_checker(std::string& ip)
@@ -403,7 +379,6 @@ Request::Request(std::string& buffer, Server& server)
 	_fragment = "";
 	chunked = false;
 	multiform = false;
-	//body = false;
 	_boundary = "";
 	state = R_line;
 	setRequest(buffer);
@@ -413,7 +388,7 @@ Request::Request(std::string& buffer, Server& server)
 		_path_to_file = standardise(_path_to_file);
 	if (state != R_error)
 	{
-		_query_str = standardise(_query_str); //this function should first do the hexa transform then tolower the string
+		_query_str = standardise(_query_str);
 		if (!handle_query())
 		{
 			_error_code = 400;
@@ -429,37 +404,45 @@ Request::Request(std::string& buffer, Server& server)
 
 Request::~Request()
 {
-	std::cout << "//////////////Printing request params//////////////" << std::endl;
-	std::cout << "Method == " << _request_method << std::endl;
-	std::cout << "Path == " << _path_to_file << std::endl;
-	std::cout << "Query == " << _query_str << std::endl;
-	std::cout << "Version == " << _version << std::endl;
-	std::cout << "Body == " << _body << std::endl;
-	std::cout << "Boundary == " << _boundary << std::endl;
-	std::cout << "Hostname == " << _hostname << std::endl;
-	std::cout << "Port == " << _port << std::endl;
-	std::cout << "Fragment == " << _fragment << std::endl;
-	std::cout << "Body len == " << _body_len << std::endl;
-	std::cout << "Body last char == " << (int)_body[_body_len - 1] << std::endl;
-	if (chunked)
-		std::cout << "IS CHUNKED" << std::endl;
-	std::cout << "//////////////HEADERS////////////" << std::endl;
-	for (std::map<std::string, std::string>::const_iterator it = _headers.begin(); it != _headers.end(); ++it)
-	{
-		std::cout << it->first << ": " << it->second << std::endl;
-	}
-	std::cout << "//////////////QUERY ARGS//////////////" << std::endl;
-	for (std::map<std::string, std::string>::const_iterator it = _query_args.begin(); it != _query_args.end(); ++it)
-	{
-        std::cout << it->first << " = " << it->second << std::endl;
-    }
-	std::cout << "//////////////MULTIFORM//////////////" << std::endl;
-	for (std::map<int, t_multi>::const_iterator it = _multiform.begin(); it != _multiform.end(); ++it)
-	{
-		std::cout << it->first << ": " << it->second.filename << " type : " << it->second.type << std::endl;
-		std::cout << "CONTENT" << std::endl;
-		std::cout << it->second.content << std::endl;
-	}
+	// std::cout << "//////////////Printing request params//////////////" << std::endl;
+	// std::cout << "Method == " << _request_method << std::endl;
+	// std::cout << "Path == " << _path_to_file << std::endl;
+	// std::cout << "Query == " << _query_str << std::endl;
+	// std::cout << "Version == " << _version << std::endl;
+	// std::cout << "Body == " << _body << std::endl;
+	// std::cout << "Boundary == " << _boundary << std::endl;
+	// std::cout << "Hostname == " << _hostname << std::endl;
+	// std::cout << "Port == " << _port << std::endl;
+	// std::cout << "Fragment == " << _fragment << std::endl;
+	// std::cout << "Body len == " << _body_len << std::endl;
+	// std::cout << "Body last char == " << (int)_body[_body_len - 1] << std::endl;
+	// std::cout << "CLIENT ADDRESS == " << (int)_server.getClientAddr().sin_addr.s_addr << std::endl;
+	// std::cout << "Error msg == " << _error_msg << std::endl;
+	// if (chunked)
+	// 	std::cout << "IS CHUNKED" << std::endl;
+	// std::cout << "//////////////HEADERS////////////" << std::endl;
+	// for (std::map<std::string, std::string>::const_iterator it = _headers.begin(); it != _headers.end(); ++it)
+	// {
+	// 	std::cout << it->first << ": " << it->second << std::endl;
+	// }
+	// std::cout << "//////////////QUERY ARGS//////////////" << std::endl;
+	// for (std::map<std::string, std::string>::const_iterator it = _query_args.begin(); it != _query_args.end(); ++it)
+	// {
+    //     std::cout << it->first << " = " << it->second << std::endl;
+    // }
+	// std::cout << "//////////////MULTIFORM//////////////" << std::endl;
+	// for (std::map<int, t_multi>::const_iterator it = _multiform.begin(); it != _multiform.end(); ++it)
+	// {
+	// 	std::cout << it->first << ": " << it->second.filename << " type : " << it->second.type << std::endl;
+	// 	std::cout << "CONTENT" << std::endl;
+	// 	std::cout << it->second.content << std::endl;
+	// }
+	// if (_error_code != -1)
+	// {
+	// 	std::cout << "ERROR IN REQUEST PARSING" << std::endl;
+	// 	std::cout << "ERROR CODE == " << _error_code << std::endl;
+	// 	std::cout << "ERROR MSG == " << _error_msg << std::endl;
+	// }
 	std::cout << "//////////////Request destroyed//////////////" << std::endl;
 }
 
@@ -487,15 +470,14 @@ void Request::setRequest(std::string& buffer)
 	}
 	if (getHeader("Transfer-Encoding").compare("chunked\r") == 0)
 	{
-		//std::cout << "CHUNK" << std::endl;
 		std::string chunk;
 		state = R_chunked_start;
 		chunked = true;
 		while (chunked)
 		{
 			std::getline(ss, chunk);
-			//std::cout << "|" << chunk << "|" << std::endl;
-			chunk += '\n';
+			if (!ss.eof())
+				chunk += '\n';
 			manage_chunks(chunk.c_str());
 		}
 		return ;
@@ -522,7 +504,7 @@ void Request::parseRequestLine(char *line)
 	{
 		switch (state)
 		{
-			case R_line: //checking for the method not accepting leading WS
+			case R_line:
 			{
 				if (strncmp(line, "GET", 3) == 0)
 				{
@@ -551,7 +533,7 @@ void Request::parseRequestLine(char *line)
 				}
 				break ;
 			}
-			case R_method: //checking for a single space after method
+			case R_method:
 			{
 				if (line[i] == ' ')
 					state = R_first_space;
@@ -560,7 +542,7 @@ void Request::parseRequestLine(char *line)
 					_error_msg = "Bad request : first space";
 					_error_code = 400;
 					state = R_error;
-					return ; //error 400 bad request : first space
+					return ;
 				}
 				break ;
 			}
@@ -583,7 +565,7 @@ void Request::parseRequestLine(char *line)
 				}
 				else
 				{
-					_error_msg = "Bad request scheme";
+					_error_msg = "Bad request : scheme";
 					_error_code = 400;
 					state = R_error;
 					return ;
@@ -641,11 +623,10 @@ void Request::parseRequestLine(char *line)
 				}
 				else if (!isdigit(line[i]) && line[i] != '.')
 				{
-					//std::cout << line[i] << std::endl;
 					_error_msg = "Bad request : wrong ip";
 					_error_code = 400;
 					state = R_error;
-					return ; //error 400 bad request : unsuported litteral ip
+					return ;
 				}
 				break ;
 			}
@@ -661,7 +642,7 @@ void Request::parseRequestLine(char *line)
 					_error_msg = "Bad request : host";
 					_error_code = 400;
 					state = R_error;
-					return ; //error bad request
+					return ;
 				}
 				else if (line[i] == '/')
 				{
@@ -689,7 +670,7 @@ void Request::parseRequestLine(char *line)
 					_error_msg = "Bad request : host";
 					_error_code = 400;
 					state = R_error;
-					return ; //error
+					return ;
 				}
 				break ;
 			}
@@ -710,7 +691,7 @@ void Request::parseRequestLine(char *line)
 				{
 					_error_msg = "Bad request : port format";
 					state = R_error;
-					return ; //error port
+					return ;
 				}
 				break ;
 			}
@@ -724,6 +705,7 @@ void Request::parseRequestLine(char *line)
 				}
 				else if (line[i] == '#')
 				{
+					_path_to_file = convert_charptr_string(line, start, i);
 					start = i + 1;
 					state = R_fragment ;
 				}
@@ -829,7 +811,6 @@ void Request::parseRequestLine(char *line)
 			{
 				if (i == len)
 				{
-					//std::cout << "First line parsing succesfull" << std::endl;
 					return ;
 				}
 				else
@@ -837,7 +818,7 @@ void Request::parseRequestLine(char *line)
 					_error_msg = "Bad request : fatal";
 					_error_code = 400;
 					state = R_error;
-					return ; //error
+					return ;
 				}
 			}
 			case R_uri_query:
@@ -863,7 +844,7 @@ void Request::parseRequestLine(char *line)
 					_error_msg = "Bad request : query format";
 					_error_code = 400;
 					state = R_error;
-					return ; //error
+					return ;
 				}
 				break ;
 			}
@@ -982,24 +963,10 @@ std::streampos Request::setHeader(std::stringstream& ss, std::streampos startpos
 
 void Request::setBody(std::stringstream& ss, std::streampos startpos)
 {
-	std::cout << "PARSING BODY"  << std::endl;
 	ss.seekg(startpos);
-	std::cout << "Startpos == " << startpos << std::endl;
 	std::string line;
-	// getline(ss,line);
-	// std::cout << (int)line[0] << std::endl;
 	while (getline(ss, line))
 	{
-		std::cout << "BODY LINE == " << line << std::endl;
-		std::cout << "line 0 " << (int)line[0] << std::endl;
-		// if (line == "\r")
-		// {
-		// 	std::cout << "BODY DONE FLAG" << std::endl;
-		// 	if (_body.length() != 0)
-		// 		_body_len = _body.length();
-		// 	state = R_done;
-		// 	return ;
-		// }
 		if (!ss.eof())
 			line += "\n";
 		_body += line;
@@ -1007,27 +974,6 @@ void Request::setBody(std::stringstream& ss, std::streampos startpos)
 	if (_body.length() != 0)
 		_body_len = _body.length();
 	state = R_done;
-	// if (line[0] == '\0')
-	// 	return ;
-	// _error_code = 400;
-	// _error_msg = "Bad request : body does not end with CRLF";
-	// state = R_error;
-
-
-	// std::string bodyContent((std::istreambuf_iterator<char>(ss)), std::istreambuf_iterator<char>());
-
-	// // Check if body ends with CRLF
-	// if (bodyContent.size() >= 2 && bodyContent.compare(bodyContent.size() - 2, 2, "\r\n") == 0)
-	// {
-	// 	_body = bodyContent;
-	// 	_body_len = _body.length();
-	// 	state = R_done; //
-	// }
-	// else
-	// {
-	// 	std::cerr << "Body does not end with CRLF" << std::endl;
-	// 	//set error and go next
-	// }
 	return ;
 }
 
