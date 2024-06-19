@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:28:16 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/19 12:31:41 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/19 14:34:06 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -66,6 +66,7 @@ void	Response::handleDirective(std::string path, t_locations& loc, Request& req,
 
 	std::string	rooted_path;
 
+	std::cout << "Handle Response" << std::endl;
 	// Catch POST method early because it depends on upload_path, not uri (=path)
 	if (uploadMethod(loc, path, serv.getConfig().upload_path, serv.getConfig().error_page_paths, req) == true)
 		return;
