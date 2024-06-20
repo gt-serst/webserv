@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:28:16 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/19 11:34:02 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/19 17:23:10 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -66,6 +66,7 @@ void	Response::handleDirective(std::string path, t_locations& loc, Request& req,
 
 	std::string	rooted_path;
 
+	std::cout << "Handle Response" << std::endl;
 	// Catch POST method early because it depends on upload_path, not uri (=path)
 	if (uploadMethod(loc, path, serv.getConfig().upload_path, serv.getConfig().error_page_paths, req) == true)
 		return;
@@ -120,34 +121,42 @@ bool	Response::uploadMethod(t_locations loc, std::string& path, std::string uplo
 
 	if (req.getRequestMethod() == "POST")
 	{
-		cleanPath(upload_path);
-		if (isMethodAllowed(loc, req) == true)
+		std::string type = getContentType(req.getBody());
+		std::cout << "Type: " << type << std::endl;
+		if (type == "text/html" || type == "text/plain" || type == "image/png" || type == "image/jpeg"
+				|| type == "image/svg+xml" || type == "image/gif")
 		{
-			const std::map<std::string, std::string>& cgi_path = req._server.getConfig().cgi_path;
-			if (findCGI(cgi_path, req.getPathToFile()) == true)
+			cleanPath(upload_path);
+			if (isMethodAllowed(loc, req) == true)
 			{
-				std::map<std::string, std::string>::const_iterator it = cgi_path.begin();
-				std::string _path = req.getPathToFile();
-				while (it != cgi_path.end())
+				const std::map<std::string, std::string>& cgi_path = req._server.getConfig().cgi_path;
+				if (findCGI(cgi_path, req.getPathToFile()) == true)
 				{
-					if (path.compare(_path.length() - it->first.length(), it->first.length(), it->first) == 0 && !it->second.empty())
+					std::map<std::string, std::string>::const_iterator it = cgi_path.begin();
+					std::string _path = req.getPathToFile();
+					while (it != cgi_path.end())
 					{
-						if (attachRootToPath(path, loc.root_path) == true)
-							handleCGI(path, req.getPathToFile(), req, it->second, *this);
+						if (path.compare(_path.length() - it->first.length(), it->first.length(), it->first) == 0 && !it->second.empty())
+						{
+							if (attachRootToPath(path, loc.root_path) == true)
+								handleCGI(path, req.getPathToFile(), req, it->second, *this);
+						}
+						++it;
 					}
-					++it;
+					this->_cgi = true;
 				}
-				this->_cgi = true;
+				else if (req.getMulti().empty() == false)
+					uploadMultiformFile(upload_path, error_paths, req.getMulti());
+				else if (req.getQuery_args().empty() == false)
+					uploadQueryFile(upload_path, error_paths, req.getQuery_args(), req.getBody());
+				else
+					errorResponse(400, "Bad Request", error_paths);
 			}
-			else if (req.getMulti().empty() == false)
-				uploadMultiformFile(upload_path, error_paths, req.getMulti());
-			else if (req.getQuery_args().empty() == false)
-				uploadQueryFile(upload_path, error_paths, req.getQuery_args(), req.getBody());
 			else
-				errorResponse(400, "Bad Request", error_paths);
+				errorResponse(405, "Method Not Allowed : File", error_paths);
 		}
 		else
-			errorResponse(405, "Method Not Allowed : File", error_paths);
+			errorResponse(415, "Unsupported Media Type : File", error_paths);
 		return (true);
 	}
 	return (false);
@@ -226,20 +235,25 @@ void	Response::fileRoutine(std::string rooted_path, std::map<int, std::string> e
 	const std::map<std::string, std::string>& cgi_path = req._server.getConfig().cgi_path;
 	if (findCGI(cgi_path, req.getPathToFile()) == true)
 	{
-		if (isMethodAllowed(loc, req) == true)
+		if (checkContentType(rooted_path) == true)
 		{
-			std::map<std::string, std::string>::const_iterator it = cgi_path.begin();
-			std::string path = req.getPathToFile();
-			while (it != cgi_path.end())
+			if (isMethodAllowed(loc, req) == true)
 			{
-				if (path.compare(path.length() - it->first.length(), it->first.length(), it->first) == 0 && !it->second.empty())
-					handleCGI(rooted_path, req.getPathToFile(), req, it->second, *this);
-				++it;
+				std::map<std::string, std::string>::const_iterator it = cgi_path.begin();
+				std::string path = req.getPathToFile();
+				while (it != cgi_path.end())
+				{
+					if (path.compare(path.length() - it->first.length(), it->first.length(), it->first) == 0 && !it->second.empty())
+						handleCGI(rooted_path, req.getPathToFile(), req, it->second, *this);
+					++it;
+				}
+				this->_cgi = true;
 			}
-			this->_cgi = true;
+			else
+				errorResponse(405, "Method Not Allowed : File", error_paths);
 		}
 		else
-			errorResponse(405, "Method Not Allowed : File", error_paths);
+			errorResponse(415, "Unsupported Media Type : File", error_paths);
 	}
 	else if (checkFileAccess(rooted_path, error_paths, "R") == true)
 	{

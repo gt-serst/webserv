@@ -1,6 +1,7 @@
 #!/bin/bash
 
 UPLOAD_DIR=$(pwd)$UPLOAD_PATH
+
 if [ ! -d "$UPLOAD_DIR" ]; then
     echo '{"files":[]}'
     exit 0

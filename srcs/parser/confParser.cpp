@@ -190,7 +190,7 @@ static t_server_scope	*isServerMaxBodySize(int *i, std::string buffer, t_server_
 		}
 		int res = ft_atoi(buffer.substr(*i, j - *i).c_str());
 		*i = j;
-		if (buffer[*i] != '\n' || res < 1 || res > 1000000)
+		if (buffer[*i] != '\n' || res < 1 || res > 10000000)
 		{
 			freeConfig(serverConfig, *servers);
 			return (NULL);

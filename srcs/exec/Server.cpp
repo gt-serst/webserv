@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/08 09:59:24 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/19 11:01:13 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/19 19:03:55 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,7 +29,7 @@
 #include <iostream>
 #include <stdio.h>
 
-#define BUFFER_SIZE 1024
+#define BUFFER_SIZE 4096
 
 Server::Server(void){}
 
@@ -46,8 +46,7 @@ Server::~Server(void){
 
 int	Server::createServerSocket(void){
 
-	int					rc;
-	int					flags;
+	int	rc;
 
 	this->_fd = socket(AF_INET, SOCK_STREAM, 0);
 	if (this->_fd < 0)
@@ -60,13 +59,6 @@ int	Server::createServerSocket(void){
 		std::cerr << "Setsockopt() failed" << std::endl;
 		return (-1);
 	}
-	flags = fcntl(this->_fd, F_GETFL, 0);
-	if (flags < 0)
-	{
-		std::cerr << "Fcntl() failed" << std::endl;
-		return (-1);
-	}
-	fcntl(this->_fd, F_SETFL, flags | O_NONBLOCK);
 
 	std::memset((char *)&_server_addr, 0, sizeof(_server_addr));
 	_server_addr.sin_family = AF_INET;
@@ -91,9 +83,9 @@ int	Server::createServerSocket(void){
 
 int	Server::listenClientConnection(void){
 
-	int					flags;
-	int					client_fd;
-	socklen_t			client_addr_len = sizeof(_client_addr);
+	int			flags;
+	int			client_fd;
+	socklen_t	client_addr_len = sizeof(_client_addr);
 
 	client_fd = accept(this->_fd, (struct sockaddr *) &(_client_addr), &client_addr_len);
 
@@ -102,7 +94,8 @@ int	Server::listenClientConnection(void){
 		std::cerr << "Accept() failed" << std::endl;
 		return (-1);
 	}
-	flags = fcntl(client_fd, F_GETFL, 0);
+	_requests.insert(std::make_pair(client_fd, ""));
+	flags = fcntl(client_fd, F_SETFL, O_NONBLOCK);
 	if (flags < 0)
 	{
 		std::cerr << "Fcntl() failed" << std::endl;
@@ -114,39 +107,36 @@ int	Server::listenClientConnection(void){
 
 int	Server::readClientSocket(int client_fd){
 
-	int			rc;
-	char		buffer[BUFFER_SIZE];
-	std::string	stack;
+	int		rc;
+	char	buffer[BUFFER_SIZE] = {0};
 
-	rc = recv(client_fd, buffer, sizeof(buffer) - 1, 0);
+	rc = recv(client_fd, buffer, BUFFER_SIZE - 1, 0);
 	if (rc == 0 || rc == -1)
 	{
+		this->closeClientSocket(client_fd);
 		if (!rc)
-		{
 			std::cout << "Client close connection" << std::endl;
-			return (0);
-		}
 		else
-		{
-			this->closeClientSocket(client_fd);
 			std::cerr << "Recv() failed" << std::endl;
-			return (-1);
-		}
+		return (-1);
 	}
-	buffer[rc] = '\0';
-	stack += buffer;
-	_requests[client_fd] += stack;
+	_requests[client_fd].append(buffer, rc);
 	// Vérification pour des requêtes envoyées en plusieurs parties
 	size_t i = _requests[client_fd].find("\r\n\r\n");
 	if (i != std::string::npos) // Si fin des headers trouvé alors vérification si il y a un chunked ou un content length
 	{
 		if(_requests[client_fd].find("Transfer-Encoding: chunked") != std::string::npos)
 		{
-
 			if (_requests[client_fd].find("0\r\n\r\n") != std::string::npos)
+			{
+				//std::cout << "La requête complète a été reçue" << std::endl;
 				return (0); // La requête complète a été reçue
+			}
 			else
+			{
+				//std::cout << "La requête n'est pas encore complète" << std::endl;
 				return (1); // La requête n'est pas encore complète
+			}
 		}
 		size_t pos = _requests[client_fd].find("Content-Length: ");
 		if (pos != std::string::npos)
@@ -160,14 +150,22 @@ int	Server::readClientSocket(int client_fd){
 
 				// Vérifier si toute la requête a été reçue
 				if (_requests[client_fd].size() >= i + content_length + 4)
+				{
+					//std::cout << "La requête complète a été reçue" << std::endl;
 					return (0); // La requête complète a été reçue
+				}
 				else
+				{
+					//std::cout << "La requête n'est pas encore complète" << std::endl;
 					return (1); // La requête n'est pas encore complète
+				}
 			}
 		}
+		//std::cout << "Content-Length non trouvé ou fin de ligne non trouvée" << std::endl;
 		return (0); // Content-Length non trouvé ou fin de ligne non trouvée
 	}
 	// Tous les headers ne sont pas présent car \r\n\r\n n'a pas été trouvé
+	//std::cout << "Tous les headers ne sont pas présent" << std::endl;
 	return (1);
 }
 
@@ -178,6 +176,7 @@ int	Server::handleRequest(int client_fd){
 	Response	response;
 
 	Request request(_requests[client_fd], *this);
+	std::cout << "Parsing request finished" << std::endl;
 	response.setVersion(request.getVersion());
 	if (request.getPathToFile().find("/favicon.ico") != std::string::npos)
 		response.errorResponse(404, "Not Found", getConfig().error_page_paths);
@@ -209,8 +208,11 @@ int	Server::handleRequest(int client_fd){
 		}
 	}
 	else
+	{
+		std::cout << "Error detected by parsing" << std::endl;
 		// Catch error from the request parser
 		response.errorResponse(request.getErrorCode(), request.getErrorMsg(), getConfig().error_page_paths);
+	}
 
 	_requests.erase(client_fd);
 	_requests.insert(std::make_pair(client_fd, response.getResponse()));
@@ -224,6 +226,7 @@ int	Server::sendResponse(int client_fd){
 	int	len;
 
 	len = _requests[client_fd].length();
+	std::cout << _requests[client_fd] << std::endl;
 	rc = send(client_fd, _requests[client_fd].c_str(), len, 0);
 	if (rc == 0 || rc == -1)
 	{

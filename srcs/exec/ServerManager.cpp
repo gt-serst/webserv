@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/07 11:04:51 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/18 17:03:34 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/19 17:08:39 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,7 +37,7 @@ ServerManager::~ServerManager(void){
 	_servers.clear();
 	_sockets.clear();
 	_ready.clear();
-	//std::cout << "ServerManager destroyed" << std::endl;
+	// std::cout << "ServerManager destroyed" << std::endl;
 }
 
 void	ServerManager::launchServer(t_server_scope *servers, int nb_servers){
@@ -134,6 +134,7 @@ void	ServerManager::serverRoutine(void){
 				// Server socket is set and ready to listen to a client
 				if (FD_ISSET(it->first, &reading_set))
 				{
+					std::cout << "Ready to listen for client connection" << std::endl;
 					int client_fd = it->second.listenClientConnection();
 
 					if (client_fd != -1)
@@ -150,6 +151,7 @@ void	ServerManager::serverRoutine(void){
 		}
 		else
 		{
+			std::cout << "Select failed" << std::endl;
 			// Select failed because his return code is lower than 0
 			for (std::map<int, Server*>::iterator it = _sockets.begin() ; it != _sockets.end() ; it++)
 				it->second->closeClientSocket(it->first);
