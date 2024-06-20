@@ -36,6 +36,7 @@ static std::string intToString(int number) {
 void Response::handleCGI(std::string rootedpath, std::string path, Request& req, std::string exec_path, Response& res) {
 	struct stat sb;
 	std::cout << "----------CGI----------" << std::endl;
+	std::cout << "|" << req._server.getConfig().upload_path << "|" << std::endl;
 	if (stat(exec_path.c_str(), &sb) == 0 && access(exec_path.c_str(), X_OK) == 0) {
 		if (stat(rootedpath.c_str(), &sb) == 0 && access(rootedpath.c_str(), X_OK) == 0) {
 			int pipefd[2];
@@ -81,7 +82,7 @@ void Response::handleCGI(std::string rootedpath, std::string path, Request& req,
 				std::string server_name = "SERVER_NAME=" + req.getHost();
 				std::string server_port = "SERVER_PORT=" + intToString(req._server.getConfig().port);
 				std::string server_protocol = "SERVER_PROTOCOL=HTTP/" + req.getVersion();
-
+				std::string upload_path = "UPLOAD_PATH=/" + req._server.getConfig().upload_path;
 				char *envp[] = {
 					strdup(path_info.c_str()),
 					strdup(path_translated.c_str()),
@@ -94,6 +95,7 @@ void Response::handleCGI(std::string rootedpath, std::string path, Request& req,
 					strdup(server_name.c_str()),
 					strdup(server_port.c_str()),
 					strdup(server_protocol.c_str()),
+					strdup(upload_path.c_str()),
 					NULL
 				};
 

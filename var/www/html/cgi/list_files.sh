@@ -1,8 +1,6 @@
 #!/bin/bash
 
-UPLOAD_DIR="/Users/fbonaert/Desktop/programmation/Ecole/projets/webserv/var/www/html/upload"
-
-
+UPLOAD_DIR=$(pwd)$UPLOAD_PATH
 if [ ! -d "$UPLOAD_DIR" ]; then
     echo '{"files":[]}'
     exit 0
@@ -18,5 +16,4 @@ for i in "${!files[@]}"; do
     fi
     printf "\"${files[$i]}\""
 done
-
 echo ']}'
