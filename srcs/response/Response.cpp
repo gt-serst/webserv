@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
+/*   By: geraudtserstevens <geraudtserstevens@st    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:28:16 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/19 17:23:10 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/21 15:06:57 by geraudtsers      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -56,7 +56,8 @@ bool	Response::checkContentType(std::string path){
 		input.close();
 		std::string type = getContentType(stack);
 		if (type == "text/html" || type == "text/plain" || type == "image/png" || type == "image/jpeg"
-				|| type == "image/svg+xml" || type == "image/gif")
+				|| type == "image/svg+xml" || type == "image/gif" || type == "application/pdf"
+				|| type == "application/zip" || type == "video/mp4")
 			return (true);
 	}
 	return (false);
@@ -257,15 +258,16 @@ void	Response::fileRoutine(std::string rooted_path, std::map<int, std::string> e
 	}
 	else if (checkFileAccess(rooted_path, error_paths, "R") == true)
 	{
-		if (checkContentType(rooted_path) == true)
-		{
-			if (isMethodAllowed(loc, req) == true)
-				runFileMethod(rooted_path, error_paths, req);
-			else
-				errorResponse(405, "Method Not Allowed : File", error_paths);
-		}
-		else
-			errorResponse(415, "Unsupported Media Type : File", error_paths);
+		runFileMethod(rooted_path, loc, error_paths, req);
+		// if (checkContentType(rooted_path) == true)
+		// {
+		// 	if (isMethodAllowed(loc, req) == true)
+		// 		runFileMethod(rooted_path, error_paths, req);
+		// 	else
+		// 		errorResponse(405, "Method Not Allowed : File", error_paths);
+		// }
+		// else
+		// 	errorResponse(415, "Unsupported Media Type : File", error_paths);
 	}
 }
 
@@ -340,14 +342,32 @@ void	Response::isAutoIndex(std::string rooted_path, std::map<int, std::string> e
 	}
 }
 
-void	Response::runFileMethod(std::string rooted_path, std::map<int, std::string> error_paths, Request& req){
+void	Response::runFileMethod(std::string rooted_path, t_locations loc, std::map<int, std::string> error_paths, Request& req){
 
-	if (req.getRequestMethod() == "GET")
-		downloadFile(rooted_path, error_paths);
-	else if (req.getRequestMethod() == "DELETE")
-		deleteFile(rooted_path, error_paths);
+	if (req.getRequestMethod() == "DELETE")
+	{
+		if (req.getPathToFile().find("upload", 0) != std::string::npos)
+			deleteFile(rooted_path, error_paths);
+		else
+			errorResponse(400, "Bad Request : delete forbidden outside of upload path", error_paths);
+	}
 	else
-		errorResponse(405, "Method Not Allowed : File", error_paths);
+	{
+		if (checkContentType(rooted_path) == true)
+		{
+			if (isMethodAllowed(loc, req) == true)
+			{
+				if (req.getRequestMethod() == "GET")
+					downloadFile(rooted_path, error_paths);
+				else
+					errorResponse(405, "Method Not Allowed : File", error_paths);
+			}
+			else
+					errorResponse(405, "Method Not Allowed : File", error_paths);
+		}
+		else
+			errorResponse(415, "Unsupported Media Type : File", error_paths);
+	}
 }
 
 void	Response::downloadFile(std::string rooted_path, std::map<int, std::string> error_paths){
@@ -360,8 +380,14 @@ void	Response::downloadFile(std::string rooted_path, std::map<int, std::string> 
 		std::string stack;
 		while (std::getline(input, buffer))
 		{
+			//std::cout << "Je passe ici" << std::endl;
+			// stack.append(buffer.c_str(), buffer.length());
+			// stack.append("\n", 1);
 			stack += buffer;
-			stack += '\n';
+			if (!input.eof())
+				stack += '\n';
+			else
+				std::cout << "EOF found" << std::endl;
 		}
 		input.close();
 		downloadFileResponse(stack);
@@ -514,6 +540,7 @@ void Response::autoIndexResponse(std::string rooted_path, std::string dir_list, 
 	this->_status_message = "OK";
 	this->_content_type = "text/html";
 	this->_content_len = this->_body.length();
+	vec_dir_list.clear();
 	generateResponse();
 }
 
@@ -565,6 +592,7 @@ std::string	Response::getContentType(std::string stack){
 	for (size_t i = 0; i < bytes.size(); i++)
 		ss_hex << std::hex << (static_cast<int>(bytes[i]) & 0xFF) << " ";
 	octets = ss_hex.str();
+	bytes.clear();
 	switch (stringToEnum(octets))
 	{
 		case E_PNG:
@@ -575,6 +603,12 @@ std::string	Response::getContentType(std::string stack){
 			return ("image/svg+xml");
 		case E_GIF:
 			return ("image/gif");
+		case E_PDF:
+			return ("application/pdf");
+		case E_ZIP:
+			return ("application/zip");
+		case E_MP4:
+			return ("video/mp4");
 		// case E_HTML:
 		// 	return ("text/html");
 		default:
@@ -605,6 +639,9 @@ t_file_type	Response::stringToEnum(std::string const& str){
 	if (str.compare(0, 5, "ff d8") == 0) return (E_JPEG);
 	if (str.compare(0, 23, "3c 3f 78 6d 6c 20 76 65") == 0) return (E_SVG);
 	if (str.compare(0, 17, "47 49 46 38 39 61") == 0) return (E_GIF);
+	if (str.compare(0, 11, "25 50 44 46") == 0) return (E_PDF);
+	if (str.compare(0, 18, "50 4b 3 4 14 0 8 0") == 0) return (E_ZIP);
+	if (str.compare(0, 20, "0 0 0 20 66 74 79 70") == 0) return (E_MP4);
 	// if (str.compare(0, 15, "3c 21 44 4f 43 54 59 50 45 20 68 74 6d 6c 3e") == 0) return E_HTML;
 	else
 		return (E_DEFAULT);

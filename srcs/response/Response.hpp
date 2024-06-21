@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.hpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
+/*   By: geraudtserstevens <geraudtserstevens@st    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:12:17 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/19 11:34:09 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/21 14:32:17 by geraudtsers      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,6 +26,9 @@ typedef enum e_file_type
 	E_JPEG,
 	E_SVG,
 	E_GIF,
+	E_PDF,
+	E_ZIP,
+	E_MP4,
 	// E_HTML,
 	E_DEFAULT
 }	t_file_type;
@@ -59,7 +62,7 @@ class Response{
 		void		isAutoIndex(std::string path, std::map<int, std::string> error_paths, t_locations loc, Request& req);
 		bool		findCGI(std::map<std::string, std::string>	cgi_path, std::string path_to_file);
 		void		handleCGI(std::string rootedpath, std::string path, Request& req, std::string exec_path, Response& res);
-		void		runFileMethod(std::string path, std::map<int, std::string> error_paths, Request& req);
+		void		runFileMethod(std::string path, t_locations loc, std::map<int, std::string> error_paths, Request& req);
 		void		downloadFile(std::string path, std::map<int, std::string> error_paths);
 		void		uploadQueryFile(std::string upload_path, std::map<int, std::string> error_paths, std::map<std::string, std::string> query, std::string body);
 		void		uploadMultiformFile(std::string upload_path, std::map<int, std::string> error_paths, std::map<int, t_multi> multiform);

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
+/*   By: geraudtserstevens <geraudtserstevens@st    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/08 09:59:24 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/19 19:03:55 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/21 15:19:51 by geraudtsers      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -121,21 +121,21 @@ int	Server::readClientSocket(int client_fd){
 		return (-1);
 	}
 	_requests[client_fd].append(buffer, rc);
-	// Vérification pour des requêtes envoyées en plusieurs parties
+	// Check for chunked requests
 	size_t i = _requests[client_fd].find("\r\n\r\n");
-	if (i != std::string::npos) // Si fin des headers trouvé alors vérification si il y a un chunked ou un content length
+	if (i != std::string::npos) // If the end of the headers is found, then check if there is a chunked or a content length
 	{
 		if(_requests[client_fd].find("Transfer-Encoding: chunked") != std::string::npos)
 		{
 			if (_requests[client_fd].find("0\r\n\r\n") != std::string::npos)
 			{
-				//std::cout << "La requête complète a été reçue" << std::endl;
-				return (0); // La requête complète a été reçue
+				std::cout << "La requête complète a été reçue" << std::endl;
+				return (0); // The complete request has been received
 			}
 			else
 			{
-				//std::cout << "La requête n'est pas encore complète" << std::endl;
-				return (1); // La requête n'est pas encore complète
+				std::cout << "La requête n'est pas encore complète" << std::endl;
+				return (1); // The request is not yet complete
 			}
 		}
 		size_t pos = _requests[client_fd].find("Content-Length: ");
@@ -144,28 +144,28 @@ int	Server::readClientSocket(int client_fd){
 			size_t end_of_line = _requests[client_fd].find("\r\n", pos);
 			if (end_of_line != std::string::npos)
 			{
-				// Extraire la valeur de Content-Length
-				size_t length_start = pos + 16; // "Content-Length: " est de 16 caractères
+				// Extract the value of Content-Length
+				size_t length_start = pos + 16; // "Content-Length: " is 16 characters long
 				size_t content_length = ft_atoi(_requests[client_fd].substr(length_start, end_of_line - length_start).c_str());
 
-				// Vérifier si toute la requête a été reçue
+				// Check if the entire request has been received
 				if (_requests[client_fd].size() >= i + content_length + 4)
 				{
-					//std::cout << "La requête complète a été reçue" << std::endl;
-					return (0); // La requête complète a été reçue
+					std::cout << "La requête complète a été reçue" << std::endl;
+					return (0); // The complete request has been received
 				}
 				else
 				{
-					//std::cout << "La requête n'est pas encore complète" << std::endl;
-					return (1); // La requête n'est pas encore complète
+					std::cout << "La requête n'est pas encore complète" << std::endl;
+					return (1); // The request is not yet complete
 				}
 			}
 		}
-		//std::cout << "Content-Length non trouvé ou fin de ligne non trouvée" << std::endl;
-		return (0); // Content-Length non trouvé ou fin de ligne non trouvée
+		std::cout << "Content-Length ou chunked header non trouvés" << std::endl;
+		return (0); // Content-Length or chunked header not found
 	}
-	// Tous les headers ne sont pas présent car \r\n\r\n n'a pas été trouvé
-	//std::cout << "Tous les headers ne sont pas présent" << std::endl;
+	// All headers are not present because \r\n\r\n was not found
+	std::cout << "Tous les headers ne sont pas présent" << std::endl;
 	return (1);
 }
 
@@ -175,6 +175,8 @@ int	Server::handleRequest(int client_fd){
 	Router		router;
 	Response	response;
 
+	std::cout << "Request sent to parsing:" << std::endl;
+	std::cout << _requests[client_fd] << std::endl;
 	Request request(_requests[client_fd], *this);
 	std::cout << "Parsing request finished" << std::endl;
 	response.setVersion(request.getVersion());
@@ -226,7 +228,7 @@ int	Server::sendResponse(int client_fd){
 	int	len;
 
 	len = _requests[client_fd].length();
-	std::cout << _requests[client_fd] << std::endl;
+	//std::cout << _requests[client_fd] << std::endl;
 	rc = send(client_fd, _requests[client_fd].c_str(), len, 0);
 	if (rc == 0 || rc == -1)
 	{
