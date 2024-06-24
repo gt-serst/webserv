@@ -906,6 +906,22 @@ bool	Request::handle_headers()
 		_error_msg = "Hostname in the URI does not match the hostname in the Host header";
 		return true;
 	}
+	int i = 0;
+	std::vector<std::string> tmp = _server.getConfig().server_name;
+	for (std::vector<std::string>::iterator it = tmp.begin(); it != tmp.end(); ++it)
+	{
+		if (line.compare(*it + "\r") == 0)
+			break;
+		i++;
+	}
+	if (tmp.begin() + i == tmp.end())
+	{
+		tmp.clear();
+		_error_code = 400;
+		_error_msg = "Hostname in the request does not match the hostname in the server config";
+		return true;
+	}
+	tmp.clear();
     size_t pos = line.find(":");
     if (pos != std::string::npos)
     {
