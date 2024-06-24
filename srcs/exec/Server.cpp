@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: geraudtserstevens <geraudtserstevens@st    +#+  +:+       +#+        */
+/*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/08 09:59:24 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/21 15:19:51 by geraudtsers      ###   ########.fr       */
+/*   Updated: 2024/06/24 14:08:27 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -184,28 +184,31 @@ int	Server::handleRequest(int client_fd){
 		response.errorResponse(404, "Not Found", getConfig().error_page_paths);
 	else if (request.getErrorCode() == -1)
 	{
-		std::string path_to_file = request.getPathToFile();
-
-		router.routeRequest(path_to_file, loc, this->_config.locations, response);
-		// If redir, generate a redir response and the browser will resend a GET request with the new direction
-		if (response.getRedir() == true)
-			response.generateResponse();
-		else
+		if (checkServerAvailability(request, response) == false)
 		{
-			request.setPathToFile(path_to_file);
+			std::string path_to_file = request.getPathToFile();
 
-			response.handleDirective(request.getPathToFile(), loc, request, *this);
-			if (response.getDefaultFile() == true)
+			router.routeRequest(path_to_file, loc, this->_config.locations, response);
+			// If redir, generate a redir response and the browser will resend a GET request with the new direction
+			if (response.getRedir() == true)
+				response.generateResponse();
+			else
 			{
-				// When a default file is found we relaunch all the routine, router and response process
-				response.setDefaultFile(false);
+				request.setPathToFile(path_to_file);
+
 				response.handleDirective(request.getPathToFile(), loc, request, *this);
-			}
-			else if (response.getCGI() == true)
-			{
-				// If CGI is runned in the response process, we do not have to send a response in the client socket because script already done it
-				_requests.erase(client_fd);
-				return (1);
+				if (response.getDefaultFile() == true)
+				{
+					// When a default file is found we relaunch all the routine, router and response process
+					response.setDefaultFile(false);
+					response.handleDirective(request.getPathToFile(), loc, request, *this);
+				}
+				else if (response.getCGI() == true)
+				{
+					// If CGI is runned in the response process, we do not have to send a response in the client socket because script already done it
+					_requests.erase(client_fd);
+					return (1);
+				}
 			}
 		}
 	}
@@ -228,8 +231,20 @@ int	Server::sendResponse(int client_fd){
 	int	len;
 
 	len = _requests[client_fd].length();
+	std::cout << "The request len is equal to " << len << " bytes!" << std::endl;
 	//std::cout << _requests[client_fd] << std::endl;
 	rc = send(client_fd, _requests[client_fd].c_str(), len, 0);
+	if (rc != static_cast<int>(_requests[client_fd].length()))
+	{
+		std::cout << "We sended " << rc << "bytes! Give me more bro..." << std::endl;
+		std::string	still_to_send;
+
+		still_to_send = _requests[client_fd].substr(rc, len);
+		_requests[client_fd] = yet_to_send;
+		return (1);
+
+		std::cout << "Ohh! Give me all your datas boys, I only received " << rc << " bytes!!!" << std::endl;
+	}
 	if (rc == 0 || rc == -1)
 	{
 		if (!rc)
@@ -250,6 +265,17 @@ int	Server::sendResponse(int client_fd){
 		_requests.erase(client_fd);
 		return (0);
 	}
+}
+
+bool	Server::checkServerAvailability(Request& req, Response& res){
+
+	if (req.getRequestMethod() == "GET" && req.getPathToFile() == "/exit")
+	{
+		res.errorResponse(503, "Service Unavailable", getConfig().error_page_paths);
+		closeServerSocket();
+		return (true);
+	}
+	return (false);
 }
 
 void	Server::closeServerSocket(void){
