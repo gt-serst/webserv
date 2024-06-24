@@ -36,7 +36,6 @@ static std::string intToString(int number) {
 void Response::handleCGI(std::string rootedpath, std::string path, Request& req, std::string exec_path, Response& res) {
 	struct stat sb;
 	std::cout << "----------CGI----------" << std::endl;
-	std::cout << "|" << req._server.getConfig().upload_path << "|" << std::endl;
 	if (stat(exec_path.c_str(), &sb) == 0 && access(exec_path.c_str(), X_OK) == 0) {
 		if (stat(rootedpath.c_str(), &sb) == 0 && access(rootedpath.c_str(), X_OK) == 0) {
 			int pipefd[2];
@@ -108,7 +107,6 @@ void Response::handleCGI(std::string rootedpath, std::string path, Request& req,
 					std::cerr << "ERROR: CGI: Failed to execute CGI script" << std::endl;
 					perror("execve()");
 				}
-
 				// Free dynamically allocated memory
 				for (size_t i = 0; envp[i]; ++i) {
 					free(envp[i]);
