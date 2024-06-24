@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/07 11:04:51 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/24 14:07:35 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/24 14:31:03 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -163,6 +163,18 @@ void	ServerManager::serverRoutine(void){
 			FD_ZERO(&_fd_set);
 			for (std::map<int, Server>::iterator it = _servers.begin() ; it != _servers.end() ; it++)
 				FD_SET(it->first, &_fd_set);
+		}
+		for (std::map<int, Server>::iterator it = _servers.begin(); it != _servers.end(); ++it)
+		{
+			if (it->second.getStillAlive() == false)
+			{
+				for (std::map<int, Server*>::iterator it = _sockets.begin(); it != _sockets.end(); ++it)
+				{
+					FD_CLR(it->first, &_fd_set);
+					FD_CLR(it->first, &reading_set);
+				}
+				return;
+			}
 		}
 	}
 }

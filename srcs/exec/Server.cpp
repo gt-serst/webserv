@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/08 09:59:24 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/24 14:12:29 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/24 14:33:39 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,6 +35,7 @@ Server::Server(void){}
 
 Server::Server(t_server_scope config) : _config(config){
 
+	_still_alive = true;
 	//std::cout << "Server created" << std::endl;
 }
 
@@ -184,7 +185,7 @@ int	Server::handleRequest(int client_fd){
 		response.errorResponse(404, "Not Found", getConfig().error_page_paths);
 	else if (request.getErrorCode() == -1)
 	{
-		if (checkServerAvailability(request, response) == false)
+		if (checkServerAvailability(request) == false)
 		{
 			std::string path_to_file = request.getPathToFile();
 
@@ -267,12 +268,12 @@ int	Server::sendResponse(int client_fd){
 	}
 }
 
-bool	Server::checkServerAvailability(Request& req, Response& res){
+bool	Server::checkServerAvailability(Request& req){
 
 	if (req.getRequestMethod() == "GET" && req.getPathToFile() == "/exit")
 	{
-		res.errorResponse(503, "Service Unavailable", getConfig().error_page_paths);
-		closeServerSocket();
+		std::cout << "Server off" << std::endl;
+		_still_alive = false;
 		return (true);
 	}
 	return (false);
@@ -315,6 +316,11 @@ struct sockaddr_in	Server::getClientAddr() const{
 std::map<int, std::string>	Server::getRequests(void) const{
 
 	return _requests;
+}
+
+bool	Server::getStillAlive(void) const{
+
+	return _still_alive;
 }
 
 void	Server::setRequests(std::map<int, std::string> requests){
