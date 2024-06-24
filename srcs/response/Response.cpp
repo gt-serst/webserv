@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: geraudtserstevens <geraudtserstevens@st    +#+  +:+       +#+        */
+/*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:28:16 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/21 15:06:57 by geraudtsers      ###   ########.fr       */
+/*   Updated: 2024/06/24 12:59:55 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,6 +25,9 @@
 #include <sstream>
 #include <ctime>
 #include <algorithm>
+
+#include <unistd.h>
+#include <fcntl.h>
 
 Response::Response(void){
 
@@ -372,28 +375,42 @@ void	Response::runFileMethod(std::string rooted_path, t_locations loc, std::map<
 
 void	Response::downloadFile(std::string rooted_path, std::map<int, std::string> error_paths){
 
-	std::ifstream input(rooted_path, std::ios::binary);
+	(void)error_paths;
+	int fd = open(rooted_path.c_str(), O_RDONLY);
+	// std::ifstream input(rooted_path, std::ios::binary);
 
-	if (input.is_open())
-	{
-		std::string buffer;
+	// if (input.is_open())
+	// {
+		// std::string buffer;
 		std::string stack;
-		while (std::getline(input, buffer))
+		int		rc;
+		char	buffer[4096] = {0};
+
+
+		rc = read(fd, buffer, 4096 - 1);
+		while (rc > 0)
 		{
-			//std::cout << "Je passe ici" << std::endl;
-			// stack.append(buffer.c_str(), buffer.length());
-			// stack.append("\n", 1);
-			stack += buffer;
-			if (!input.eof())
-				stack += '\n';
-			else
-				std::cout << "EOF found" << std::endl;
+			//std::cout << "Rc: " <<  rc << std::endl;
+			stack.append(buffer, rc);
+			rc = read(fd, buffer, 4096 - 1);
 		}
-		input.close();
+		// while (std::getline(input, buffer))
+		// {
+		// 	//std::cout << "Je passe ici" << std::endl;
+		// 	// stack.append(buffer.c_str(), buffer.length());
+		// 	// stack.append("\n", 1);
+		// 	stack += buffer;
+		// 	if (!input.eof())
+		// 		stack += '\n';
+		// 	else
+		// 		std::cout << "EOF found" << std::endl;
+		// }
+		// input.close();
+		close(fd);
 		downloadFileResponse(stack);
-	}
-	else
-		errorResponse(404, "Not Found : Open input failed", error_paths);
+	// }
+	// else
+		// errorResponse(404, "Not Found : Open input failed", error_paths);
 }
 
 void	Response::uploadQueryFile(std::string upload_path, std::map<int, std::string> error_paths, std::map<std::string, std::string> query, std::string body){
@@ -717,7 +734,7 @@ std::string	Response::matchErrorCodeWithPage(int error_code, std::map<int, std::
 void	Response::createHtmlErrorPage(int error_code, std::string message){
 
 	int			i;
-	int			integer[] = {400, 403, 404, 405, 413, 414, 415, 500, 505};
+	int			integer[] = {400, 403, 404, 405, 413, 414, 415, 500, 503, 505};
 	std::string	error_headers[] = {"The server could not understand the request due to invalid syntax.",
 	"You do not have permission to access this resource on this server.",
 	"The requested resource could not be found on this server.",
@@ -726,6 +743,7 @@ void	Response::createHtmlErrorPage(int error_code, std::string message){
 	"The requested URI is too long for the server to process.",
 	"The media format of the requested data is not supported by the server.",
 	"The server encountered an internal error or misconfiguration and was unable to complete your request.",
+	"The server is currently unable to handle the request due to a temporary overloading or maintenance of the server. Please try again later.",
 	"The server does not support the HTTP protocol version used in the request."};
 
 	i = 0;

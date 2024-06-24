@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/08 09:43:45 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/17 15:33:23 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/24 12:00:07 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,9 +14,14 @@
 # define SERVER_HPP
 
 # include "../parser/confParser.hpp"
+// # include "../request/Request.hpp"
+// # include "../response/Response.hpp"
 # include <string>
 # include <map>
 # include <arpa/inet.h>
+
+class Request;
+class Response;
 
 class Server
 {
@@ -29,6 +34,7 @@ class Server
 		int							readClientSocket(int client_fd);
 		int							handleRequest(int client_fd);
 		int							sendResponse(int client_fd);
+		bool						checkServerAvailability(Request& req, Response& res);
 		void						closeServerSocket(void);
 		void						closeClientSocket(int client_fd);
 		int							getFd(void) const;
