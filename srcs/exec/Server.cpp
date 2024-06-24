@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/08 09:59:24 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/24 14:33:39 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/24 14:45:21 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -177,7 +177,7 @@ int	Server::handleRequest(int client_fd){
 	Response	response;
 
 	std::cout << "Request sent to parsing:" << std::endl;
-	std::cout << _requests[client_fd] << std::endl;
+	// std::cout << _requests[client_fd] << std::endl;
 	Request request(_requests[client_fd], *this);
 	std::cout << "Parsing request finished" << std::endl;
 	response.setVersion(request.getVersion());

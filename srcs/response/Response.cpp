@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:28:16 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/24 12:59:55 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/24 14:42:04 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,8 +26,8 @@
 #include <ctime>
 #include <algorithm>
 
-#include <unistd.h>
-#include <fcntl.h>
+// #include <unistd.h>
+// #include <fcntl.h>
 
 Response::Response(void){
 
@@ -375,42 +375,42 @@ void	Response::runFileMethod(std::string rooted_path, t_locations loc, std::map<
 
 void	Response::downloadFile(std::string rooted_path, std::map<int, std::string> error_paths){
 
-	(void)error_paths;
-	int fd = open(rooted_path.c_str(), O_RDONLY);
-	// std::ifstream input(rooted_path, std::ios::binary);
+	// (void)error_paths;
+	// int fd = open(rooted_path.c_str(), O_RDONLY);
+	std::ifstream input(rooted_path, std::ios::binary);
 
-	// if (input.is_open())
-	// {
-		// std::string buffer;
+	if (input.is_open())
+	{
+		std::string buffer;
 		std::string stack;
-		int		rc;
-		char	buffer[4096] = {0};
+		// int		rc;
+		// char	buffer[4096] = {0};
 
 
-		rc = read(fd, buffer, 4096 - 1);
-		while (rc > 0)
-		{
-			//std::cout << "Rc: " <<  rc << std::endl;
-			stack.append(buffer, rc);
-			rc = read(fd, buffer, 4096 - 1);
-		}
-		// while (std::getline(input, buffer))
+		// rc = read(fd, buffer, 4096 - 1);
+		// while (rc > 0)
 		// {
-		// 	//std::cout << "Je passe ici" << std::endl;
-		// 	// stack.append(buffer.c_str(), buffer.length());
-		// 	// stack.append("\n", 1);
-		// 	stack += buffer;
-		// 	if (!input.eof())
-		// 		stack += '\n';
-		// 	else
-		// 		std::cout << "EOF found" << std::endl;
+		// 	//std::cout << "Rc: " <<  rc << std::endl;
+		// 	stack.append(buffer, rc);
+		// 	rc = read(fd, buffer, 4096 - 1);
 		// }
-		// input.close();
-		close(fd);
+		while (std::getline(input, buffer))
+		{
+			//std::cout << "Je passe ici" << std::endl;
+			// stack.append(buffer.c_str(), buffer.length());
+			// stack.append("\n", 1);
+			stack += buffer;
+			if (!input.eof())
+				stack += '\n';
+			else
+				std::cout << "EOF found" << std::endl;
+		}
+		input.close();
+		// close(fd);
 		downloadFileResponse(stack);
-	// }
-	// else
-		// errorResponse(404, "Not Found : Open input failed", error_paths);
+	}
+	else
+		errorResponse(404, "Not Found : Open input failed", error_paths);
 }
 
 void	Response::uploadQueryFile(std::string upload_path, std::map<int, std::string> error_paths, std::map<std::string, std::string> query, std::string body){
