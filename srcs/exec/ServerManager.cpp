@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/07 11:04:51 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/19 17:08:39 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/24 14:07:35 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -97,12 +97,15 @@ void	ServerManager::serverRoutine(void){
 				// Client socket is set and ready to send the response to the browser
 				if (FD_ISSET(*it, &writing_set))
 				{
-					_sockets[*it]->sendResponse(*it);
-					FD_CLR(*it, &_fd_set);
-					FD_CLR(*it, &reading_set);
-					close(*it);
-					_sockets.erase(*it);
-					_ready.erase(it);
+					int rc = _sockets[*it]->sendResponse(*it);
+					if (rc != 1)
+					{
+						FD_CLR(*it, &_fd_set);
+						FD_CLR(*it, &reading_set);
+						close(*it);
+						_sockets.erase(*it);
+						_ready.erase(it);
+					}
 					break;
 				}
 			}
@@ -159,9 +162,7 @@ void	ServerManager::serverRoutine(void){
 			_ready.clear();
 			FD_ZERO(&_fd_set);
 			for (std::map<int, Server>::iterator it = _servers.begin() ; it != _servers.end() ; it++)
-			{
 				FD_SET(it->first, &_fd_set);
-			}
 		}
 	}
 }

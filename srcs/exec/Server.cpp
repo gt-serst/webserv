@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/08 09:59:24 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/24 13:01:38 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/24 14:08:27 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -231,15 +231,18 @@ int	Server::sendResponse(int client_fd){
 	int	len;
 
 	len = _requests[client_fd].length();
-	std::cout << "The request len is equal to " << len << "bytes!" << std::endl;
+	std::cout << "The request len is equal to " << len << " bytes!" << std::endl;
 	//std::cout << _requests[client_fd] << std::endl;
 	rc = send(client_fd, _requests[client_fd].c_str(), len, 0);
 	if (rc != static_cast<int>(_requests[client_fd].length()))
 	{
-		std::string	yet_to_send;
+		std::cout << "We sended " << rc << "bytes! Give me more bro..." << std::endl;
+		std::string	still_to_send;
 
-		yet_to_send = _requests[client_fd].substr(rc, len);
-		rc = send(client_fd, yet_to_send.c_str(), yet_to_send.length(), 0);
+		still_to_send = _requests[client_fd].substr(rc, len);
+		_requests[client_fd] = yet_to_send;
+		return (1);
+
 		std::cout << "Ohh! Give me all your datas boys, I only received " << rc << " bytes!!!" << std::endl;
 	}
 	if (rc == 0 || rc == -1)
