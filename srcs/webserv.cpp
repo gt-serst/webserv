@@ -18,7 +18,12 @@ int	webserv(int argc, char **argv)
 {
 	std::string	file = confChecker(argc, argv);
 	if (file.empty())
-		return (1);
+	{
+		char *av[] = {strdup("./webserv"), strdup("config/fel.conf"), NULL};
+		file = confChecker(2, av);
+		if (file.empty())
+			return (1);
+	}
 	t_server_scope	*servers = NULL;
 	int		serverCount = -1;
 	if(!(servers = confParser(file, &serverCount)))
