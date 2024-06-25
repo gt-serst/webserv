@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/25 12:15:36 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/25 12:15:38 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/25 15:35:40 by febonaer         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -232,6 +232,7 @@ static t_locations	*handleA(int *i, std::string buffer, t_locations *res)
 			res->auto_index = false;
 			return (res);
 		}
+		delete res;
 		return (nullptr);
 	}
 	else if (buffer.substr(*i, 15) == "allowed_methods")
@@ -258,12 +259,21 @@ static t_locations	*handleA(int *i, std::string buffer, t_locations *res)
 				*i += 7;
 				result["DELETE"] = true;
 			}
+			else
+			{
+				delete res;
+				return (nullptr);
+			}
 		}
 		if (buffer[*i] == 0 || buffer[*i] != '\n' || (result["GET"] == false && result["POST"] == false && result["DELETE"] == false))
+		{
+			delete res;
 			return (nullptr);
+		}
 		res->allowed_methods = result;
 		return (res);
 	}
+	delete res;
 	return (nullptr);
 }
 
@@ -281,6 +291,7 @@ static t_locations	*handleR(int *i, std::string buffer, t_locations *res)
 			*i = j + 1;
 			return (res);
 		}
+		delete res;
 		return (nullptr);
 	}
 	else if (buffer.substr(*i, 12) == "redirections" && buffer[*i + 12] == ' ')
@@ -306,18 +317,26 @@ static t_locations	*handleR(int *i, std::string buffer, t_locations *res)
 					*i = j;
 				}
 				else
+				{
+					delete res;
 					return (nullptr);
+				}
 			}
 			else
+			{
+				delete res;
 				return (nullptr);
+			}
 		}
 		if (buffer[*i] && buffer[*i] == '\n')
 		{
 			res->redirections = result;
 			return (res);
 		}
+		delete res;
 		return (nullptr);
 	}
+	delete res;
 	return (nullptr);
 }
 
@@ -339,7 +358,10 @@ static t_locations	*handleD(int *i, std::string buffer, t_locations *res)
 				*i = j;
 			}
 			else
+			{
+				delete res;
 				return (nullptr);
+			}
 		}
 		if (buffer[*i] && buffer[*i] == '\n')
 		{
@@ -348,6 +370,7 @@ static t_locations	*handleD(int *i, std::string buffer, t_locations *res)
 			return (res);
 		}
 	}
+	delete res;
 	return (nullptr);
 }
 
@@ -369,7 +392,10 @@ static t_locations	*getLocationParams(int *i, std::string buffer)
 	while (buffer[*i] && buffer.substr(*i, 2) != "\t}")
 	{
 		if (buffer[*i] && buffer.substr(*i, 4) != "\t\t\t\t" && buffer[*i] != '\n')
+		{
+			delete res;
 			return (nullptr);
+		}
 		if (buffer[*i] == '\n')
 		{
 			(*i)++;
@@ -379,18 +405,28 @@ static t_locations	*getLocationParams(int *i, std::string buffer)
 		switch (buffer[*i])
 		{
 			case 'a' :
-				if (!(res = handleA(i, buffer, res)))
+				if (!(res = handleA(i, buffer, res)) || res == nullptr)
+				{
+					delete res;
 					return (nullptr);
+				}
 				break ;
 			case 'r' :
 				if (!(res = handleR(i, buffer, res)))
+				{
+					delete res;
 					return (nullptr);
+				}
 				break ;
 			case 'd' :
 				if (!(res = handleD(i, buffer, res)))
+				{
+					delete res;
 					return (nullptr);
+				}
 				break ;
 			default :
+				delete res;
 				return (nullptr);
 		}
 	}
@@ -437,6 +473,8 @@ static t_server_scope	*getServerConfig(int *i, std::string buffer, t_server_scop
 {
 	int locs = 0;
 	//While inside a 'server' block, calling the appropriate function according to the first character.
+	serverConfig[*servers].max_body_size = 0;
+	serverConfig[*servers].port = 0;
 	while (buffer[*i] && buffer[*i] != '}')
 	{
 		if (buffer[*i] && buffer[*i] != '\t' && buffer[*i] != '\n')
@@ -555,7 +593,7 @@ static t_server_scope	*checkConfig(t_server_scope *serverConfig, int *servers)
 			freeConfig(serverConfig, *servers);
 			return (NULL);
 		}
-		if (!serverConfig[i].max_body_size)
+		if (serverConfig[i].max_body_size <= 0)
 			serverConfig[i].max_body_size = 1024;
 		while (it != serverConfig[i].locations.end())
 		{

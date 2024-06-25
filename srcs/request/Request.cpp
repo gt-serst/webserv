@@ -29,6 +29,16 @@ bool Request::multiform_headers(std::stringstream& ss, std::streampos& pos, int 
 			{
 				end_pos = line.find("\"", start_pos + 10);
 				_multiform[i].filename = line.substr(start_pos + 10, end_pos - (start_pos + 10));
+				for (size_t j = 0; j < _multiform[i].filename.length(); j++)
+				{
+					if (std::isspace(_multiform[i].filename[j]))
+					{
+						state = R_error;
+						_error_code = 400;
+						_error_msg = "Bad request the name of the file you are trying to upload contains a whitespace";
+						return true;
+					}
+				}
 			}
 		}
 		start_pos = line.find("Content-Type:");
@@ -112,14 +122,12 @@ bool Request::handle_query()
         if (amp_pos == std::string::npos || amp_pos + 1 > _query_str.length())
 		{
             value = _query_str.substr(equal_pos + 1);
-			//std::cout << value << std::endl;
             _query_args[key] = value;
             break;
         }
 		else
 		{
             value = _query_str.substr(equal_pos + 1, amp_pos - equal_pos - 1);
-			//std::cout << value << std::endl;
             _query_args[key] = value;
             start = amp_pos + 1;
         }
@@ -248,7 +256,7 @@ void	Request::validity_checks()
 		std::string hlen = getHeader("Content-Length");
 		if (hlen.empty())
 		{
-			_error_code = 411;
+			_error_code = 400;
 			_error_msg = "Content-Length header is missing";
 			return ;
 		}
@@ -375,7 +383,6 @@ Request::Request(){}
 
 Request::Request(std::string& buffer, Server& server)
 {
-	std::cout << "Parsing request" << std::endl << std::endl;
 	_server = server;
 	_version = "1.1";
 	_path_to_file = "/";
@@ -411,7 +418,6 @@ Request::Request(std::string& buffer, Server& server)
 	}
 	if (state != R_error)
 		validity_checks();
-	std::cout << "Request parsing over" << std::endl;
 }
 
 Request::~Request()
@@ -446,8 +452,8 @@ Request::~Request()
 	// for (std::map<int, t_multi>::const_iterator it = _multiform.begin(); it != _multiform.end(); ++it)
 	// {
 	// 	std::cout << it->first << ": " << it->second.filename << " type : " << it->second.type << std::endl;
-	// 	std::cout << "CONTENT" << std::endl;
-	// 	std::cout << it->second.content << std::endl;
+	// 	// std::cout << "CONTENT" << std::endl;
+	// 	// std::cout << it->second.content << std::endl;
 	// }
 	// if (_error_code != -1)
 	// {
@@ -470,7 +476,7 @@ Request::~Request()
 	chunked = false;
 	multiform = false;
 	_boundary.clear();
-	std::cout << "//////////////Request destroyed//////////////" << std::endl;
+	//std::cout << "//////////////Request destroyed//////////////" << std::endl;
 }
 
 void Request::setRequest(std::string& buffer)
