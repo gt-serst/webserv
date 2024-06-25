@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:28:16 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/25 13:48:05 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/25 16:14:17 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,9 +25,7 @@
 #include <sstream>
 #include <ctime>
 #include <algorithm>
-
-// #include <unistd.h>
-// #include <fcntl.h>
+#include <iostream>
 
 Response::Response(void){
 
@@ -70,7 +68,7 @@ void	Response::handleDirective(std::string path, t_locations& loc, Request& req,
 
 	std::string	rooted_path;
 
-	std::cout << "Handle Response" << std::endl;
+	std::cout << "Response processing started" << std::endl;
 	// Catch POST method early because it depends on upload_path, not uri (=path)
 	if (uploadMethod(loc, path, serv.getConfig().upload_path, serv.getConfig().error_page_paths, req) == true)
 		return;
@@ -79,7 +77,6 @@ void	Response::handleDirective(std::string path, t_locations& loc, Request& req,
 		struct stat buf;
 
 		rooted_path = path;
-		std::cout << rooted_path << std::endl;
 		if (stat(rooted_path.c_str(), &buf) != 0)
 			errorResponse(404, "Not Found : Stat Failed", serv.getConfig().error_page_paths);
 		// Path points towards a directory
@@ -111,6 +108,7 @@ void	Response::handleDirective(std::string path, t_locations& loc, Request& req,
 		else
 			errorResponse(415, "Unsupported Media Type : Not a directory nor a file", serv.getConfig().error_page_paths);
 	}
+	std::cout << "Response processing finished" << std::endl;
 }
 
 void	Response::cleanPath(std::string& str){
@@ -126,7 +124,6 @@ bool	Response::uploadMethod(t_locations loc, std::string& path, std::string uplo
 	if (req.getRequestMethod() == "POST")
 	{
 		std::string type = getContentType(req.getBody());
-		std::cout << "Type: " << type << std::endl;
 		if (type == "text/html" || type == "text/plain" || type == "image/png" || type == "image/jpeg"
 				|| type == "image/svg+xml" || type == "image/gif")
 		{
@@ -260,18 +257,7 @@ void	Response::fileRoutine(std::string rooted_path, std::map<int, std::string> e
 			errorResponse(415, "Unsupported Media Type : File", error_paths);
 	}
 	else if (checkFileAccess(rooted_path, error_paths, "R") == true)
-	{
 		runFileMethod(rooted_path, loc, error_paths, req);
-		// if (checkContentType(rooted_path) == true)
-		// {
-		// 	if (isMethodAllowed(loc, req) == true)
-		// 		runFileMethod(rooted_path, error_paths, req);
-		// 	else
-		// 		errorResponse(405, "Method Not Allowed : File", error_paths);
-		// }
-		// else
-		// 	errorResponse(415, "Unsupported Media Type : File", error_paths);
-	}
 }
 
 bool	Response::findCGI(std::map<std::string, std::string>	cgi_path, std::string path_to_file){
@@ -375,38 +361,20 @@ void	Response::runFileMethod(std::string rooted_path, t_locations loc, std::map<
 
 void	Response::downloadFile(std::string rooted_path, std::map<int, std::string> error_paths){
 
-	// (void)error_paths;
-	// int fd = open(rooted_path.c_str(), O_RDONLY);
 	std::ifstream input(rooted_path, std::ios::binary);
 
 	if (input.is_open())
 	{
 		std::string buffer;
 		std::string stack;
-		// int		rc;
-		// char	buffer[4096] = {0};
 
-
-		// rc = read(fd, buffer, 4096 - 1);
-		// while (rc > 0)
-		// {
-		// 	//std::cout << "Rc: " <<  rc << std::endl;
-		// 	stack.append(buffer, rc);
-		// 	rc = read(fd, buffer, 4096 - 1);
-		// }
 		while (std::getline(input, buffer))
 		{
-			//std::cout << "Je passe ici" << std::endl;
-			// stack.append(buffer.c_str(), buffer.length());
-			// stack.append("\n", 1);
 			stack += buffer;
 			if (!input.eof())
 				stack += '\n';
-			else
-				std::cout << "EOF found" << std::endl;
 		}
 		input.close();
-		// close(fd);
 		downloadFileResponse(stack);
 	}
 	else
@@ -626,8 +594,6 @@ std::string	Response::getContentType(std::string stack){
 			return ("application/zip");
 		case E_MP4:
 			return ("video/mp4");
-		// case E_HTML:
-		// 	return ("text/html");
 		default:
 			break;
 	}
@@ -659,7 +625,6 @@ t_file_type	Response::stringToEnum(std::string const& str){
 	if (str.compare(0, 11, "25 50 44 46") == 0) return (E_PDF);
 	if (str.compare(0, 18, "50 4b 3 4 14 0 8 0") == 0) return (E_ZIP);
 	if (str.compare(0, 20, "0 0 0 20 66 74 79 70") == 0) return (E_MP4);
-	// if (str.compare(0, 15, "3c 21 44 4f 43 54 59 50 45 20 68 74 6d 6c 3e") == 0) return E_HTML;
 	else
 		return (E_DEFAULT);
 }
@@ -734,7 +699,7 @@ std::string	Response::matchErrorCodeWithPage(int error_code, std::map<int, std::
 void	Response::createHtmlErrorPage(int error_code, std::string message){
 
 	int			i;
-	int			integer[] = {400, 403, 404, 405, 413, 414, 415, 500, 503, 505};
+	int			integer[] = {400, 403, 404, 405, 413, 414, 415, 500, 501, 502, 503, 505};
 	std::string	error_headers[] = {"The server could not understand the request due to invalid syntax.",
 	"You do not have permission to access this resource on this server.",
 	"The requested resource could not be found on this server.",
@@ -743,6 +708,8 @@ void	Response::createHtmlErrorPage(int error_code, std::string message){
 	"The requested URI is too long for the server to process.",
 	"The media format of the requested data is not supported by the server.",
 	"The server encountered an internal error or misconfiguration and was unable to complete your request.",
+	"The server does not support the functionality required to fulfill the request.",
+	"The server received an invalid response from the upstream server while trying to fulfill the request.",
 	"The server is currently unable to handle the request due to a temporary overloading or maintenance of the server. Please try again later.",
 	"The server does not support the HTTP protocol version used in the request."};
 

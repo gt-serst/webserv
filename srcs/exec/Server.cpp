@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/08 09:59:24 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/25 14:15:43 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/25 16:13:52 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,9 +25,7 @@
 #include <fcntl.h>
 #include <arpa/inet.h>
 #include <unistd.h>
-
 #include <iostream>
-#include <stdio.h>
 
 #define BUFFER_SIZE 4096
 
@@ -51,7 +49,15 @@ int	Server::createServerSocket(void){
 
 	this->_fd = socket(AF_INET, SOCK_STREAM, 0);
 	if (this->_fd < 0)
-		std::cerr << "Socket() failed" << std::endl;
+		std::cerr << "ERROR: Socket() failed" << std::endl;
+
+	int reuse = 1;
+	rc = setsockopt(this->_fd, SOL_SOCKET, SO_REUSEPORT, &reuse, sizeof(reuse));
+	if (rc < 0)
+	{
+		perror("ERROR: Setsockopt() failed");
+		return (-1);
+	}
 
 	std::memset((char *)&_server_addr, 0, sizeof(_server_addr));
 	_server_addr.sin_family = AF_INET;
@@ -61,14 +67,14 @@ int	Server::createServerSocket(void){
 	rc = bind(this->_fd, (struct sockaddr *) &(_server_addr), sizeof(_server_addr));
 	if (rc < 0)
 	{
-		std::cerr << "Bind() failed" << std::endl;
+		std::cerr << "ERROR: Bind() failed" << std::endl;
 		return (-1);
 	}
 	int	connection_backlog = 1000;
 	rc = listen(this->_fd, connection_backlog);
 	if (rc < 0)
 	{
-		std::cerr << "Listen() failed" << std::endl;
+		std::cerr << "ERROR: Listen() failed" << std::endl;
 		return (-1);
 	}
 	return (this->_fd);
@@ -84,14 +90,14 @@ int	Server::listenClientConnection(void){
 
 	if (client_fd < 0)
 	{
-		std::cerr << "Accept() failed" << std::endl;
+		std::cerr << "ERROR: Accept() failed" << std::endl;
 		return (-1);
 	}
 	_requests.insert(std::make_pair(client_fd, ""));
 	flags = fcntl(client_fd, F_SETFL, O_NONBLOCK);
 	if (flags < 0)
 	{
-		std::cerr << "Fcntl() failed" << std::endl;
+		std::cerr << "ERROR: Fcntl() failed" << std::endl;
 		return (-1);
 	}
 	fcntl(client_fd, F_GETFL, 0);
@@ -104,14 +110,13 @@ int	Server::readClientSocket(int client_fd){
 	char	buffer[BUFFER_SIZE] = {0};
 
 	rc = recv(client_fd, buffer, BUFFER_SIZE - 1, 0);
-	//std::cout << buffer << std::endl;
 	if (rc == 0 || rc == -1)
 	{
 		this->closeClientSocket(client_fd);
 		if (!rc)
 			std::cout << "Client close connection" << std::endl;
 		else
-			std::cerr << "Recv() failed" << std::endl;
+			std::cerr << "ERROR: Recv() failed" << std::endl;
 		return (-1);
 	}
 	_requests[client_fd].append(buffer, rc);
@@ -122,15 +127,9 @@ int	Server::readClientSocket(int client_fd){
 		if(_requests[client_fd].find("Transfer-Encoding: chunked") != std::string::npos)
 		{
 			if (_requests[client_fd].find("0\r\n\r\n") != std::string::npos)
-			{
-				std::cout << "La requête complète a été reçue" << std::endl;
 				return (0); // The complete request has been received
-			}
 			else
-			{
-				std::cout << "La requête n'est pas encore complète / problème avec la position des retours à la ligne (\\r\\n après chaque header, double \\r\\n à la fin des headers et \\r\\n à la fin du body)" << std::endl;
 				return (1); // The request is not yet complete / Problem with the position of line breaks (\r\n after each header, double \r\n at the end of the headers, and \r\n at the end of the body).
-			}
 		}
 		size_t pos = _requests[client_fd].find("Content-Length: ");
 		if (pos != std::string::npos)
@@ -144,22 +143,14 @@ int	Server::readClientSocket(int client_fd){
 
 				// Check if the entire request has been received
 				if (_requests[client_fd].size() >= i + content_length + 4)
-				{
-					std::cout << "La requête complète a été reçue" << std::endl;
 					return (0); // The complete request has been received
-				}
 				else
-				{
-					//std::cout << "La requête n'est pas encore complète / problème avec la position des retours à la ligne (\\r\\n après chaque header, double \\r\\n à la fin des headers et \\r\\n à la fin du body)" << std::endl;
 					return (1); // The request is not yet complete / Problem with the position of line breaks (\r\n after each header, double \r\n at the end of the headers, and \r\n at the end of the body).
-				}
 			}
 		}
-		std::cout << "Content-Length ou chunked header non trouvés" << std::endl;
 		return (0); // Content-Length or chunked header not found
 	}
 	// All headers are not present because \r\n\r\n was not found / Problem with the position of line breaks (\r\n after each header, double \r\n at the end of the headers, and \r\n at the end of the body).
-	std::cout << "Tous les headers ne sont pas présent / problème avec la position des retours à la ligne (\\r\\n après chaque header, double \\r\\n à la fin des headers et \\r\\n à la fin du body)" << std::endl;
 	return (1);
 }
 
@@ -169,10 +160,7 @@ int	Server::handleRequest(int client_fd){
 	Router		router;
 	Response	response;
 
-	std::cout << "Request sent to parsing:" << std::endl;
-	//std::cout << _requests[client_fd] << std::endl;
 	Request request(_requests[client_fd], *this);
-	std::cout << "Parsing request finished" << std::endl;
 	response.setVersion(request.getVersion());
 	if (request.getPathToFile().find("/favicon.ico") != std::string::npos)
 		response.errorResponse(404, "Not Found", getConfig().error_page_paths);
@@ -194,6 +182,7 @@ int	Server::handleRequest(int client_fd){
 				if (response.getDefaultFile() == true)
 				{
 					// When a default file is found we relaunch all the routine, router and response process
+					std::cout << "Default file detected, relaunch response processing" << std::endl;
 					response.setDefaultFile(false);
 					response.handleDirective(request.getPathToFile(), loc, request, *this);
 				}
@@ -225,19 +214,14 @@ int	Server::sendResponse(int client_fd){
 	int	len;
 
 	len = _requests[client_fd].length();
-	std::cout << "The request len is equal to " << len << " bytes!" << std::endl;
-	//std::cout << _requests[client_fd] << std::endl;
 	rc = send(client_fd, _requests[client_fd].c_str(), len, 0);
 	if (rc != static_cast<int>(_requests[client_fd].length()))
 	{
-		std::cout << "We sended " << rc << "bytes! Give me more bro..." << std::endl;
 		std::string	still_to_send;
 
 		still_to_send = _requests[client_fd].substr(rc, len);
 		_requests[client_fd] = still_to_send;
 		return (1);
-
-		std::cout << "Ohh! Give me all your datas boys, I only received " << rc << " bytes!!!" << std::endl;
 	}
 	if (rc == 0 || rc == -1)
 	{
@@ -250,7 +234,7 @@ int	Server::sendResponse(int client_fd){
 		else
 		{
 			this->closeClientSocket(client_fd);
-			std::cerr << "Send() failed" << std::endl;
+			std::cerr << "ERROR: Send() failed" << std::endl;
 			return (-1);
 		}
 	}

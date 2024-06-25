@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/25 12:16:01 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/25 12:16:03 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/25 16:06:49 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,7 +47,7 @@ static std::string intToString(int number) {
 
 void Response::handleCGI(std::string rootedpath, std::string path, Request& req, std::string exec_path, Response& res) {
 	struct stat sb;
-	std::cout << "----------CGI----------" << std::endl;
+	std::cout << "CGI processing started" << std::endl;
 	if (stat(exec_path.c_str(), &sb) == 0 && access(exec_path.c_str(), X_OK) == 0) {
 		if (stat(rootedpath.c_str(), &sb) == 0 && access(rootedpath.c_str(), X_OK) == 0) {
 			int pipefd[2];
@@ -60,7 +60,7 @@ void Response::handleCGI(std::string rootedpath, std::string path, Request& req,
 			pid_t p = fork();
 			int client_fd = req._server.getClientFd();
 			if (p == 0) { // Child process
-				      // Redirect stdout to client_fd
+				// Redirect stdout to client_fd
 				close(pipefd[1]);
 
 				// Redirect stdin to the read end of the pipe
@@ -162,7 +162,7 @@ void Response::handleCGI(std::string rootedpath, std::string path, Request& req,
 					CgiError(req, res, 502, "CGI select() error");
 					return ;
 				} else if (retval == 0) {
-					std::cerr << "ERROR: CGI: timeout" << std::endl;
+					std::cerr << "CGI processing finished" << std::endl;
 					kill(p, SIGKILL);
 					return ;
 				}
