@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/08 09:59:24 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/25 11:13:26 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/25 11:56:15 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,14 +52,6 @@ int	Server::createServerSocket(void){
 	this->_fd = socket(AF_INET, SOCK_STREAM, 0);
 	if (this->_fd < 0)
 		std::cerr << "Socket() failed" << std::endl;
-
-	int reuse = 1;
-	rc = setsockopt(this->_fd, SOL_SOCKET, SO_REUSEPORT, &reuse, sizeof(reuse));
-	if (rc < 0)
-	{
-		std::cerr << "Setsockopt() failed" << std::endl;
-		return (-1);
-	}
 
 	std::memset((char *)&_server_addr, 0, sizeof(_server_addr));
 	_server_addr.sin_family = AF_INET;
