@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/07 11:04:51 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/24 15:41:44 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/25 11:01:42 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -92,12 +92,13 @@ void	ServerManager::serverRoutine(void){
 		}
 		if (rc > 0)
 		{
-			for (std::vector<int>::iterator it = _ready.begin(); it != _ready.end(); ++it)
+			for (std::vector<int>::iterator it = _ready.begin(); rc && it != _ready.end(); ++it)
 			{
 				// Client socket is set and ready to send the response to the browser
 				if (FD_ISSET(*it, &writing_set))
 				{
 					int rc = _sockets[*it]->sendResponse(*it);
+					// Chunked response detected
 					if (rc != 1)
 					{
 						FD_CLR(*it, &_fd_set);
@@ -106,10 +107,11 @@ void	ServerManager::serverRoutine(void){
 						_sockets.erase(*it);
 						_ready.erase(it);
 					}
+					rc = 0;
 					break;
 				}
 			}
-			for (std::map<int, Server*>::iterator it = _sockets.begin(); it != _sockets.end(); ++it)
+			for (std::map<int, Server*>::iterator it = _sockets.begin(); rc && it != _sockets.end(); ++it)
 			{
 				// Client socket is set and ready to send the request to the server
 				if (FD_ISSET(it->first, &reading_set))
@@ -120,6 +122,7 @@ void	ServerManager::serverRoutine(void){
 						rc = it->second->handleRequest(it->first);
 						if (rc == 0)
 							_ready.push_back(it->first);
+						// CGI detected
 						else if (rc == 1)
 						{
 							FD_CLR(it->first, &_fd_set);
@@ -132,7 +135,7 @@ void	ServerManager::serverRoutine(void){
 					break;
 				}
 			}
-			for (std::map<int, Server>::iterator it = _servers.begin(); it != _servers.end(); ++it)
+			for (std::map<int, Server>::iterator it = _servers.begin(); rc && it != _servers.end(); ++it)
 			{
 				// Server socket is set and ready to listen to a client
 				if (FD_ISSET(it->first, &reading_set))
