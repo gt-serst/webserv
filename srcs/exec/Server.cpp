@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/08 09:59:24 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/25 11:56:15 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/25 12:14:56 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -129,7 +129,7 @@ int	Server::readClientSocket(int client_fd){
 			else
 			{
 				std::cout << "La requête n'est pas encore complète / problème avec la position des retours à la ligne (\r\n après chaque header, double \r\n à la fin des headers et \r\n à la fin du body)" << std::endl;
-				return (1); // The request is not yet complete
+				return (1); // The request is not yet complete / Problem with the position of line breaks (\r\n after each header, double \r\n at the end of the headers, and \r\n at the end of the body).
 			}
 		}
 		size_t pos = _requests[client_fd].find("Content-Length: ");
@@ -151,14 +151,14 @@ int	Server::readClientSocket(int client_fd){
 				else
 				{
 					std::cout << "La requête n'est pas encore complète / problème avec la position des retours à la ligne (\r\n après chaque header, double \r\n à la fin des headers et \r\n à la fin du body)" << std::endl;
-					return (1); // The request is not yet complete
+					return (1); // The request is not yet complete / Problem with the position of line breaks (\r\n after each header, double \r\n at the end of the headers, and \r\n at the end of the body).
 				}
 			}
 		}
 		std::cout << "Content-Length ou chunked header non trouvés" << std::endl;
 		return (0); // Content-Length or chunked header not found
 	}
-	// All headers are not present because \r\n\r\n was not found
+	// All headers are not present because \r\n\r\n was not found / Problem with the position of line breaks (\r\n after each header, double \r\n at the end of the headers, and \r\n at the end of the body).
 	std::cout << "Tous les headers ne sont pas présent / problème avec la position des retours à la ligne (\r\n après chaque header, double \r\n à la fin des headers et \r\n à la fin du body)" << std::endl;
 	return (1);
 }
