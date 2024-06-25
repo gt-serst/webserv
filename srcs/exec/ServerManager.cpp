@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ServerManager.cpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
+/*   By: geraudtserstevens <geraudtserstevens@st    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/07 11:04:51 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/25 16:13:41 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/26 00:00:58 by geraudtsers      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -162,7 +162,6 @@ void	ServerManager::serverRoutine(void){
 		}
 		else
 		{
-			std::cout << "ERROR: Select() failed" << std::endl;
 			// Select failed because his return code is lower than 0
 			for (std::map<int, Server*>::iterator it = _sockets.begin() ; it != _sockets.end() ; it++)
 				it->second->closeClientSocket(it->first);
