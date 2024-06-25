@@ -29,6 +29,16 @@ bool Request::multiform_headers(std::stringstream& ss, std::streampos& pos, int 
 			{
 				end_pos = line.find("\"", start_pos + 10);
 				_multiform[i].filename = line.substr(start_pos + 10, end_pos - (start_pos + 10));
+				for (size_t j = 0; j < _multiform[i].filename.length(); j++)
+				{
+					if (std::isspace(_multiform[i].filename[j]))
+					{
+						state = R_error;
+						_error_code = 400;
+						_error_msg = "Bad request the name of the file you are trying to upload contains a whitespace";
+						return true;
+					}
+				}
 			}
 		}
 		start_pos = line.find("Content-Type:");
@@ -442,8 +452,8 @@ Request::~Request()
 	// for (std::map<int, t_multi>::const_iterator it = _multiform.begin(); it != _multiform.end(); ++it)
 	// {
 	// 	std::cout << it->first << ": " << it->second.filename << " type : " << it->second.type << std::endl;
-	// 	std::cout << "CONTENT" << std::endl;
-	// 	std::cout << it->second.content << std::endl;
+	// 	// std::cout << "CONTENT" << std::endl;
+	// 	// std::cout << it->second.content << std::endl;
 	// }
 	// if (_error_code != -1)
 	// {
