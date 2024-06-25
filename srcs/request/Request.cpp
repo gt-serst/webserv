@@ -112,14 +112,12 @@ bool Request::handle_query()
         if (amp_pos == std::string::npos || amp_pos + 1 > _query_str.length())
 		{
             value = _query_str.substr(equal_pos + 1);
-			//std::cout << value << std::endl;
             _query_args[key] = value;
             break;
         }
 		else
 		{
             value = _query_str.substr(equal_pos + 1, amp_pos - equal_pos - 1);
-			//std::cout << value << std::endl;
             _query_args[key] = value;
             start = amp_pos + 1;
         }
@@ -248,7 +246,7 @@ void	Request::validity_checks()
 		std::string hlen = getHeader("Content-Length");
 		if (hlen.empty())
 		{
-			_error_code = 411;
+			_error_code = 400;
 			_error_msg = "Content-Length header is missing";
 			return ;
 		}

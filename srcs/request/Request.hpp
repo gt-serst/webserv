@@ -22,8 +22,7 @@
 #include <exception>
 #include <string.h>
 #include <limits.h>
-#define MAX_URI_SIZE 200
-#define MAX_REQUEST_SIZE
+#define MAX_URI_SIZE 2000
 
 enum state //state is current state so the name is what we previsly validated || when we encounter any (% hex hex) char we should translate hexa to ascii
 {
@@ -78,8 +77,8 @@ class Request
 	private:
 		std::string _request;
 		std::string _request_method;
-		std::string _hostname;//std
-		std::string _path_to_file;//std
+		std::string _hostname;
+		std::string _path_to_file;
 		std::string _version;
 		std::map<std::string, std::string> _headers;
 		std::map<std::string, std::string> _query_args;
@@ -97,7 +96,6 @@ class Request
 		int chunk_size;
 		bool chunked;
 		bool multiform;
-		//bool body;
 
 		void parseRequestLine(char *line);
 		std::streampos setHeader(std::stringstream& ss, std::streampos startpos);
