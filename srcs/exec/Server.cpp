@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/08 09:59:24 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/25 12:14:56 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/25 13:48:16 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -226,7 +226,7 @@ int	Server::sendResponse(int client_fd){
 
 	len = _requests[client_fd].length();
 	std::cout << "The request len is equal to " << len << " bytes!" << std::endl;
-	//std::cout << _requests[client_fd] << std::endl;
+	std::cout << _requests[client_fd] << std::endl;
 	rc = send(client_fd, _requests[client_fd].c_str(), len, 0);
 	if (rc != static_cast<int>(_requests[client_fd].length()))
 	{
