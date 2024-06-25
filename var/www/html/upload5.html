@@ -111,11 +111,18 @@
         }
 
         function uploadComplete() {
+            const iframe = document.getElementById('upload_iframe');
             const uploadStatus = document.getElementById('uploadStatus');
-            if (uploadStatus.dataset.uploading === "true") {
+            const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+            const responseText = iframeDoc.body.innerText || iframeDoc.body.textContent;
+
+            if (responseText.includes('Upload successful')) { // Adjust the condition based on your server's response
                 uploadStatus.textContent = 'Upload complete!';
                 fetchFiles();
+            } else {
+                uploadStatus.textContent = 'Upload failed. Please try again.';
             }
+            uploadStatus.dataset.uploading = "false";
         }
 
         window.onload = () => {
@@ -132,7 +139,7 @@
         <input type="file" name="file" required>
         <input type="submit" value="Upload">
     </form>
-    <iframe name="upload_iframe" style="display:none;" onload="uploadComplete()"></iframe>
+    <iframe id="upload_iframe" name="upload_iframe" style="display:none;" onload="uploadComplete()"></iframe>
     <div id="uploadStatus" style="text-align:center; color: green;"></div>
 
     <h2>Uploaded Files</h2>
