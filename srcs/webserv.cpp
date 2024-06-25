@@ -14,5 +14,6 @@ int	webserv(int argc, char **argv)
 	ServerManager	sm;
 
 	sm.launchServer(servers, serverCount + 1);
+	delete[] servers;
 	return (0);
 }
