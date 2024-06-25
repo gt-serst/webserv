@@ -922,6 +922,22 @@ bool	Request::handle_headers()
     {
         _hostname = line;
     }
+	int i = 0;
+	std::vector<std::string> tmp = _server.getConfig().server_name;
+	for (std::vector<std::string>::iterator it = tmp.begin(); it != tmp.end(); ++it)
+	{
+		if (_hostname.compare(*it) == 0)
+			break;
+		i++;
+	}
+	if (tmp.begin() + i == tmp.end())
+	{
+		tmp.clear();
+		_error_code = 400;
+		_error_msg = "Hostname in the request does not match the hostname in the server config";
+		return true;
+	}
+	tmp.clear();
 	line = getHeader("Content-Length");
 	if (!line.empty())
 	{

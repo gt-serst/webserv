@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/08 09:59:24 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/24 14:12:29 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/25 11:13:26 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,6 +35,7 @@ Server::Server(void){}
 
 Server::Server(t_server_scope config) : _config(config){
 
+	_still_alive = true;
 	//std::cout << "Server created" << std::endl;
 }
 
@@ -111,6 +112,7 @@ int	Server::readClientSocket(int client_fd){
 	char	buffer[BUFFER_SIZE] = {0};
 
 	rc = recv(client_fd, buffer, BUFFER_SIZE - 1, 0);
+	std::cout << buffer << std::endl;
 	if (rc == 0 || rc == -1)
 	{
 		this->closeClientSocket(client_fd);
@@ -134,7 +136,7 @@ int	Server::readClientSocket(int client_fd){
 			}
 			else
 			{
-				std::cout << "La requête n'est pas encore complète" << std::endl;
+				std::cout << "La requête n'est pas encore complète / problème avec la position des retours à la ligne (\r\n après chaque header, double \r\n à la fin des headers et \r\n à la fin du body)" << std::endl;
 				return (1); // The request is not yet complete
 			}
 		}
@@ -156,7 +158,7 @@ int	Server::readClientSocket(int client_fd){
 				}
 				else
 				{
-					std::cout << "La requête n'est pas encore complète" << std::endl;
+					std::cout << "La requête n'est pas encore complète / problème avec la position des retours à la ligne (\r\n après chaque header, double \r\n à la fin des headers et \r\n à la fin du body)" << std::endl;
 					return (1); // The request is not yet complete
 				}
 			}
@@ -165,7 +167,7 @@ int	Server::readClientSocket(int client_fd){
 		return (0); // Content-Length or chunked header not found
 	}
 	// All headers are not present because \r\n\r\n was not found
-	std::cout << "Tous les headers ne sont pas présent" << std::endl;
+	std::cout << "Tous les headers ne sont pas présent / problème avec la position des retours à la ligne (\r\n après chaque header, double \r\n à la fin des headers et \r\n à la fin du body)" << std::endl;
 	return (1);
 }
 
@@ -184,7 +186,7 @@ int	Server::handleRequest(int client_fd){
 		response.errorResponse(404, "Not Found", getConfig().error_page_paths);
 	else if (request.getErrorCode() == -1)
 	{
-		if (checkServerAvailability(request, response) == false)
+		if (checkServerAvailability(request) == false)
 		{
 			std::string path_to_file = request.getPathToFile();
 
@@ -267,12 +269,12 @@ int	Server::sendResponse(int client_fd){
 	}
 }
 
-bool	Server::checkServerAvailability(Request& req, Response& res){
+bool	Server::checkServerAvailability(Request& req){
 
 	if (req.getRequestMethod() == "GET" && req.getPathToFile() == "/exit")
 	{
-		res.errorResponse(503, "Service Unavailable", getConfig().error_page_paths);
-		closeServerSocket();
+		std::cout << "Server off" << std::endl;
+		_still_alive = false;
 		return (true);
 	}
 	return (false);
@@ -315,6 +317,11 @@ struct sockaddr_in	Server::getClientAddr() const{
 std::map<int, std::string>	Server::getRequests(void) const{
 
 	return _requests;
+}
+
+bool	Server::getStillAlive(void) const{
+
+	return _still_alive;
 }
 
 void	Server::setRequests(std::map<int, std::string> requests){
