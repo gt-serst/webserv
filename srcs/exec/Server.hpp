@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/08 09:43:45 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/24 16:17:53 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/25 16:13:15 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,8 +14,6 @@
 # define SERVER_HPP
 
 # include "../parser/confParser.hpp"
-// # include "../request/Request.hpp"
-// # include "../response/Response.hpp"
 # include <string>
 # include <map>
 # include <arpa/inet.h>

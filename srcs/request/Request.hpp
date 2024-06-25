@@ -6,24 +6,24 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/25 12:15:56 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/25 12:15:58 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/25 16:12:59 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef REQUEST_H
-#define REQUEST_H
+# define REQUEST_H
 
-#include "../exec/Server.hpp"
-#include <string>
-#include <iostream>
-#include <sstream>
-#include <vector>
-#include <map>
-#include <exception>
-#include <string.h>
-#include <limits.h>
-#define MAX_URI_SIZE 200
-#define MAX_REQUEST_SIZE
+# include "../exec/Server.hpp"
+# include <string>
+# include <iostream>
+# include <sstream>
+# include <vector>
+# include <map>
+# include <exception>
+# include <string.h>
+# include <limits.h>
+# define MAX_URI_SIZE 200
+# define MAX_REQUEST_SIZE
 
 enum state //state is current state so the name is what we previsly validated || when we encounter any (% hex hex) char we should translate hexa to ascii
 {

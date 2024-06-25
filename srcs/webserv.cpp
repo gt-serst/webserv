@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/25 12:16:16 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/25 12:16:18 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/25 16:14:46 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,9 +23,11 @@ int	webserv(int argc, char **argv)
 	int		serverCount = -1;
 	if(!(servers = confParser(file, &serverCount)))
 		return (1);
+
 	ServerManager	sm;
 
 	sm.launchServer(servers, serverCount + 1);
+
 	delete[] servers;
 	return (0);
 }

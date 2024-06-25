@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/25 12:15:50 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/25 12:15:52 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/25 16:12:23 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -98,33 +98,31 @@ bool Request::getBoundary()
 
 bool Request::handle_query()
 {
-    _query_args.clear();
-    size_t start = 0;
+	_query_args.clear();
+	size_t start = 0;
 
-    while (start < _query_str.size())
+	while (start < _query_str.size())
 	{
-        size_t equal_pos = _query_str.find('=', start);
-        size_t amp_pos = _query_str.find('&', start);
-        if (equal_pos == std::string::npos)
-            return false;
-        std::string key = _query_str.substr(start, equal_pos - start);
-        std::string value;
-        if (amp_pos == std::string::npos || amp_pos + 1 > _query_str.length())
+		size_t equal_pos = _query_str.find('=', start);
+		size_t amp_pos = _query_str.find('&', start);
+		if (equal_pos == std::string::npos)
+			return false;
+		std::string key = _query_str.substr(start, equal_pos - start);
+		std::string value;
+		if (amp_pos == std::string::npos || amp_pos + 1 > _query_str.length())
 		{
-            value = _query_str.substr(equal_pos + 1);
-			//std::cout << value << std::endl;
-            _query_args[key] = value;
-            break;
-        }
+			value = _query_str.substr(equal_pos + 1);
+			_query_args[key] = value;
+			break;
+		}
 		else
 		{
-            value = _query_str.substr(equal_pos + 1, amp_pos - equal_pos - 1);
-			//std::cout << value << std::endl;
-            _query_args[key] = value;
-            start = amp_pos + 1;
-        }
-    }
-    return true;
+			value = _query_str.substr(equal_pos + 1, amp_pos - equal_pos - 1);
+			_query_args[key] = value;
+			start = amp_pos + 1;
+		}
+	}
+	return true;
 }
 
 void	Request::manage_chunks(const char *chunk)
@@ -272,34 +270,34 @@ void	Request::validity_checks()
 
 int hexDigitToInt(char ch)
 {
-    if (ch >= '0' && ch <= '9') return ch - '0';
-    if (ch >= 'a' && ch <= 'f') return ch - 'a' + 10;
-    if (ch >= 'A' && ch <= 'F') return ch - 'A' + 10;
-    return -1;
+	if (ch >= '0' && ch <= '9') return ch - '0';
+	if (ch >= 'a' && ch <= 'f') return ch - 'a' + 10;
+	if (ch >= 'A' && ch <= 'F') return ch - 'A' + 10;
+	return -1;
 }
 
 int convert_hexa(std::string &str, size_t &i, size_t &len)
 {
-    if ((i + 2) >= len) return 1;
+	if ((i + 2) >= len) return 1;
 
-    if (std::isalnum(str[i + 1]) && std::isalnum(str[i + 2]))
+	if (std::isalnum(str[i + 1]) && std::isalnum(str[i + 2]))
 	{
-        int high = hexDigitToInt(str[i + 1]);
-        int low = hexDigitToInt(str[i + 2]);
-        if (high == -1 || low == -1) return 1;
-        char convertedChar = (high << 4) | low;
-        str.replace(i, 3, 1, convertedChar);
-        len -= 2;
-    }
-    return 0;
+		int high = hexDigitToInt(str[i + 1]);
+		int low = hexDigitToInt(str[i + 2]);
+		if (high == -1 || low == -1) return 1;
+		char convertedChar = (high << 4) | low;
+		str.replace(i, 3, 1, convertedChar);
+		len -= 2;
+	}
+	return 0;
 }
 
 std::string toLowerCase(const std::string& str)
 {
-    std::string result = str;
-    for (size_t i = 0; i < result.length(); ++i)
-        result[i] = std::tolower(result[i]);
-    return result;
+	std::string result = str;
+	for (size_t i = 0; i < result.length(); ++i)
+		result[i] = std::tolower(result[i]);
+	return result;
 }
 
 std::string	Request::standardise(std::string str)
@@ -321,27 +319,27 @@ std::string	Request::standardise(std::string str)
 
 int ip_checker(std::string& ip)
 {
-    int valid = 0;
-    int test = 0;
-    size_t len = ip.length();
-    size_t pos;
-    size_t tmp = 0;
+	int valid = 0;
+	int test = 0;
+	size_t len = ip.length();
+	size_t pos;
+	size_t tmp = 0;
 
-    while ((pos = ip.find(".", tmp)) != std::string::npos)
+	while ((pos = ip.find(".", tmp)) != std::string::npos)
 	{
-        test = ft_atoi(ip.substr(tmp, pos - tmp).c_str());
-        if (test > 255 || test < 0)
-            return 1;
-        tmp = pos + 1;
-        valid++;
-    }
-    if (valid == 3)
+		test = ft_atoi(ip.substr(tmp, pos - tmp).c_str());
+		if (test > 255 || test < 0)
+			return 1;
+		tmp = pos + 1;
+		valid++;
+	}
+	if (valid == 3)
 	{
-        test = ft_atoi(ip.substr(tmp, len - tmp).c_str());
-        if (test <= 255 && test >= 0)
-            valid++;
-    }
-    return (valid == 4) ? 0 : 1;
+		test = ft_atoi(ip.substr(tmp, len - tmp).c_str());
+		if (test <= 255 && test >= 0)
+			valid++;
+	}
+	return (valid == 4) ? 0 : 1;
 }
 
 std::string convert_charptr_string(const char *line, int start, int end)
@@ -375,7 +373,7 @@ Request::Request(){}
 
 Request::Request(std::string& buffer, Server& server)
 {
-	std::cout << "Parsing request" << std::endl << std::endl;
+	std::cout << "Parsing request" << std::endl;
 	_server = server;
 	_version = "1.1";
 	_path_to_file = "/";
@@ -440,8 +438,8 @@ Request::~Request()
 	// std::cout << "//////////////QUERY ARGS//////////////" << std::endl;
 	// for (std::map<std::string, std::string>::const_iterator it = _query_args.begin(); it != _query_args.end(); ++it)
 	// {
-    //     std::cout << it->first << " = " << it->second << std::endl;
-    // }
+	//     std::cout << it->first << " = " << it->second << std::endl;
+	// }
 	// std::cout << "//////////////MULTIFORM//////////////" << std::endl;
 	// for (std::map<int, t_multi>::const_iterator it = _multiform.begin(); it != _multiform.end(); ++it)
 	// {
@@ -470,7 +468,7 @@ Request::~Request()
 	chunked = false;
 	multiform = false;
 	_boundary.clear();
-	std::cout << "//////////////Request destroyed//////////////" << std::endl;
+	//std::cout << "//////////////Request destroyed//////////////" << std::endl;
 }
 
 void Request::setRequest(std::string& buffer)
@@ -918,10 +916,10 @@ bool	Request::handle_headers()
 		_error_msg = "Hostname in the URI does not match the hostname in the Host header";
 		return true;
 	}
-    size_t pos = line.find(":");
-    if (pos != std::string::npos)
-    {
-        _hostname = line.substr(0, pos);
+	size_t pos = line.find(":");
+	if (pos != std::string::npos)
+	{
+		_hostname = line.substr(0, pos);
 		_port = ft_atoi(line.substr(pos + 1, line.length()).c_str());
 		if (_server.getConfig().port != _port)
 		{
@@ -929,11 +927,11 @@ bool	Request::handle_headers()
 			_error_msg = "The port in the host header does not match the port of the request";
 			return true;
 		}
-    }
-    else
-    {
-        _hostname = line;
-    }
+	}
+	else
+	{
+		_hostname = line;
+	}
 	int i = 0;
 	std::vector<std::string> tmp = _server.getConfig().server_name;
 	for (std::vector<std::string>::iterator it = tmp.begin(); it != tmp.end(); ++it)
