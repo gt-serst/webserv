@@ -373,7 +373,6 @@ Request::Request(){}
 
 Request::Request(std::string& buffer, Server& server)
 {
-	std::cout << "Parsing request" << std::endl << std::endl;
 	_server = server;
 	_version = "1.1";
 	_path_to_file = "/";
@@ -409,7 +408,6 @@ Request::Request(std::string& buffer, Server& server)
 	}
 	if (state != R_error)
 		validity_checks();
-	std::cout << "Request parsing over" << std::endl;
 }
 
 Request::~Request()
@@ -468,7 +466,7 @@ Request::~Request()
 	chunked = false;
 	multiform = false;
 	_boundary.clear();
-	std::cout << "//////////////Request destroyed//////////////" << std::endl;
+	//std::cout << "//////////////Request destroyed//////////////" << std::endl;
 }
 
 void Request::setRequest(std::string& buffer)
