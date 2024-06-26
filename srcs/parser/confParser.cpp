@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/25 12:15:36 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/25 15:35:40 by febonaer         ###   ########.fr       */
+/*   Updated: 2024/06/26 09:57:07 by febonaer         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -202,7 +202,7 @@ static t_server_scope	*isServerMaxBodySize(int *i, std::string buffer, t_server_
 		}
 		int res = ft_atoi(buffer.substr(*i, j - *i).c_str());
 		*i = j;
-		if (buffer[*i] != '\n' || res < 1 || res > 10000000)
+		if (buffer[*i] != '\n' || res < 0 || res > 30000000)
 		{
 			freeConfig(serverConfig, *servers);
 			return (NULL);
