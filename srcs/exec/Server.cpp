@@ -3,10 +3,14 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
+/*   By: geraudtserstevens <geraudtserstevens@st    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/08 09:59:24 by gt-serst          #+#    #+#             */
+<<<<<<< HEAD
 /*   Updated: 2024/06/26 10:02:19 by gt-serst         ###   ########.fr       */
+=======
+/*   Updated: 2024/06/25 23:49:04 by geraudtsers      ###   ########.fr       */
+>>>>>>> 1e54eb98d4f4bd4bdd95fec098361447fabc0d9e
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -169,6 +173,7 @@ int	Server::handleRequest(int client_fd){
 	Router		router;
 	Response	response;
 
+	//std::cout << _requests[client_fd] << std::endl;
 	Request request(_requests[client_fd], *this);
 	response.setVersion(request.getVersion());
 	if (request.getPathToFile().find("/favicon.ico") != std::string::npos)
@@ -222,6 +227,7 @@ int	Server::sendResponse(int client_fd){
 	int	rc;
 	int	len;
 
+	//std::cout << _requests[client_fd] << std::endl;
 	len = _requests[client_fd].length();
 	rc = send(client_fd, _requests[client_fd].c_str(), len, 0);
 	if (rc != static_cast<int>(_requests[client_fd].length()))
