@@ -3,10 +3,14 @@
 /*                                                        :::      ::::::::   */
 /*   ServerManager.cpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
+/*   By: geraudtserstevens <geraudtserstevens@st    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/07 11:04:51 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/25 16:13:41 by gt-serst         ###   ########.fr       */
+<<<<<<< HEAD
+/*   Updated: 2024/06/26 10:00:09 by gt-serst         ###   ########.fr       */
+=======
+/*   Updated: 2024/06/26 00:00:58 by geraudtsers      ###   ########.fr       */
+>>>>>>> 1e54eb98d4f4bd4bdd95fec098361447fabc0d9e
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -136,6 +140,13 @@ void	ServerManager::serverRoutine(void){
 							_sockets.erase(it->first);
 						}
 					}
+					else if (rc == -1)
+					{
+						FD_CLR(it->first, &_fd_set);
+						FD_CLR(it->first, &reading_set);
+						close(it->first);
+						_sockets.erase(it->first);
+					}
 					rc = 0;
 					break;
 				}
@@ -162,7 +173,6 @@ void	ServerManager::serverRoutine(void){
 		}
 		else
 		{
-			std::cout << "ERROR: Select() failed" << std::endl;
 			// Select failed because his return code is lower than 0
 			for (std::map<int, Server*>::iterator it = _sockets.begin() ; it != _sockets.end() ; it++)
 				it->second->closeClientSocket(it->first);
