@@ -138,7 +138,7 @@ bool Request::handle_query()
 void	Request::manage_chunks(const char *chunk)
 {
 	char ch;
-	int len = strlen(chunk);
+	int len = std::strlen(chunk);
 	for (int i = 0; i <= len; i++)
 	{
 		ch = chunk[i];
@@ -364,7 +364,7 @@ std::string convert_charptr_string(const char *line, int start, int end)
 
 bool	unreserved_char(char ch)
 {
-	if (isalnum(ch) || ch == '-' || ch == '_' || ch == '.' || ch == '!'
+	if (std::isalnum(ch) || ch == '-' || ch == '_' || ch == '.' || ch == '!'
 		|| ch == '~' || ch == '*' || ch == '\'' || ch == '(' || ch == ')' || ch == '=')
 		return true;
 	else
@@ -524,7 +524,7 @@ void Request::setRequest(std::string& buffer)
 
 void Request::parseRequestLine(char *line)
 {
-	int len = strlen(line);
+	int len = std::strlen(line);
 	int start = 0;
 	if (len > MAX_URI_SIZE)
 	{
@@ -587,12 +587,12 @@ void Request::parseRequestLine(char *line)
 					start = i;
 					state = R_abs_path;
 				}
-				else if (strncmp(&line[i], "http://", 7))
+				else if (std::strncmp(&line[i], "http://", 7))
 				{
 					i += 6;
 					state = R_abs_slashes;
 				}
-				else if (strncmp(&line[i], "https://", 8))
+				else if (std::strncmp(&line[i], "https://", 8))
 				{
 					i += 7;
 					state = R_abs_slashes;
@@ -608,12 +608,12 @@ void Request::parseRequestLine(char *line)
 			}
 			case R_abs_slashes:
 			{
-				if (isdigit(line[i]))
+				if (std::isdigit(line[i]))
 				{
 					start = i - 1;
 					state = R_abs_literal_ip;
 				}
-				else if (isalpha(line[i]) || line[i] == '_' || line[i] == '-')
+				else if (std::isalpha(line[i]) || line[i] == '_' || line[i] == '-')
 				{
 					state = R_abs_host_start;
 					start = i - 1;
@@ -655,7 +655,7 @@ void Request::parseRequestLine(char *line)
 					start = i;
 					state = R_abs_path;
 				}
-				else if (!isdigit(line[i]) && line[i] != '.')
+				else if (!std::isdigit(line[i]) && line[i] != '.')
 				{
 					_error_msg = "Bad request : wrong ip";
 					_error_code = 400;
@@ -721,7 +721,7 @@ void Request::parseRequestLine(char *line)
 					_port = ft_atoi(convert_charptr_string(line, start, i).c_str());
 					state = R_second_space;
 				}
-				else if(!isdigit(line[i]))
+				else if(!std::isdigit(line[i]))
 				{
 					_error_msg = "Bad request : port format";
 					state = R_error;
@@ -760,7 +760,7 @@ void Request::parseRequestLine(char *line)
 			}
 			case R_second_space:
 			{
-				if (strncmp(&line[i], "HTTP/", 5) != 0)
+				if (std::strncmp(&line[i], "HTTP/", 5) != 0)
 				{
 					_error_msg = "Bad request : this server only handles HTTP requests";
 					_error_code = 501;
@@ -792,7 +792,7 @@ void Request::parseRequestLine(char *line)
 			}
 			case R_version_minor:
 			{
-				if (!isdigit(line[i]))
+				if (!std::isdigit(line[i]))
 				{
 					_error_code = 400;
 					_error_msg = "Bad request : version";
