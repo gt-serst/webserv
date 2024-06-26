@@ -6,11 +6,7 @@
 /*   By: geraudtserstevens <geraudtserstevens@st    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/08 09:59:24 by gt-serst          #+#    #+#             */
-<<<<<<< HEAD
-/*   Updated: 2024/06/26 10:02:19 by gt-serst         ###   ########.fr       */
-=======
-/*   Updated: 2024/06/25 23:49:04 by geraudtsers      ###   ########.fr       */
->>>>>>> 1e54eb98d4f4bd4bdd95fec098361447fabc0d9e
+/*   Updated: 2024/06/26 10:41:33 by febonaer         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
