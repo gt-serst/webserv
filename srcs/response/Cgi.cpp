@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/25 12:16:01 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/26 10:10:48 by febonaer         ###   ########.fr       */
+/*   Updated: 2024/06/26 11:00:49 by febonaer         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -95,24 +95,24 @@ void Response::handleCGI(std::string rootedpath, std::string path, Request& req,
 				std::string server_protocol = "SERVER_PROTOCOL=HTTP/" + req.getVersion();
 				std::string upload_path = "UPLOAD_PATH=/" + req._server.getConfig().upload_path;
 				char *envp[] = {
-					strdup(path_info.c_str()),
-					strdup(path_translated.c_str()),
-					strdup(query_string.c_str()),
-					strdup(content_length.c_str()),
-					strdup(content_type.c_str()),
-					strdup(remote_addr.c_str()),
-					strdup(remote_host.c_str()),
-					strdup(request_method.c_str()),
-					strdup(server_name.c_str()),
-					strdup(server_port.c_str()),
-					strdup(server_protocol.c_str()),
-					strdup(upload_path.c_str()),
+					ft_strdup(path_info.c_str()),
+					ft_strdup(path_translated.c_str()),
+					ft_strdup(query_string.c_str()),
+					ft_strdup(content_length.c_str()),
+					ft_strdup(content_type.c_str()),
+					ft_strdup(remote_addr.c_str()),
+					ft_strdup(remote_host.c_str()),
+					ft_strdup(request_method.c_str()),
+					ft_strdup(server_name.c_str()),
+					ft_strdup(server_port.c_str()),
+					ft_strdup(server_protocol.c_str()),
+					ft_strdup(upload_path.c_str()),
 					NULL
 				};
 
 				char *argv[] = {
-					strdup(exec_path.c_str()),
-					strdup(rootedpath.c_str()),
+					ft_strdup(exec_path.c_str()),
+					ft_strdup(rootedpath.c_str()),
 					NULL
 				};
 				if (execve(exec_path.c_str(), argv, envp) == -1) {
