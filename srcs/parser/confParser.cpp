@@ -41,7 +41,7 @@ static t_server_scope *isServerName(int *i, std::string buffer, t_server_scope *
 	{
 		*i += 1;
 		int j = *i;
-		while (buffer[j] && isprint(buffer[j]) && buffer[j] != ' ')
+		while (buffer[j] && std::isprint(buffer[j]) && buffer[j] != ' ')
 			j++;
 		if (j != *i && buffer[j] && (buffer[j] == '\n' || buffer[j] == ' '))
 		{
@@ -72,14 +72,14 @@ static t_server_scope *isServerErrPage(int *i, std::string buffer, t_server_scop
 	{
 		*i += 1;
 		int j = *i;
-		while (buffer[j] && isdigit(buffer[j]))
+		while (buffer[j] && std::isdigit(buffer[j]))
 			j++;
 		int error_code = ft_atoi(buffer.substr(*i, j - *i).c_str());
 		if (j != *i && buffer[j] && buffer[j] == ' ' && error_code >= 400 && error_code < 600)
 		{
 			j++;
 			*i = j;
-			while (buffer[j] && isprint(buffer[j]) && buffer[j] != ' ')
+			while (buffer[j] && std::isprint(buffer[j]) && buffer[j] != ' ')
 				j++;
 			if (buffer[j] && (buffer[j] == ' ' || buffer[j] == '\n'))
 			{
@@ -109,7 +109,7 @@ static t_server_scope	*isServerHost(int *i, std::string buffer, t_server_scope *
 	{
 		*i += 9;
 		int j =	*i;
-		while (isdigit(buffer[j]))
+		while (std::isdigit(buffer[j]))
 			j++;
 		if (j == *i)
 		{
@@ -140,7 +140,7 @@ static t_server_scope *isServerUploadPath(int *i, std::string buffer, t_server_s
 	}
 	*i += 13;
 	int j = *i;
-	while (buffer[j] && buffer[j] != '\n' && buffer[j] != ' ' && isprint(buffer[j]))
+	while (buffer[j] && buffer[j] != '\n' && buffer[j] != ' ' && std::isprint(buffer[j]))
 		j++;
 	if (j != *i && buffer[j] && buffer[j] == '\n')
 	{
@@ -158,7 +158,7 @@ static t_server_scope	*isServerCGI(int *i, std::string buffer, t_server_scope *s
 	{
 		*i += 6;
 		int j = *i;
-		while (buffer[j] && isprint(buffer[j]) && buffer[j] != ' ')
+		while (buffer[j] && std::isprint(buffer[j]) && buffer[j] != ' ')
 			j++;
 		if (j != *i)
 		{
@@ -170,7 +170,7 @@ static t_server_scope	*isServerCGI(int *i, std::string buffer, t_server_scope *s
 			*i = j;
 			if (buffer[j] == '.')
 			{
-				while (buffer[j] && isprint(buffer[j]) && buffer[j] != ' ')
+				while (buffer[j] && std::isprint(buffer[j]) && buffer[j] != ' ')
 					j++;
 			}
 			if (j != *i && buffer[j] == '\n')
@@ -192,7 +192,7 @@ static t_server_scope	*isServerMaxBodySize(int *i, std::string buffer, t_server_
 	{
 		*i += 21;
 		int j =	*i;
-		while (isdigit(buffer[j]))
+		while (std::isdigit(buffer[j]))
 			j++;
 		if (j == *i)
 		{
@@ -282,7 +282,7 @@ static t_locations	*handleR(int *i, std::string buffer, t_locations *res)
 	{
 		*i += 5;
 		int j = *i;
-		while (buffer[j] && buffer[j] != '\n' && buffer[j] != ' ' && isprint(buffer[j]))
+		while (buffer[j] && buffer[j] != '\n' && buffer[j] != ' ' && std::isprint(buffer[j]))
 			j++;
 		if (j != *i && buffer[j] && buffer[j] == '\n')
 		{
@@ -301,14 +301,14 @@ static t_locations	*handleR(int *i, std::string buffer, t_locations *res)
 		{
 			*i += 1;
 			int	j = *i;
-			while (buffer[j] && buffer[j] != '\n' && buffer[j] != ' ' && isprint(buffer[j]))
+			while (buffer[j] && buffer[j] != '\n' && buffer[j] != ' ' && std::isprint(buffer[j]))
 				j++;
 			std::string	tmp = buffer.substr(*i, j - *i);
 			if (j != *i && buffer[j] && buffer[j] == ' ' && buffer[j] != '\n')
 			{
 				j++;
 				*i = j;
-				while (buffer[j] && isprint(buffer[j]) && buffer[j] != ' ')
+				while (buffer[j] && std::isprint(buffer[j]) && buffer[j] != ' ')
 					j++;
 				if (buffer[j] && (buffer[j] == ' ' || buffer[j] == '\n'))
 				{
@@ -349,7 +349,7 @@ static t_locations	*handleD(int *i, std::string buffer, t_locations *res)
 		{
 			*i += 1;
 			int	j = *i;
-			while (buffer[j] && isprint(buffer[j]) && buffer[j] != ' ')
+			while (buffer[j] && std::isprint(buffer[j]) && buffer[j] != ' ')
 				j++;
 			if (j != *i && buffer[j] && (buffer[j] == '\n' || buffer[j] == ' '))
 			{
@@ -438,7 +438,7 @@ static t_server_scope	*isServerLocation(int *i, std::string buffer, t_server_sco
 	{
 		*i += 9;
 		int j = *i;
-		while (buffer[j] && isprint(buffer[j]) && buffer[j] != ' ')
+		while (buffer[j] && std::isprint(buffer[j]) && buffer[j] != ' ')
 			j++;
 		if (j != *i && buffer.substr(j, 4) == "\n\t{\n")
 		{
