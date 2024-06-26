@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/25 12:16:16 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/26 10:42:39 by febonaer         ###   ########.fr       */
+/*   Updated: 2024/06/26 10:56:34 by febonaer         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,7 +19,7 @@ int	webserv(int argc, char **argv)
 	std::string	file = confChecker(argc, argv);
 	if (file.empty())
 	{
-		char *av[] = {strdup("./webserv"), strdup("config/fel.conf"), NULL};
+		char *av[] = {ft_strdup("./webserv"), ft_strdup("config/fel.conf"), NULL};
 		file = confChecker(2, av);
 		free(av[0]);
 		free(av[1]);
