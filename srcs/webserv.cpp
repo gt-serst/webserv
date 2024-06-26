@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/25 12:16:16 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/25 16:14:46 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/26 10:31:14 by febonaer         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,6 +21,8 @@ int	webserv(int argc, char **argv)
 	{
 		char *av[] = {strdup("./webserv"), strdup("config/fel.conf"), NULL};
 		file = confChecker(2, av);
+		free(av[0]);
+		free(av[1]);
 		if (file.empty())
 			return (1);
 	}
