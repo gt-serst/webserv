@@ -20,10 +20,8 @@
 # include <vector>
 # include <map>
 # include <exception>
-# include <string.h>
 # include <limits.h>
-# define MAX_URI_SIZE 200
-# define MAX_REQUEST_SIZE
+# define MAX_URI_SIZE 2000
 
 enum state //state is current state so the name is what we previsly validated || when we encounter any (% hex hex) char we should translate hexa to ascii
 {
