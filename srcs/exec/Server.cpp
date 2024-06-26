@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
+/*   By: geraudtserstevens <geraudtserstevens@st    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/08 09:59:24 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/25 16:13:52 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/26 10:41:33 by febonaer         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -112,12 +112,17 @@ int	Server::readClientSocket(int client_fd){
 	rc = recv(client_fd, buffer, BUFFER_SIZE - 1, 0);
 	if (rc == 0 || rc == -1)
 	{
-		this->closeClientSocket(client_fd);
 		if (!rc)
+		{
 			std::cout << "Client close connection" << std::endl;
+			this->closeClientSocket(client_fd);
+			return (1);
+		}
 		else
+		{
 			std::cerr << "ERROR: Recv() failed" << std::endl;
-		return (-1);
+			return (-1);
+		}
 	}
 	_requests[client_fd].append(buffer, rc);
 	// Check for chunked requests
@@ -140,7 +145,11 @@ int	Server::readClientSocket(int client_fd){
 				// Extract the value of Content-Length
 				size_t length_start = pos + 16; // "Content-Length: " is 16 characters long
 				size_t content_length = ft_atoi(_requests[client_fd].substr(length_start, end_of_line - length_start).c_str());
-
+				if (content_length < 0 || content_length > 30000000)
+				{
+					std::cerr << "ERROR: Wrong content length" << std::endl;
+					return (-1);
+				}
 				// Check if the entire request has been received
 				if (_requests[client_fd].size() >= i + content_length + 4)
 					return (0); // The complete request has been received
@@ -160,6 +169,7 @@ int	Server::handleRequest(int client_fd){
 	Router		router;
 	Response	response;
 
+	//std::cout << _requests[client_fd] << std::endl;
 	Request request(_requests[client_fd], *this);
 	response.setVersion(request.getVersion());
 	if (request.getPathToFile().find("/favicon.ico") != std::string::npos)
@@ -213,6 +223,7 @@ int	Server::sendResponse(int client_fd){
 	int	rc;
 	int	len;
 
+	//std::cout << _requests[client_fd] << std::endl;
 	len = _requests[client_fd].length();
 	rc = send(client_fd, _requests[client_fd].c_str(), len, 0);
 	if (rc != static_cast<int>(_requests[client_fd].length()))

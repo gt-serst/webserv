@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/25 12:15:36 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/26 09:57:07 by febonaer         ###   ########.fr       */
+/*   Updated: 2024/06/26 10:46:58 by febonaer         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,7 +15,6 @@
 static void		freeConfig(t_server_scope *serverConfig, int servers)
 {
 	(void)servers;
-	//clear all maps?
 	delete[] serverConfig;
 }
 
