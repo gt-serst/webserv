@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: geraudtserstevens <geraudtserstevens@st    +#+  +:+       +#+        */
+/*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/08 09:59:24 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/26 10:41:33 by febonaer         ###   ########.fr       */
+/*   Updated: 2024/06/26 11:02:41 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -147,7 +147,9 @@ int	Server::readClientSocket(int client_fd){
 				size_t content_length = ft_atoi(_requests[client_fd].substr(length_start, end_of_line - length_start).c_str());
 				if (content_length < 0 || content_length > 30000000)
 				{
-					std::cerr << "ERROR: Wrong content length" << std::endl;
+					_requests.erase(client_fd);
+					std::cout << content_length << std::endl;
+					std::cerr << "ERROR: Wrong content length, file too large" << std::endl;
 					return (-1);
 				}
 				// Check if the entire request has been received
@@ -180,29 +182,33 @@ int	Server::handleRequest(int client_fd){
 		{
 			std::string path_to_file = request.getPathToFile();
 
-			router.routeRequest(path_to_file, loc, this->_config.locations, response);
-			// If redir, generate a redir response and the browser will resend a GET request with the new direction
-			if (response.getRedir() == true)
-				response.generateResponse();
-			else
+			if (router.routeRequest(path_to_file, loc, this->_config.locations, response) == true)
 			{
-				request.setPathToFile(path_to_file);
+				// If redir, generate a redir response and the browser will resend a GET request with the new direction
+				if (response.getRedir() == true)
+					response.generateResponse();
+				else
+				{
+					request.setPathToFile(path_to_file);
 
-				response.handleDirective(request.getPathToFile(), loc, request, *this);
-				if (response.getDefaultFile() == true)
-				{
-					// When a default file is found we relaunch all the routine, router and response process
-					std::cout << "Default file detected, relaunch response processing" << std::endl;
-					response.setDefaultFile(false);
 					response.handleDirective(request.getPathToFile(), loc, request, *this);
-				}
-				else if (response.getCGI() == true)
-				{
-					// If CGI is runned in the response process, we do not have to send a response in the client socket because script already done it
-					_requests.erase(client_fd);
-					return (1);
+					if (response.getDefaultFile() == true)
+					{
+						// When a default file is found we relaunch all the routine, router and response process
+						std::cout << "Default file detected, relaunch response processing" << std::endl;
+						response.setDefaultFile(false);
+						response.handleDirective(request.getPathToFile(), loc, request, *this);
+					}
+					else if (response.getCGI() == true)
+					{
+						// If CGI is runned in the response process, we do not have to send a response in the client socket because script already done it
+						_requests.erase(client_fd);
+						return (1);
+					}
 				}
 			}
+			else
+				response.errorResponse(500, "Internal Server Error", getConfig().error_page_paths);
 		}
 	}
 	else

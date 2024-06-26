@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:28:16 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/25 16:14:17 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/26 10:55:56 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -213,14 +213,18 @@ bool	Response::findDefaultFile(std::string& rooted_path, t_locations& loc, std::
 						default_path.append("/");
 					default_path.append(loc.default_path[i]);
 					req.setPathToFile(default_path);
-					router.routeRequest(default_path, loc, routes, *this);
-					if (getRedir() == true)
-						generateResponse();
-					else
+					if (router.routeRequest(default_path, loc, routes, *this) == true)
 					{
-						this->_default_file = true;
-						req.setPathToFile(default_path);
+						if (getRedir() == true)
+							generateResponse();
+						else
+						{
+							this->_default_file = true;
+							req.setPathToFile(default_path);
+						}
 					}
+					else
+						return (errorResponse(500, "Internal Server Error", error_paths), false);
 				}
 				else
 					errorResponse(403, "Forbidden", error_paths);
@@ -505,8 +509,8 @@ void Response::autoIndexResponse(std::string rooted_path, std::string dir_list, 
 
 		char buffer[80];
 		std::string unrooted_path;
-		struct tm* time_info = localtime(&buf.st_ctime);
-		strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", time_info);
+		struct tm* time_info = std::localtime(&buf.st_ctime);
+		std::strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", time_info);
 
 		unrooted_path = req.getPathToFile();
 		if (unrooted_path[unrooted_path.length() - 1] != '/')
