@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
+/*   By: geraudtserstevens <geraudtserstevens@st    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:28:16 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/26 10:55:56 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/27 14:53:46 by geraudtsers      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -337,7 +337,7 @@ void	Response::isAutoIndex(std::string rooted_path, std::map<int, std::string> e
 
 void	Response::runFileMethod(std::string rooted_path, t_locations loc, std::map<int, std::string> error_paths, Request& req){
 
-	if (req.getRequestMethod() == "DELETE")
+	if (req.getRequestMethod() == "DELETE" && isMethodAllowed(loc, req) == true)
 	{
 		if (req.getPathToFile().find("upload", 0) != std::string::npos)
 			deleteFile(rooted_path, error_paths);

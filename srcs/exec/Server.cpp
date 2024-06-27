@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
+/*   By: geraudtserstevens <geraudtserstevens@st    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/08 09:59:24 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/26 11:02:41 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/27 14:33:00 by geraudtsers      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,7 +52,7 @@ int	Server::createServerSocket(void){
 		std::cerr << "ERROR: Socket() failed" << std::endl;
 
 	int reuse = 1;
-	rc = setsockopt(this->_fd, SOL_SOCKET, SO_REUSEPORT, &reuse, sizeof(reuse));
+	rc = setsockopt(this->_fd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse));
 	if (rc < 0)
 	{
 		perror("ERROR: Setsockopt() failed");
@@ -100,7 +100,7 @@ int	Server::listenClientConnection(void){
 		std::cerr << "ERROR: Fcntl() failed" << std::endl;
 		return (-1);
 	}
-	fcntl(client_fd, F_GETFL, 0);
+	// fcntl(client_fd, F_GETFL, 0);
 	return (client_fd);
 }
 
