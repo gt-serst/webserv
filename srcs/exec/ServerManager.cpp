@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ServerManager.cpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
+/*   By: geraudtserstevens <geraudtserstevens@st    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/07 11:04:51 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/26 11:02:45 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/06/28 15:58:35 by geraudtsers      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -103,7 +103,7 @@ void	ServerManager::serverRoutine(void){
 					// Chunked response detected
 					if (rc != 1)
 					{
-						std::cout << "Response to client sended" << std::endl;
+						std::cout << "Response to client sent" << std::endl;
 						FD_CLR(*it, &_fd_set);
 						FD_CLR(*it, &reading_set);
 						close(*it);

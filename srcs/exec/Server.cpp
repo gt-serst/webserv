@@ -6,7 +6,7 @@
 /*   By: geraudtserstevens <geraudtserstevens@st    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/08 09:59:24 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/27 14:33:00 by geraudtsers      ###   ########.fr       */
+/*   Updated: 2024/06/28 16:53:24 by geraudtsers      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -100,7 +100,6 @@ int	Server::listenClientConnection(void){
 		std::cerr << "ERROR: Fcntl() failed" << std::endl;
 		return (-1);
 	}
-	// fcntl(client_fd, F_GETFL, 0);
 	return (client_fd);
 }
 
@@ -115,14 +114,13 @@ int	Server::readClientSocket(int client_fd){
 		if (!rc)
 		{
 			std::cout << "Client close connection" << std::endl;
-			this->closeClientSocket(client_fd);
-			return (1);
+			//this->closeClientSocket(client_fd);
 		}
 		else
 		{
 			std::cerr << "ERROR: Recv() failed" << std::endl;
-			return (-1);
 		}
+		return (-1);
 	}
 	_requests[client_fd].append(buffer, rc);
 	// Check for chunked requests
@@ -148,7 +146,6 @@ int	Server::readClientSocket(int client_fd){
 				if (content_length < 0 || content_length > 30000000)
 				{
 					_requests.erase(client_fd);
-					std::cout << content_length << std::endl;
 					std::cerr << "ERROR: Wrong content length, file too large" << std::endl;
 					return (-1);
 				}

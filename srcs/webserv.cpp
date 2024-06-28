@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   webserv.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
+/*   By: geraudtserstevens <geraudtserstevens@st    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/25 12:16:16 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/26 10:56:34 by febonaer         ###   ########.fr       */
+/*   Updated: 2024/06/28 16:43:03 by geraudtsers      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,7 +19,7 @@ int	webserv(int argc, char **argv)
 	std::string	file = confChecker(argc, argv);
 	if (file.empty())
 	{
-		char *av[] = {ft_strdup("./webserv"), ft_strdup("config/fel.conf"), NULL};
+		char *av[] = {ft_strdup("./webserv"), ft_strdup("config/default.conf"), NULL};
 		file = confChecker(2, av);
 		free(av[0]);
 		free(av[1]);

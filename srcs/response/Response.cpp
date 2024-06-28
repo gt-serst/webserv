@@ -6,7 +6,7 @@
 /*   By: geraudtserstevens <geraudtserstevens@st    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:28:16 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/27 14:53:46 by geraudtsers      ###   ########.fr       */
+/*   Updated: 2024/06/28 15:56:13 by geraudtsers      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -285,6 +285,7 @@ bool	Response::isMethodAllowed(t_locations loc, Request& req){
 
 	for (size_t i = 0; i < loc.allowed_methods.size(); i++)
 	{
+		std::cout << loc.allowed_methods[req.getRequestMethod()] << std::endl;
 		if (loc.allowed_methods[req.getRequestMethod()] == true)
 			return (true);
 	}
