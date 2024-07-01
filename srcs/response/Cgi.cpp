@@ -52,35 +52,39 @@ void Response::handleCGI(std::string rootedpath, std::string path, Request& req,
 	if (stat(exec_path.c_str(), &sb) == 0 && access(exec_path.c_str(), X_OK) == 0) {
 		if (stat(rootedpath.c_str(), &sb) == 0 && access(rootedpath.c_str(), X_OK) == 0) {
 			int pipefd[2];
-			if (pipe(pipefd) == -1) {
+			int output_pipe[2];
+			if (pipe(pipefd) == -1 || pipe(output_pipe) == -1) {
 				std::cerr << "ERROR: CGI: pipe() failed" << std::endl;
 				perror("pipe()");
 				CgiError(req, res, 502, "CGI pipe() error");
-				return ;
+				return;
 			}
 			pid_t p = fork();
 			int client_fd = req._server.getClientFd();
 			if (p == 0) { // Child process
-				// Redirect stdout to client_fd
-				close(pipefd[1]);
+				close(pipefd[1]); // Close write end of the input pipe
+				close(output_pipe[0]); // Close read end of the output pipe
 
-				// Redirect stdin to the read end of the pipe
 				if (dup2(pipefd[0], STDIN_FILENO) == -1) {
 					std::cerr << "ERROR: CGI: dup2() failed" << std::endl;
 					perror("dup2()");
-					CgiError(req, res, 502, "CGI dup2() error");
+					close(pipefd[0]);
+					close(output_pipe[1]);
+					_exit(EXIT_FAILURE); // Exit if dup2 fails
 				}
-				if (dup2(client_fd, STDOUT_FILENO) == -1) {
+				if (dup2(output_pipe[1], STDOUT_FILENO) == -1) {
 					std::cerr << "ERROR: CGI: dup2() failed" << std::endl;
 					perror("dup2()");
-					CgiError(req, res, 502, "CGI dup2() error");
-					return ;
+					close(pipefd[0]);
+					close(output_pipe[1]);
+					_exit(EXIT_FAILURE); // Exit if dup2 fails
 				}
-				if (dup2(client_fd, STDERR_FILENO) == -1) {
+				if (dup2(output_pipe[1], STDERR_FILENO) == -1) {
 					std::cerr << "ERROR: CGI: dup2() failed" << std::endl;
 					perror("dup2()");
-					CgiError(req, res, 502, "CGI dup2() error");
-					return ;
+					close(pipefd[0]);
+					close(output_pipe[1]);
+					_exit(EXIT_FAILURE); // Exit if dup2 fails
 				}
 
 				std::string path_info = "PATH_INFO=" + path;
@@ -113,13 +117,19 @@ void Response::handleCGI(std::string rootedpath, std::string path, Request& req,
 
 				char *argv[] = {
 					ft_strdup(exec_path.c_str()),
-					ft_strdup(rootedpath.c_str()),
+					ft_strdup(path.substr(path.find_last_of("/") + 1, path.length()).c_str()),
 					NULL
 				};
+				std::string script_dir = rootedpath.substr(0, rootedpath.find_last_of("/"));
+				if (chdir(script_dir.c_str()) == -1) {
+					std::cerr << "ERROR: CGI: chdir() failed" << std::endl;
+					perror("chdir()");
+				}
 				if (execve(exec_path.c_str(), argv, envp) == -1) {
 					std::cerr << "ERROR: CGI: Failed to execute CGI script" << std::endl;
 					perror("execve()");
 				}
+
 				// Free dynamically allocated memory
 				for (size_t i = 0; envp[i]; ++i) {
 					free(envp[i]);
@@ -127,67 +137,98 @@ void Response::handleCGI(std::string rootedpath, std::string path, Request& req,
 				for (size_t i = 0; argv[i]; ++i) {
 					free(argv[i]);
 				}
+				close(pipefd[0]);
+				close(output_pipe[1]);
+				_exit(EXIT_FAILURE); // Exit if execve fails
 			} else if (p == -1) { // Fork failed
 				std::cerr << "ERROR: CGI: fork() failed to open a new process" << std::endl;
 				perror("fork()");
-				CgiError(req, res, 502, "CGI fork() error");
-				return ;
-			} else { // Parent process
-				int status;
-				//int retval;
-				//fd_set rfds;
-				//struct timeval tv;
-
 				close(pipefd[0]);
-				// Write the request body to the pipe
-				if (req.getRequestMethod() == "POST")
-				{
+				close(pipefd[1]);
+				close(output_pipe[0]);
+				close(output_pipe[1]);
+				CgiError(req, res, 502, "CGI fork() error");
+				return;
+			} else { // Parent process
+				close(pipefd[0]); // Close read end of the input pipe
+				close(output_pipe[1]); // Close write end of the output pipe
+
+				// Write the request body to the input pipe
+				if (req.getRequestMethod() == "POST") {
 					if (write(pipefd[1], req.getBody().c_str(), req.getBody().size()) == -1) {
 						std::cerr << "ERROR: CGI: write() failed" << std::endl;
 						perror("write()");
+						close(pipefd[1]);
+						close(output_pipe[0]);
 						CgiError(req, res, 502, "CGI write() error");
+						return;
 					}
 				}
 
-				// Close the write end of the pipe
-				close(pipefd[1]);
-				/*FD_ZERO(&rfds);
-				FD_SET(client_fd, &rfds);
-				tv.tv_sec = 1;
-				tv.tv_usec = 0;
-
-				retval = select(0, NULL, NULL, NULL, &tv);
-				if (retval == -1) {
-					std::cerr << "ERROR: CGI: select() failed" << std::endl;
-					perror("select()");
-					CgiError(req, res, 502, "CGI select() error");
-					return ;
-				} else if (retval == 0) {
-					std::cerr << "CGI processing finished" << std::endl;
-					kill(p, SIGKILL);
-				}*/
+				close(pipefd[1]); // Close the write end of the input pipe
 				std::time_t seconds = std::time(nullptr);
 				while (seconds + 2 != std::time(nullptr))
 					continue ;
 				kill(p, SIGKILL);
+				// Wait for the child process to finish
+				int status;
 				pid_t result = waitpid(p, &status, 0);
 				if (result == -1) {
 					std::cerr << "ERROR: CGI: waitpid() failed" << std::endl;
 					perror("waitpid()");
-					CgiError(req, res, 502, "CGI waitpid()");
-					return ;
-				} else {
-					if (WIFEXITED(status)) {
-						std::cout << "Child exited with status " << WEXITSTATUS(status) << std::endl;
-						if (WEXITSTATUS(status) != 0)
-							CgiError(req, res, 502, "CGI script error");
-					} else if (WIFSIGNALED(status)) {
-						std::cout << "Child killed by signal " << WTERMSIG(status) << std::endl;
-						CgiError(req, res, 502, "CGI timeout");
-					} else if (WIFSTOPPED(status)) {
-						std::cout << "Child stopped by signal " << WSTOPSIG(status) << std::endl;
-						CgiError(req, res, 502, "CGI timeout");
+					close(output_pipe[0]);
+					CgiError(req, res, 502, "CGI waitpid() error");
+					return;
+				}
+
+				bool hasError = false;
+				std::cout << path.substr(path.find_last_of("/"), path.length()).c_str() << std::endl;
+				std::cout << rootedpath.substr(0, rootedpath.find_last_of("/")) << std::endl;
+				// Check the status of the child process
+				if (WIFEXITED(status)) {
+					int exitStatus = WEXITSTATUS(status);
+					if (exitStatus != 0) {
+						std::cerr << "ERROR: CGI script exited with status " << exitStatus << std::endl;
+						hasError = true;
 					}
+				} else if (WIFSIGNALED(status)) {
+					int signalNumber = WTERMSIG(status);
+					std::cerr << "ERROR: CGI script killed by signal " << signalNumber << std::endl;
+					hasError = true;
+				} else if (WIFSTOPPED(status)) {
+					int stopSignal = WSTOPSIG(status);
+					std::cerr << "ERROR: CGI script stopped by signal " << stopSignal << std::endl;
+					hasError = true;
+				}
+
+				// Read the output from the CGI script to clear the buffer
+				char buffer[1024];
+				ssize_t bytesRead;
+				while ((bytesRead = read(output_pipe[0], buffer, sizeof(buffer))) > 0) {
+					if (!hasError) {
+						if (write(client_fd, buffer, bytesRead) == -1) {
+							std::cerr << "ERROR: CGI: write() to client failed" << std::endl;
+							perror("write()");
+							close(output_pipe[0]);
+							CgiError(req, res, 502, "CGI write() to client error");
+							return;
+						}
+					}
+				}
+
+				if (bytesRead == -1) {
+					std::cerr << "ERROR: CGI: read() failed" << std::endl;
+					perror("read()");
+					close(output_pipe[0]);
+					CgiError(req, res, 502, "CGI read() error");
+					return;
+				}
+
+				close(output_pipe[0]); // Close the read end of the output pipe
+
+				if (hasError) {
+					CgiError(req, res, 502, "CGI script error");
+					return;
 				}
 			}
 		} else {
