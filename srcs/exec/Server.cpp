@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/08 09:59:24 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/07/01 14:24:17 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/07/01 14:57:47 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -114,7 +114,8 @@ int	Server::readClientSocket(int client_fd){
 		if (!rc)
 		{
 			//std::cout << "Client close connection" << std::endl;
-			return (0);
+			this->closeClientSocket(client_fd);
+			// return (0);
 		}
 		else
 			std::cerr << "ERROR: Recv() failed" << std::endl;
@@ -208,7 +209,7 @@ int	Server::handleRequest(int client_fd){
 	}
 	else
 	{
-		std::cout << "Error detected by parsing" << std::endl;
+		//std::cout << "Error detected by parsing" << std::endl;
 		// Catch error from the request parser
 		response.errorResponse(request.getErrorCode(), request.getErrorMsg(), getConfig().error_page_paths);
 	}

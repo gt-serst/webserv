@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:28:16 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/07/01 14:07:57 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/07/01 15:01:00 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,9 +29,10 @@
 
 Response::Response(void){
 
-	_status_code = -1;
+	this->_status_code = -1;
 	this->_content_len = -1;
 	this->_cgi = false;
+	this->_setRedir = false;
 	this->_default_file = false;
 	//std::cout << "Response created" << std::endl;
 }
