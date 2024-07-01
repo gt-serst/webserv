@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:28:16 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/07/01 15:45:54 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/07/01 17:37:35 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,6 +26,8 @@
 #include <ctime>
 #include <algorithm>
 #include <iostream>
+
+#include <fcntl.h>
 
 Response::Response(void){
 
@@ -366,13 +368,25 @@ void	Response::runFileMethod(std::string rooted_path, t_locations loc, std::map<
 
 void	Response::downloadFile(std::string rooted_path, std::map<int, std::string> error_paths){
 
-	std::ifstream input(rooted_path, std::ios::binary);
-
+	// std::ifstream input(rooted_path, std::ios::binary);
+	std::ifstream input(rooted_path, std::ifstream::in);
+	// int fd;
+ 	// fd = open(rooted_path.c_str(), O_RDONLY);
+	// if (fd > 0)
 	if (input.is_open())
 	{
 		std::string buffer;
+		// char buf[4096];
 		std::string stack;
 
+		// int rc = read(fd, buf, 4096 - 1);
+		// buf[rc] = '\0';
+		// while (rc  > 0)
+		// {
+			// stack += buf;
+			// rc = read(fd, buf, 4096 - 1);
+			// buf[rc] = '\0';
+		// }
 		while (std::getline(input, buffer))
 		{
 			stack += buffer;
@@ -380,6 +394,7 @@ void	Response::downloadFile(std::string rooted_path, std::map<int, std::string> 
 				stack += '\n';
 		}
 		input.close();
+		// close(fd);
 		downloadFileResponse(stack);
 	}
 	else
