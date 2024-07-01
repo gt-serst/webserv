@@ -25,6 +25,7 @@
 #include <cstring>
 #include <signal.h>
 #include <fcntl.h>
+#include <ctime>
 
 static void	CgiError(Request& req, Response& res, int errorCode, std::string errorString)
 {
@@ -133,9 +134,9 @@ void Response::handleCGI(std::string rootedpath, std::string path, Request& req,
 				return ;
 			} else { // Parent process
 				int status;
-				int retval;
-				fd_set rfds;
-				struct timeval tv;
+				//int retval;
+				//fd_set rfds;
+				//struct timeval tv;
 
 				close(pipefd[0]);
 				// Write the request body to the pipe
@@ -150,7 +151,7 @@ void Response::handleCGI(std::string rootedpath, std::string path, Request& req,
 
 				// Close the write end of the pipe
 				close(pipefd[1]);
-				FD_ZERO(&rfds);
+				/*FD_ZERO(&rfds);
 				FD_SET(client_fd, &rfds);
 				tv.tv_sec = 1;
 				tv.tv_usec = 0;
@@ -164,8 +165,11 @@ void Response::handleCGI(std::string rootedpath, std::string path, Request& req,
 				} else if (retval == 0) {
 					std::cerr << "CGI processing finished" << std::endl;
 					kill(p, SIGKILL);
-					return ;
-				}
+				}*/
+				std::time_t seconds = std::time(nullptr);
+				while (seconds + 2 != std::time(nullptr))
+					continue ;
+				kill(p, SIGKILL);
 				pid_t result = waitpid(p, &status, 0);
 				if (result == -1) {
 					std::cerr << "ERROR: CGI: waitpid() failed" << std::endl;
@@ -175,10 +179,14 @@ void Response::handleCGI(std::string rootedpath, std::string path, Request& req,
 				} else {
 					if (WIFEXITED(status)) {
 						std::cout << "Child exited with status " << WEXITSTATUS(status) << std::endl;
+						if (WEXITSTATUS(status) != 0)
+							CgiError(req, res, 502, "CGI script error");
 					} else if (WIFSIGNALED(status)) {
 						std::cout << "Child killed by signal " << WTERMSIG(status) << std::endl;
+						CgiError(req, res, 502, "CGI timeout");
 					} else if (WIFSTOPPED(status)) {
 						std::cout << "Child stopped by signal " << WSTOPSIG(status) << std::endl;
+						CgiError(req, res, 502, "CGI timeout");
 					}
 				}
 			}
