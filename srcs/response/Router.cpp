@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Router.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: geraudtserstevens <geraudtserstevens@st    +#+  +:+       +#+        */
+/*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 11:15:20 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/28 16:42:19 by geraudtsers      ###   ########.fr       */
+/*   Updated: 2024/07/01 14:08:07 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -86,7 +86,7 @@ std::string	Router::handleRedirection(std::string path_to_file, std::map<std::st
 		// Comparisson between the path and each url from redirections in the config file
 		if (it->first.compare(path_to_file) == 0)
 		{
-			std::cout << "Redirection detected" << std::endl;
+			//std::cout << "Redirection detected" << std::endl;
 			return (it->second);
 		}
 	}

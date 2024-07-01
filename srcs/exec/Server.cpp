@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/08 09:59:24 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/07/01 10:57:21 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/07/01 14:24:17 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -113,7 +113,7 @@ int	Server::readClientSocket(int client_fd){
 	{
 		if (!rc)
 		{
-			std::cout << "Client close connection" << std::endl;
+			//std::cout << "Client close connection" << std::endl;
 			return (0);
 		}
 		else
@@ -190,7 +190,7 @@ int	Server::handleRequest(int client_fd){
 					if (response.getDefaultFile() == true)
 					{
 						// When a default file is found we relaunch all the routine, router and response process
-						std::cout << "Default file detected, relaunch response processing" << std::endl;
+						//std::cout << "Default file detected, relaunch response processing" << std::endl;
 						response.setDefaultFile(false);
 						response.handleDirective(request.getPathToFile(), loc, request, *this);
 					}
@@ -237,22 +237,22 @@ int	Server::sendResponse(int client_fd){
 	}
 	if (rc == 0 || rc == -1)
 	{
+		_requests.erase(client_fd);
 		if (!rc)
 		{
-			_requests.erase(client_fd);
-			std::cout << "Client close connection" << std::endl;
+			//std::cout << "Client close connection" << std::endl;
 			return (0);
 		}
 		else
 		{
-			this->closeClientSocket(client_fd);
-			std::cerr << "ERROR: Send() failed" << std::endl;
+			//std::cerr << "ERROR: Send() failed" << std::endl;
 			return (-1);
 		}
 	}
 	else
 	{
 		_requests.erase(client_fd);
+		//std::cout << "Response to client sent" << std::endl;
 		return (0);
 	}
 }
@@ -261,7 +261,7 @@ bool	Server::checkServerAvailability(Request& req){
 
 	if (req.getRequestMethod() == "GET" && req.getPathToFile() == "/exit")
 	{
-		std::cout << "Server off" << std::endl;
+		//std::cout << "Server off" << std::endl;
 		_still_alive = false;
 		return (true);
 	}

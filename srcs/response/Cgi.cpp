@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/25 12:16:01 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/26 11:00:49 by febonaer         ###   ########.fr       */
+/*   Updated: 2024/07/01 14:52:56 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,7 +48,7 @@ static std::string intToString(int number) {
 
 void Response::handleCGI(std::string rootedpath, std::string path, Request& req, std::string exec_path, Response& res) {
 	struct stat sb;
-	std::cout << "CGI processing started" << std::endl;
+	//std::cout << "CGI processing started" << std::endl;
 	if (stat(exec_path.c_str(), &sb) == 0 && access(exec_path.c_str(), X_OK) == 0) {
 		if (stat(rootedpath.c_str(), &sb) == 0 && access(rootedpath.c_str(), X_OK) == 0) {
 			int pipefd[2];
@@ -182,8 +182,8 @@ void Response::handleCGI(std::string rootedpath, std::string path, Request& req,
 				}
 
 				bool hasError = false;
-				std::cout << path.substr(path.find_last_of("/"), path.length()).c_str() << std::endl;
-				std::cout << rootedpath.substr(0, rootedpath.find_last_of("/")) << std::endl;
+				//std::cout << path.substr(path.find_last_of("/"), path.length()).c_str() << std::endl;
+				//std::cout << rootedpath.substr(0, rootedpath.find_last_of("/")) << std::endl;
 				// Check the status of the child process
 				if (WIFEXITED(status)) {
 					int exitStatus = WEXITSTATUS(status);

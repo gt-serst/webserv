@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Request.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: geraudtserstevens <geraudtserstevens@st    +#+  +:+       +#+        */
+/*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/25 12:15:50 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/28 16:25:50 by geraudtsers      ###   ########.fr       */
+/*   Updated: 2024/07/01 14:09:09 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -383,7 +383,7 @@ Request::Request(){}
 
 Request::Request(std::string& buffer, Server& server)
 {
-	std::cout << "Parsing request" << std::endl;
+	//std::cout << "Parsing request" << std::endl;
 	_server = server;
 	_version = "1.1";
 	_path_to_file = "/";

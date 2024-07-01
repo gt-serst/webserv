@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: geraudtserstevens <geraudtserstevens@st    +#+  +:+       +#+        */
+/*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:28:16 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/28 15:56:13 by geraudtsers      ###   ########.fr       */
+/*   Updated: 2024/07/01 14:07:57 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -68,7 +68,7 @@ void	Response::handleDirective(std::string path, t_locations& loc, Request& req,
 
 	std::string	rooted_path;
 
-	std::cout << "Response processing started" << std::endl;
+	//std::cout << "Response processing started" << std::endl;
 	// Catch POST method early because it depends on upload_path, not uri (=path)
 	if (uploadMethod(loc, path, serv.getConfig().upload_path, serv.getConfig().error_page_paths, req) == true)
 		return;
@@ -108,7 +108,7 @@ void	Response::handleDirective(std::string path, t_locations& loc, Request& req,
 		else
 			errorResponse(415, "Unsupported Media Type : Not a directory nor a file", serv.getConfig().error_page_paths);
 	}
-	std::cout << "Response processing finished" << std::endl;
+	//std::cout << "Response processing finished" << std::endl;
 }
 
 void	Response::cleanPath(std::string& str){
@@ -285,7 +285,6 @@ bool	Response::isMethodAllowed(t_locations loc, Request& req){
 
 	for (size_t i = 0; i < loc.allowed_methods.size(); i++)
 	{
-		std::cout << loc.allowed_methods[req.getRequestMethod()] << std::endl;
 		if (loc.allowed_methods[req.getRequestMethod()] == true)
 			return (true);
 	}
