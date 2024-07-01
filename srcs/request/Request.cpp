@@ -404,6 +404,7 @@ Request::Request(std::string& buffer, Server& server)
 	setRequest(buffer);
 	if (state != R_error)
 		_hostname = standardise(_hostname);
+
 	if (state != R_error)
 		_path_to_file = standardise(_path_to_file);
 	if (state != R_error)
@@ -587,12 +588,12 @@ void Request::parseRequestLine(char *line)
 					start = i;
 					state = R_abs_path;
 				}
-				else if (std::strncmp(&line[i], "http://", 7))
+				else if (std::strncmp(&line[i], "http://", 7) == 0)
 				{
 					i += 6;
 					state = R_abs_slashes;
 				}
-				else if (std::strncmp(&line[i], "https://", 8))
+				else if (std::strncmp(&line[i], "https://", 8) == 0)
 				{
 					i += 7;
 					state = R_abs_slashes;
@@ -610,13 +611,13 @@ void Request::parseRequestLine(char *line)
 			{
 				if (std::isdigit(line[i]))
 				{
-					start = i - 1;
+					start = i;
 					state = R_abs_literal_ip;
 				}
 				else if (std::isalpha(line[i]) || line[i] == '_' || line[i] == '-')
 				{
 					state = R_abs_host_start;
-					start = i - 1;
+					start = i;
 				}
 				else
 				{
@@ -919,15 +920,15 @@ bool	Request::handle_headers()
 		_error_msg = "Host header is missing";
 		return true;
 	}
-	if (_hostname.empty() == 0  && line.compare(_hostname + "\r") == 0)
-	{
-		_error_code = 400;
-		_error_msg = "Hostname in the URI does not match the hostname in the Host header";
-		return true;
-	}
 	size_t pos = line.find(":");
 	if (pos != std::string::npos)
 	{
+		if (_hostname.empty() == 0  && line.substr(0, pos).compare(_hostname))
+		{
+			_error_code = 400;
+			_error_msg = "Hostname in the URI does not match the hostname in the Host header";
+			return true;
+		}
 		_hostname = line.substr(0, pos);
 		_port = ft_atoi(line.substr(pos + 1, line.length()).c_str());
 		if (_server.getConfig().port != _port)
@@ -939,6 +940,12 @@ bool	Request::handle_headers()
 	}
 	else
 	{
+		if (_hostname.empty() == 0  && line.compare(_hostname + "\r"))
+		{
+			_error_code = 400;
+			_error_msg = "Hostname in the URI does not match the hostname in the Host header";
+			return true;
+		}
 		_hostname = line;
 		if (_hostname[_hostname.length() - 1] == '\r' || _hostname[_hostname.length() - 1] == '\n')
 			_hostname.erase(_hostname.length() - 1, 1);
@@ -947,7 +954,7 @@ bool	Request::handle_headers()
 	std::vector<std::string> tmp = _server.getConfig().server_name;
 	for (std::vector<std::string>::iterator it = tmp.begin(); it != tmp.end(); ++it)
 	{
-		if (_hostname.compare(*it) == 0)
+		if (_hostname.compare(*it) == 0 || (*it == "localhost" && _hostname == "127.0.0.1"))
 			break;
 		i++;
 	}
