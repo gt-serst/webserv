@@ -940,6 +940,8 @@ bool	Request::handle_headers()
 	else
 	{
 		_hostname = line;
+		if (_hostname[_hostname.length() - 1] == '\r' || _hostname[_hostname.length() - 1] == '\n')
+			_hostname.erase(_hostname.length() - 1, 1);
 	}
 	int i = 0;
 	std::vector<std::string> tmp = _server.getConfig().server_name;
