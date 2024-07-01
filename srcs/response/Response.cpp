@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:28:16 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/07/01 15:02:42 by febonaer         ###   ########.fr       */
+/*   Updated: 2024/07/01 15:45:54 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -705,7 +705,8 @@ void	Response::createHtmlErrorPage(int error_code, std::string message){
 
 	int			i;
 	int			integer[] = {400, 403, 404, 405, 413, 414, 415, 500, 501, 502, 503, 505};
-	std::string	error_headers[] = {"The server could not understand the request due to invalid syntax.",
+	std::string	error_headers[] = {
+	"The server could not understand the request due to invalid syntax.",
 	"You do not have permission to access this resource on this server.",
 	"The requested resource could not be found on this server.",
 	"The method specified in the request is not allowed for the resource identified by the request URI.",

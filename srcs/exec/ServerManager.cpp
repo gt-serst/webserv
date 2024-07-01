@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/07 11:04:51 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/07/01 14:22:04 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/07/01 15:04:12 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -104,6 +104,7 @@ void	ServerManager::serverRoutine(void){
 					// Chunked response detected
 					if (rc != 1)
 					{
+						//std::cout << "Clean everything" << std::endl;
 						FD_CLR(*it, &_fd_set);
 						FD_CLR(*it, &reading_set);
 						close(*it);

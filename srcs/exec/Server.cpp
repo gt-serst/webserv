@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/08 09:59:24 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/07/01 14:57:47 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/07/01 15:41:30 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -114,8 +114,7 @@ int	Server::readClientSocket(int client_fd){
 		if (!rc)
 		{
 			//std::cout << "Client close connection" << std::endl;
-			this->closeClientSocket(client_fd);
-			// return (0);
+			return (0);
 		}
 		else
 			std::cerr << "ERROR: Recv() failed" << std::endl;
@@ -233,7 +232,9 @@ int	Server::sendResponse(int client_fd){
 		std::string	still_to_send;
 
 		still_to_send = _requests[client_fd].substr(rc, len);
-		_requests[client_fd] = still_to_send;
+		_requests.erase(client_fd);
+		_requests.insert(std::make_pair(client_fd, still_to_send));
+		// _requests[client_fd] = still_to_send;
 		return (1);
 	}
 	if (rc == 0 || rc == -1)
