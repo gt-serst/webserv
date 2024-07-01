@@ -497,10 +497,14 @@ void Request::setRequest(std::string& buffer)
 	std::streampos pos = ss.tellg();
 	pos = setHeader(ss, pos);
 	if (state == R_error)
+	{
+		ss.flush();
 		return ;
+	}
 	if (handle_headers())
 	{
 		state = R_error;
+		ss.flush();;
 		return ;
 	}
 	if (getHeader("Transfer-Encoding").compare("chunked\r") == 0)
@@ -521,6 +525,7 @@ void Request::setRequest(std::string& buffer)
 		parse_multiform(ss, pos);
 	else
 		setBody(ss, pos);
+	ss.flush();
 }
 
 void Request::parseRequestLine(char *line)
