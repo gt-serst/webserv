@@ -17,7 +17,7 @@ bool Request::multiform_headers(std::stringstream& ss, std::streampos& pos, int 
 {
 	ss.seekg(pos);
 	std::string line;
-	getline(ss, line);
+	std::getline(ss, line);
 	size_t end_pos;
 	while (line.find(":") != std::string::npos)
 	{
@@ -46,7 +46,7 @@ bool Request::multiform_headers(std::stringstream& ss, std::streampos& pos, int 
 		{
 			_multiform[i].type = line.substr(start_pos + 13, line.length() - (start_pos + 13) - 1);
 		}
-		getline(ss, line);
+		std::getline(ss, line);
 	}
 	pos = ss.tellg();
 	return false;
@@ -66,7 +66,7 @@ void Request::parse_multiform(std::stringstream& ss, std::streampos pos)
 	int i = 0;
 	std::string bound_morph = _boundary.erase(_boundary.size() - 1);
 	_boundary += "\r";
-	while (getline(ss, line))
+	while (std::getline(ss, line))
 	{
 		if(line.compare("--" + _boundary) == 0)
 		{
@@ -1029,7 +1029,7 @@ void Request::setBody(std::stringstream& ss, std::streampos startpos)
 {
 	ss.seekg(startpos);
 	std::string line;
-	while (getline(ss, line))
+	while (std::getline(ss, line))
 	{
 		if (!ss.eof())
 			line += "\n";
