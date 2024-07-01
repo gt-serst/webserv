@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/25 12:16:01 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/07/01 14:52:56 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/07/01 15:41:38 by febonaer         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -70,21 +70,18 @@ void Response::handleCGI(std::string rootedpath, std::string path, Request& req,
 					perror("dup2()");
 					close(pipefd[0]);
 					close(output_pipe[1]);
-					_exit(EXIT_FAILURE); // Exit if dup2 fails
 				}
 				if (dup2(output_pipe[1], STDOUT_FILENO) == -1) {
 					std::cerr << "ERROR: CGI: dup2() failed" << std::endl;
 					perror("dup2()");
 					close(pipefd[0]);
 					close(output_pipe[1]);
-					_exit(EXIT_FAILURE); // Exit if dup2 fails
 				}
 				if (dup2(output_pipe[1], STDERR_FILENO) == -1) {
 					std::cerr << "ERROR: CGI: dup2() failed" << std::endl;
 					perror("dup2()");
 					close(pipefd[0]);
 					close(output_pipe[1]);
-					_exit(EXIT_FAILURE); // Exit if dup2 fails
 				}
 
 				std::string path_info = "PATH_INFO=" + path;
@@ -139,7 +136,6 @@ void Response::handleCGI(std::string rootedpath, std::string path, Request& req,
 				}
 				close(pipefd[0]);
 				close(output_pipe[1]);
-				_exit(EXIT_FAILURE); // Exit if execve fails
 			} else if (p == -1) { // Fork failed
 				std::cerr << "ERROR: CGI: fork() failed to open a new process" << std::endl;
 				perror("fork()");

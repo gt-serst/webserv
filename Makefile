@@ -6,7 +6,7 @@
 #    By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/05/21 15:52:59 by gt-serst          #+#    #+#              #
-#    Updated: 2024/07/01 14:18:07 by gt-serst         ###   ########.fr        #
+#    Updated: 2024/07/01 15:15:39 by febonaer         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -35,7 +35,7 @@ SRCS		=	$(UTILS)\
 
 NAME		= webserv
 
-FLAGS		= -Wall -Wextra -Werror -std=c++98
+FLAGS		= -Wall -Wextra -Werror -std=c++98 -g -g1 -g2 -g3
 
 OBJS		= ${SRCS:.cpp=.o}
 
