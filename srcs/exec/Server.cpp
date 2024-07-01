@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: geraudtserstevens <geraudtserstevens@st    +#+  +:+       +#+        */
+/*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/08 09:59:24 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/06/28 16:53:24 by geraudtsers      ###   ########.fr       */
+/*   Updated: 2024/07/01 10:57:21 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -114,12 +114,10 @@ int	Server::readClientSocket(int client_fd){
 		if (!rc)
 		{
 			std::cout << "Client close connection" << std::endl;
-			//this->closeClientSocket(client_fd);
+			return (0);
 		}
 		else
-		{
 			std::cerr << "ERROR: Recv() failed" << std::endl;
-		}
 		return (-1);
 	}
 	_requests[client_fd].append(buffer, rc);
