@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/08 09:59:24 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/07/02 14:28:30 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/07/02 15:16:31 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -121,6 +121,7 @@ int	Server::readClientSocket(int client_fd){
 		return (-1);
 	}
 	_requests[client_fd].append(buffer, rc);
+	std::memset(buffer, 0, sizeof(buffer));
 	// Check for chunked requests
 	size_t i = _requests[client_fd].find("\r\n\r\n");
 	if (i != std::string::npos) // If the end of the headers is found, then check if there is a chunked or a content length
@@ -253,6 +254,8 @@ int	Server::sendResponse(int client_fd){
 	}
 	else
 	{
+		// for (std::map<int, std::string>::iterator it = _requests.begin(); it != _requests.end(); ++it)
+		// 	std::cout << it->first << std::endl;
 		_requests.erase(client_fd);
 		//std::cout << "Response to client sent" << std::endl;
 		return (0);

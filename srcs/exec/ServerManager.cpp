@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/07 11:04:51 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/07/02 14:27:52 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/07/02 15:11:48 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -80,6 +80,12 @@ void	ServerManager::serverRoutine(void){
 		struct timeval	timeout;
 
 		rc = 0;
+		// for (std::vector<int>::iterator it = _ready.begin(); it != _ready.end(); ++it)
+		// 	std::cout << *it << std::endl;
+		// for (std::map<int, Server*>::iterator it = _sockets.begin(); it != _sockets.end(); ++it)
+		// 	std::cout << it->first << std::endl;
+		// for (std::map<int, Server>::iterator it = _servers.begin(); it != _servers.end(); ++it)
+		// 	std::cout << it->first << std::endl;
 		while (rc == 0)
 		{
 			// After each loop fds information are kept from the previous loop and select is relaunched

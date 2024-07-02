@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:28:16 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/07/02 14:19:43 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/07/02 15:52:50 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,6 +41,12 @@ Response::Response(void){
 
 Response::~Response(void){
 
+	_response.clear();
+	_http_version.clear();
+	_status_message.clear();
+	_location.clear();
+	_content_type.clear();
+	_body.clear();
 	//std::cout << "Response destroyed" << std::endl;
 }
 
@@ -386,10 +392,11 @@ void	Response::downloadFile(std::string rooted_path, std::map<int, std::string> 
 			// stack += buf;
 			// rc = read(fd, buf, 4096 - 1);
 			// buf[rc] = '\0';
-		// }
+		//
 		while (std::getline(input, buffer))
 		{
 			stack += buffer;
+			buffer.clear();
 			if (!input.eof())
 				stack += '\n';
 		}
@@ -582,6 +589,7 @@ void	Response::downloadFileResponse(std::string stack){
 	this->_content_type = getContentType(stack);
 	this->_content_len = stack.length();
 	this->_body = stack;
+	stack.clear();
 	generateResponse();
 }
 
