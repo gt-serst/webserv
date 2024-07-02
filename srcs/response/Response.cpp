@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:28:16 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/07/01 17:37:35 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/07/02 14:19:43 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -523,10 +523,10 @@ void Response::autoIndexResponse(std::string rooted_path, std::string dir_list, 
 			continue;
 		}
 
-		char buffer[80];
+		//char buffer[80];
 		std::string unrooted_path;
-		struct tm* time_info = std::localtime(&buf.st_ctime);
-		std::strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", time_info);
+		//struct tm* time_info = std::localtime(&buf.st_ctime);
+		//std::strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", time_info);
 
 		unrooted_path = req.getPathToFile();
 		if (unrooted_path[unrooted_path.length() - 1] != '/')
@@ -534,7 +534,8 @@ void Response::autoIndexResponse(std::string rooted_path, std::string dir_list, 
 
 		std::string redirect_url = unrooted_path + *it;
 		std::string txt_button = *it;
-		std::string creation_date = buffer;
+		//std::string creation_date = buffer;
+		std::string creation_date = "";
 		std::string char_count = getCharCount(buf);
 
 		insertHtmlIndexLine(redirect_url, txt_button, creation_date, char_count);
