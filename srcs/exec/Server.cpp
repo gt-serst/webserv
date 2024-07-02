@@ -6,7 +6,7 @@
 /*   By: geraudtserstevens <geraudtserstevens@st    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/08 09:59:24 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/07/02 16:58:07 by geraudtsers      ###   ########.fr       */
+/*   Updated: 2024/07/03 01:04:13 by geraudtsers      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -55,7 +55,7 @@ int	Server::createServerSocket(void){
 	rc = setsockopt(this->_fd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse));
 	if (rc < 0)
 	{
-		perror("ERROR: Setsockopt() failed");
+		std::cerr << "ERROR: Setsockopt() failed" << std::endl;
 		return (-1);
 	}
 
