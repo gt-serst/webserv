@@ -463,21 +463,26 @@ Request::~Request()
 	// 	std::cout << "ERROR CODE == " << _error_code << std::endl;
 	// 	std::cout << "ERROR MSG == " << _error_msg << std::endl;
 	// }
-	_version.clear();
-	_path_to_file.clear();
+	_request.clear();
+	_request_method.clear();
 	_hostname.clear();
-	_litteral_ip.clear();
+	_path_to_file.clear();
+	_version.clear();
+	_headers.clear();
+	_query_args.clear();
 	_body.clear();
 	_query_str.clear();
-	_error_code = -1;
 	_error_msg.clear();
+	_litteral_ip.clear();
+	_boundary.clear();
+	_fragment.clear();
+	_multiform.clear();
+	_error_code = -1;
 	_port = _server->getConfig().port;
 	chunk_size = 0;
 	_body_len = -1;
-	_fragment.clear();
 	chunked = false;
 	multiform = false;
-	_boundary.clear();
 	//std::cout << "//////////////Request destroyed//////////////" << std::endl;
 }
 
