@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:28:16 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/07/01 15:45:54 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/07/02 15:52:50 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,6 +27,8 @@
 #include <algorithm>
 #include <iostream>
 
+#include <fcntl.h>
+
 Response::Response(void){
 
 	this->_status_code = -1;
@@ -39,6 +41,12 @@ Response::Response(void){
 
 Response::~Response(void){
 
+	_response.clear();
+	_http_version.clear();
+	_status_message.clear();
+	_location.clear();
+	_content_type.clear();
+	_body.clear();
 	//std::cout << "Response destroyed" << std::endl;
 }
 
@@ -366,20 +374,34 @@ void	Response::runFileMethod(std::string rooted_path, t_locations loc, std::map<
 
 void	Response::downloadFile(std::string rooted_path, std::map<int, std::string> error_paths){
 
-	std::ifstream input(rooted_path, std::ios::binary);
-
+	// std::ifstream input(rooted_path, std::ios::binary);
+	std::ifstream input(rooted_path, std::ifstream::in);
+	// int fd;
+ 	// fd = open(rooted_path.c_str(), O_RDONLY);
+	// if (fd > 0)
 	if (input.is_open())
 	{
 		std::string buffer;
+		// char buf[4096];
 		std::string stack;
 
+		// int rc = read(fd, buf, 4096 - 1);
+		// buf[rc] = '\0';
+		// while (rc  > 0)
+		// {
+			// stack += buf;
+			// rc = read(fd, buf, 4096 - 1);
+			// buf[rc] = '\0';
+		//
 		while (std::getline(input, buffer))
 		{
 			stack += buffer;
+			buffer.clear();
 			if (!input.eof())
 				stack += '\n';
 		}
 		input.close();
+		// close(fd);
 		downloadFileResponse(stack);
 	}
 	else
@@ -508,10 +530,10 @@ void Response::autoIndexResponse(std::string rooted_path, std::string dir_list, 
 			continue;
 		}
 
-		char buffer[80];
+		//char buffer[80];
 		std::string unrooted_path;
-		struct tm* time_info = std::localtime(&buf.st_ctime);
-		std::strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", time_info);
+		//struct tm* time_info = std::localtime(&buf.st_ctime);
+		//std::strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", time_info);
 
 		unrooted_path = req.getPathToFile();
 		if (unrooted_path[unrooted_path.length() - 1] != '/')
@@ -519,7 +541,8 @@ void Response::autoIndexResponse(std::string rooted_path, std::string dir_list, 
 
 		std::string redirect_url = unrooted_path + *it;
 		std::string txt_button = *it;
-		std::string creation_date = buffer;
+		//std::string creation_date = buffer;
+		std::string creation_date = "";
 		std::string char_count = getCharCount(buf);
 
 		insertHtmlIndexLine(redirect_url, txt_button, creation_date, char_count);
@@ -566,6 +589,7 @@ void	Response::downloadFileResponse(std::string stack){
 	this->_content_type = getContentType(stack);
 	this->_content_len = stack.length();
 	this->_body = stack;
+	stack.clear();
 	generateResponse();
 }
 
