@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/08 09:59:24 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/07/02 15:16:31 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/07/02 16:39:50 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -111,6 +111,7 @@ int	Server::readClientSocket(int client_fd){
 	rc = recv(client_fd, buffer, BUFFER_SIZE - 1, 0);
 	if (rc == 0 || rc == -1)
 	{
+		this->closeClientSocket(client_fd);
 		if (!rc)
 		{
 			//std::cout << "Client close connection" << std::endl;
@@ -120,8 +121,8 @@ int	Server::readClientSocket(int client_fd){
 			std::cerr << "ERROR: Recv() failed" << std::endl;
 		return (-1);
 	}
+	std::cout << "Hello" << std::endl;
 	_requests[client_fd].append(buffer, rc);
-	std::memset(buffer, 0, sizeof(buffer));
 	// Check for chunked requests
 	size_t i = _requests[client_fd].find("\r\n\r\n");
 	if (i != std::string::npos) // If the end of the headers is found, then check if there is a chunked or a content length
@@ -235,7 +236,6 @@ int	Server::sendResponse(int client_fd){
 		still_to_send = _requests[client_fd].substr(rc, len);
 		_requests.erase(client_fd);
 		_requests.insert(std::make_pair(client_fd, still_to_send));
-		// _requests[client_fd] = still_to_send;
 		return (1);
 	}
 	if (rc == 0 || rc == -1)

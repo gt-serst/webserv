@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:28:16 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/07/02 15:52:50 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/07/02 16:31:46 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,7 +52,7 @@ Response::~Response(void){
 
 bool	Response::checkContentType(std::string path){
 
-	std::ifstream input(path, std::ios::binary);
+	std::ifstream input(path);
 
 	if (input.is_open())
 	{
@@ -61,6 +61,7 @@ bool	Response::checkContentType(std::string path){
 		while (std::getline(input, buffer))
 		{
 			stack += buffer;
+			buffer.clear();
 			stack += '\n';
 		}
 		input.close();
@@ -273,7 +274,7 @@ void	Response::fileRoutine(std::string rooted_path, std::map<int, std::string> e
 		runFileMethod(rooted_path, loc, error_paths, req);
 }
 
-bool	Response::findCGI(std::map<std::string, std::string>	cgi_path, std::string path_to_file){
+bool	Response::findCGI(std::map<std::string, std::string> cgi_path, std::string path_to_file){
 
 	if (cgi_path.empty() == false)
 	{
@@ -374,25 +375,13 @@ void	Response::runFileMethod(std::string rooted_path, t_locations loc, std::map<
 
 void	Response::downloadFile(std::string rooted_path, std::map<int, std::string> error_paths){
 
-	// std::ifstream input(rooted_path, std::ios::binary);
-	std::ifstream input(rooted_path, std::ifstream::in);
-	// int fd;
- 	// fd = open(rooted_path.c_str(), O_RDONLY);
-	// if (fd > 0)
+	std::ifstream input(rooted_path);
+
 	if (input.is_open())
 	{
 		std::string buffer;
-		// char buf[4096];
 		std::string stack;
 
-		// int rc = read(fd, buf, 4096 - 1);
-		// buf[rc] = '\0';
-		// while (rc  > 0)
-		// {
-			// stack += buf;
-			// rc = read(fd, buf, 4096 - 1);
-			// buf[rc] = '\0';
-		//
 		while (std::getline(input, buffer))
 		{
 			stack += buffer;
@@ -401,7 +390,6 @@ void	Response::downloadFile(std::string rooted_path, std::map<int, std::string> 
 				stack += '\n';
 		}
 		input.close();
-		// close(fd);
 		downloadFileResponse(stack);
 	}
 	else
@@ -530,10 +518,7 @@ void Response::autoIndexResponse(std::string rooted_path, std::string dir_list, 
 			continue;
 		}
 
-		//char buffer[80];
 		std::string unrooted_path;
-		//struct tm* time_info = std::localtime(&buf.st_ctime);
-		//std::strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", time_info);
 
 		unrooted_path = req.getPathToFile();
 		if (unrooted_path[unrooted_path.length() - 1] != '/')
@@ -541,11 +526,9 @@ void Response::autoIndexResponse(std::string rooted_path, std::string dir_list, 
 
 		std::string redirect_url = unrooted_path + *it;
 		std::string txt_button = *it;
-		//std::string creation_date = buffer;
-		std::string creation_date = "";
 		std::string char_count = getCharCount(buf);
 
-		insertHtmlIndexLine(redirect_url, txt_button, creation_date, char_count);
+		insertHtmlIndexLine(redirect_url, txt_button, char_count);
 	}
 
 	this->_body += "</body>\n</html>";
@@ -557,11 +540,10 @@ void Response::autoIndexResponse(std::string rooted_path, std::string dir_list, 
 	generateResponse();
 }
 
-void Response::insertHtmlIndexLine(std::string redirect_url, std::string txt_button, std::string creation_date, std::string char_count) {
+void Response::insertHtmlIndexLine(std::string redirect_url, std::string txt_button, std::string char_count) {
 
 	this->_body += "<div class=\"file-info\">\n"
 				   "    <button onclick=\"window.location.href='" + redirect_url + "'\">" + txt_button + "</button>\n"
-				   "    <div class=\"creation-date\">" + creation_date + "</div>\n"
 				   "    <div class=\"char-count\">" + char_count + "</div>\n"
 				   "</div>\n";
 }
@@ -589,7 +571,6 @@ void	Response::downloadFileResponse(std::string stack){
 	this->_content_type = getContentType(stack);
 	this->_content_len = stack.length();
 	this->_body = stack;
-	stack.clear();
 	generateResponse();
 }
 
@@ -606,6 +587,8 @@ std::string	Response::getContentType(std::string stack){
 	for (size_t i = 0; i < bytes.size(); i++)
 		ss_hex << std::hex << (static_cast<int>(bytes[i]) & 0xFF) << " ";
 	octets = ss_hex.str();
+	ss.clear();
+	ss_hex.clear();
 	bytes.clear();
 	switch (stringToEnum(octets))
 	{
@@ -696,6 +679,7 @@ void	Response::errorResponse(int error_code, std::string message, std::map<int, 
 					while (std::getline(input, buffer))
 					{
 						stack += buffer;
+						buffer.clear();
 						stack += '\n';
 					}
 					input.close();

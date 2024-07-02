@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/07 11:04:51 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/07/02 15:11:48 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/07/02 16:24:14 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -73,7 +73,6 @@ void	ServerManager::serverRoutine(void){
 	//std::cout << "Waiting for connection..." << std::endl;
 	while (1)
 	{
-		//system("leaks webserv");
 		int				rc;
 		fd_set			reading_set;
 		fd_set			writing_set;

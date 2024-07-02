@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:12:17 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/07/01 15:02:26 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/07/02 16:12:03 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -68,7 +68,7 @@ class Response{
 		void		deleteFile(std::string path, std::map<int, std::string> error_paths);
 		void		autoIndexResponse(std::string path, std::string dir_list, Request& req);
 		std::string	getCharCount(struct stat file_info);
-		void		insertHtmlIndexLine(std::string redirect_url, std::string txt_button, std::string creation_date, std::string char_count);
+		void		insertHtmlIndexLine(std::string redirect_url, std::string txt_button, std::string char_count);
 		void		deleteResponse(void);
 		void		downloadFileResponse(std::string stack);
 		bool		checkContentType(std::string path);

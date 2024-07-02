@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/25 12:15:50 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/07/02 14:30:00 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/07/02 16:03:17 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -463,6 +463,8 @@ Request::~Request()
 	// 	std::cout << "ERROR CODE == " << _error_code << std::endl;
 	// 	std::cout << "ERROR MSG == " << _error_msg << std::endl;
 	// }
+	_request.clear();
+	_request_method.clear();
 	_version.clear();
 	_path_to_file.clear();
 	_hostname.clear();
@@ -478,6 +480,9 @@ Request::~Request()
 	chunked = false;
 	multiform = false;
 	_boundary.clear();
+	_headers.clear();
+	_query_args.clear();
+	_multiform.clear();
 	//std::cout << "//////////////Request destroyed//////////////" << std::endl;
 }
 
