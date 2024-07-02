@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
+/*   By: geraudtserstevens <geraudtserstevens@st    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/08 09:59:24 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/07/02 16:39:50 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/07/02 16:58:07 by geraudtsers      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -113,15 +113,11 @@ int	Server::readClientSocket(int client_fd){
 	{
 		this->closeClientSocket(client_fd);
 		if (!rc)
-		{
-			//std::cout << "Client close connection" << std::endl;
-			return (0);
-		}
+			std::cout << "Connection was closed" << std::endl;
 		else
 			std::cerr << "ERROR: Recv() failed" << std::endl;
 		return (-1);
 	}
-	std::cout << "Hello" << std::endl;
 	_requests[client_fd].append(buffer, rc);
 	// Check for chunked requests
 	size_t i = _requests[client_fd].find("\r\n\r\n");
@@ -200,6 +196,7 @@ int	Server::handleRequest(int client_fd){
 					{
 						// If CGI is runned in the response process, we do not have to send a response in the client socket because script already done it
 						_requests.erase(client_fd);
+						this->closeClientSocket(client_fd);
 						return (1);
 					}
 				}
@@ -241,6 +238,7 @@ int	Server::sendResponse(int client_fd){
 	if (rc == 0 || rc == -1)
 	{
 		_requests.erase(client_fd);
+		this->closeClientSocket(client_fd);
 		if (!rc)
 		{
 			//std::cout << "Client close connection" << std::endl;
@@ -257,6 +255,7 @@ int	Server::sendResponse(int client_fd){
 		// for (std::map<int, std::string>::iterator it = _requests.begin(); it != _requests.end(); ++it)
 		// 	std::cout << it->first << std::endl;
 		_requests.erase(client_fd);
+		this->closeClientSocket(client_fd);
 		//std::cout << "Response to client sent" << std::endl;
 		return (0);
 	}

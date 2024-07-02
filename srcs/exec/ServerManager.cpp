@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ServerManager.cpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
+/*   By: geraudtserstevens <geraudtserstevens@st    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/07 11:04:51 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/07/02 16:24:14 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/07/02 16:58:15 by geraudtsers      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -112,7 +112,6 @@ void	ServerManager::serverRoutine(void){
 						//std::cout << "Clean everything" << std::endl;
 						FD_CLR(*it, &_fd_set);
 						FD_CLR(*it, &reading_set);
-						close(*it);
 						_sockets.erase(*it);
 						_ready.erase(it);
 					}
@@ -138,7 +137,6 @@ void	ServerManager::serverRoutine(void){
 						{
 							FD_CLR(it->first, &_fd_set);
 							FD_CLR(it->first, &reading_set);
-							close(it->first);
 							_sockets.erase(it->first);
 						}
 					}
@@ -146,7 +144,6 @@ void	ServerManager::serverRoutine(void){
 					{
 						FD_CLR(it->first, &_fd_set);
 						FD_CLR(it->first, &reading_set);
-						close(it->first);
 						_sockets.erase(it->first);
 					}
 					rc = 0;
