@@ -131,7 +131,7 @@ bool	Response::uploadMethod(t_locations loc, std::string& path, std::string uplo
 			cleanPath(upload_path);
 			if (isMethodAllowed(loc, req) == true)
 			{
-				const std::map<std::string, std::string>& cgi_path = req._server.getConfig().cgi_path;
+				const std::map<std::string, std::string>& cgi_path = req._server->getConfig().cgi_path;
 				if (findCGI(cgi_path, req.getPathToFile()) == true)
 				{
 					std::map<std::string, std::string>::const_iterator it = cgi_path.begin();
@@ -238,7 +238,7 @@ bool	Response::findDefaultFile(std::string& rooted_path, t_locations& loc, std::
 
 void	Response::fileRoutine(std::string rooted_path, std::map<int, std::string> error_paths, t_locations loc, Request& req){
 
-	const std::map<std::string, std::string>& cgi_path = req._server.getConfig().cgi_path;
+	const std::map<std::string, std::string>& cgi_path = req._server->getConfig().cgi_path;
 	if (findCGI(cgi_path, req.getPathToFile()) == true)
 	{
 		if (checkContentType(rooted_path) == true)

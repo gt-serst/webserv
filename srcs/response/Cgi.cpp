@@ -29,14 +29,14 @@
 
 static void	CgiError(Request& req, Response& res, int errorCode, std::string errorString)
 {
-	int	client_fd = req._server.getClientFd();
-	std::map<int, std::string> _req = req._server.getRequests();
-	res.errorResponse(errorCode, errorString, req._server.getConfig().error_page_paths);
+	int	client_fd = req._server->getClientFd();
+	std::map<int, std::string> _req = req._server->getRequests();
+	res.errorResponse(errorCode, errorString, req._server->getConfig().error_page_paths);
 	res.generateResponse();
 	_req.erase(client_fd);
 	_req.insert(std::make_pair(client_fd, res.getResponse()));
-	req._server.setRequests(_req);
-	req._server.sendResponse(client_fd);
+	req._server->setRequests(_req);
+	req._server->sendResponse(client_fd);
 	_req.clear();
 }
 
@@ -60,7 +60,7 @@ void Response::handleCGI(std::string rootedpath, std::string path, Request& req,
 				return;
 			}
 			pid_t p = fork();
-			int client_fd = req._server.getClientFd();
+			int client_fd = req._server->getClientFd();
 			if (p == 0) { // Child process
 				close(pipefd[1]); // Close write end of the input pipe
 				close(output_pipe[0]); // Close read end of the output pipe
@@ -89,13 +89,13 @@ void Response::handleCGI(std::string rootedpath, std::string path, Request& req,
 				std::string query_string = "QUERY_STRING=" + req.getQuerystr();
 				std::string content_length = "CONTENT_LENGTH=" + intToString(req.getLen());
 				std::string content_type = "CONTENT_TYPE=" + req.getHeader("Content-Type");
-				std::string remote_host = "REMOTE_HOST=" + intToString((int)req._server.getClientAddr().sin_port);
-				std::string remote_addr = "REMOTE_ADDR=" + intToString((int)req._server.getClientAddr().sin_addr.s_addr);
+				std::string remote_host = "REMOTE_HOST=" + intToString((int)req._server->getClientAddr().sin_port);
+				std::string remote_addr = "REMOTE_ADDR=" + intToString((int)req._server->getClientAddr().sin_addr.s_addr);
 				std::string request_method = "REQUEST_METHOD=" + req.getRequestMethod();
 				std::string server_name = "SERVER_NAME=" + req.getHost();
-				std::string server_port = "SERVER_PORT=" + intToString(req._server.getConfig().port);
+				std::string server_port = "SERVER_PORT=" + intToString(req._server->getConfig().port);
 				std::string server_protocol = "SERVER_PROTOCOL=HTTP/" + req.getVersion();
-				std::string upload_path = "UPLOAD_PATH=/" + req._server.getConfig().upload_path;
+				std::string upload_path = "UPLOAD_PATH=/" + req._server->getConfig().upload_path;
 				char *envp[] = {
 					ft_strdup(path_info.c_str()),
 					ft_strdup(path_translated.c_str()),

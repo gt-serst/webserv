@@ -384,7 +384,7 @@ Request::Request(){}
 Request::Request(std::string& buffer, Server& server)
 {
 	//std::cout << "Parsing request" << std::endl;
-	_server = server;
+	_server = &server;
 	_version = "1.1";
 	_path_to_file = "/";
 	_hostname = "";
@@ -471,7 +471,7 @@ Request::~Request()
 	_query_str.clear();
 	_error_code = -1;
 	_error_msg.clear();
-	_port = _server.getConfig().port;
+	_port = _server->getConfig().port;
 	chunk_size = 0;
 	_body_len = -1;
 	_fragment.clear();
@@ -936,7 +936,7 @@ bool	Request::handle_headers()
 		}
 		_hostname = line.substr(0, pos);
 		_port = ft_atoi(line.substr(pos + 1, line.length()).c_str());
-		if (_server.getConfig().port != _port)
+		if (_server->getConfig().port != _port)
 		{
 			_error_code = 400;
 			_error_msg = "The port in the host header does not match the port of the request";
@@ -956,7 +956,7 @@ bool	Request::handle_headers()
 			_hostname.erase(_hostname.length() - 1, 1);
 	}
 	int i = 0;
-	std::vector<std::string> tmp = _server.getConfig().server_name;
+	std::vector<std::string> tmp = _server->getConfig().server_name;
 	for (std::vector<std::string>::iterator it = tmp.begin(); it != tmp.end(); ++it)
 	{
 		if (_hostname.compare(*it) == 0 || (*it == "localhost" && _hostname == "127.0.0.1"))
@@ -980,7 +980,7 @@ bool	Request::handle_headers()
 			_error_msg = "A request cant have both the transfer encoding and the content length headers";
 			return true;
 		}
-		if (ft_atoi(line.c_str()) > _server.getConfig().max_body_size)
+		if (ft_atoi(line.c_str()) > _server->getConfig().max_body_size)
 		{
 			_error_code = 413;
 			_error_msg = "The body is greater than the max body size accepted by the server";

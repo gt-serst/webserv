@@ -126,7 +126,7 @@ class Request
 		int			getErrorCode() const;
 		int			getPort() const;
 		std::string getQuerystr() const;
-		Server _server;
+		Server* _server;
 		std::string getIp() const;
 		int			getLen() const;
 		std::map<int, t_multi> getMulti() const;
