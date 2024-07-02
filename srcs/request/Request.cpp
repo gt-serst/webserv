@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/25 12:15:50 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/07/02 16:03:17 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/07/02 17:11:12 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -465,24 +465,24 @@ Request::~Request()
 	// }
 	_request.clear();
 	_request_method.clear();
-	_version.clear();
-	_path_to_file.clear();
 	_hostname.clear();
-	_litteral_ip.clear();
+	_path_to_file.clear();
+	_version.clear();
+	_headers.clear();
+	_query_args.clear();
 	_body.clear();
 	_query_str.clear();
-	_error_code = -1;
 	_error_msg.clear();
+	_litteral_ip.clear();
+	_boundary.clear();
+	_fragment.clear();
+	_multiform.clear();
+	_error_code = -1;
 	_port = _server->getConfig().port;
 	chunk_size = 0;
 	_body_len = -1;
-	_fragment.clear();
 	chunked = false;
 	multiform = false;
-	_boundary.clear();
-	_headers.clear();
-	_query_args.clear();
-	_multiform.clear();
 	//std::cout << "//////////////Request destroyed//////////////" << std::endl;
 }
 
