@@ -1,8 +1,6 @@
 #!/bin/bash
-
 # Read the body from standard input
 body=$(cat)
-
 # Output the HTTP response headers
 echo "$SERVER_PROTOCOL 200 OK"
 echo "Content-Type: text/html; charset=UTF-8"

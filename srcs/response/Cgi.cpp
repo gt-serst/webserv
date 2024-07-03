@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/25 12:16:01 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/07/01 15:42:10 by febonaer         ###   ########.fr       */
+/*   Updated: 2024/07/03 12:07:22 by febonaer         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -163,7 +163,7 @@ void Response::handleCGI(std::string rootedpath, std::string path, Request& req,
 
 				close(pipefd[1]); // Close the write end of the input pipe
 				std::time_t seconds = std::time(nullptr);
-				while (seconds + 2 != std::time(nullptr))
+				while (seconds + 2 > std::time(nullptr))
 					continue ;
 				kill(p, SIGKILL);
 				// Wait for the child process to finish
@@ -178,8 +178,6 @@ void Response::handleCGI(std::string rootedpath, std::string path, Request& req,
 				}
 
 				bool hasError = false;
-				//std::cout << path.substr(path.find_last_of("/"), path.length()).c_str() << std::endl;
-				//std::cout << rootedpath.substr(0, rootedpath.find_last_of("/")) << std::endl;
 				// Check the status of the child process
 				if (WIFEXITED(status)) {
 					int exitStatus = WEXITSTATUS(status);
