@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: geraudtserstevens <geraudtserstevens@st    +#+  +:+       +#+        */
+/*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/08 09:59:24 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/07/03 12:07:09 by febonaer         ###   ########.fr       */
+/*   Updated: 2024/07/03 13:14:18 by febonaer         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -55,7 +55,7 @@ int	Server::createServerSocket(void){
 	rc = setsockopt(this->_fd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse));
 	if (rc < 0)
 	{
-		perror("ERROR: Setsockopt() failed");
+		std::cerr << "ERROR: Setsockopt() failed" << std::endl;
 		return (-1);
 	}
 
@@ -111,11 +111,13 @@ int	Server::readClientSocket(int client_fd){
 	rc = recv(client_fd, buffer, BUFFER_SIZE - 1, 0);
 	if (rc == 0 || rc == -1)
 	{
-		this->closeClientSocket(client_fd);
 		if (!rc)
-			std::cout << "Connection was closed" << std::endl;
+			return (0);
 		else
+		{
+			this->closeClientSocket(client_fd);
 			std::cerr << "ERROR: Recv() failed" << std::endl;
+		}
 		return (-1);
 	}
 	_requests[client_fd].append(buffer, rc);
@@ -142,6 +144,7 @@ int	Server::readClientSocket(int client_fd){
 				if (content_length < 0 || content_length > 30000000)
 				{
 					_requests.erase(client_fd);
+					this->closeClientSocket(client_fd);
 					std::cerr << "ERROR: Wrong content length, file too large" << std::endl;
 					return (-1);
 				}

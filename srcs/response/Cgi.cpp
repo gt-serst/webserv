@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/25 12:16:01 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/07/03 12:07:22 by febonaer         ###   ########.fr       */
+/*   Updated: 2024/07/03 13:12:30 by febonaer         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,14 +48,13 @@ static std::string intToString(int number) {
 
 void Response::handleCGI(std::string rootedpath, std::string path, Request& req, std::string exec_path, Response& res) {
 	struct stat sb;
-	//std::cout << "CGI processing started" << std::endl;
+	std::cout << "CGI processing started" << std::endl;
 	if (stat(exec_path.c_str(), &sb) == 0 && access(exec_path.c_str(), X_OK) == 0) {
 		if (stat(rootedpath.c_str(), &sb) == 0 && access(rootedpath.c_str(), X_OK) == 0) {
 			int pipefd[2];
 			int output_pipe[2];
 			if (pipe(pipefd) == -1 || pipe(output_pipe) == -1) {
 				std::cerr << "ERROR: CGI: pipe() failed" << std::endl;
-				perror("pipe()");
 				CgiError(req, res, 502, "CGI pipe() error");
 				return;
 			}
@@ -67,19 +66,16 @@ void Response::handleCGI(std::string rootedpath, std::string path, Request& req,
 
 				if (dup2(pipefd[0], STDIN_FILENO) == -1) {
 					std::cerr << "ERROR: CGI: dup2() failed" << std::endl;
-					perror("dup2()");
 					close(pipefd[0]);
 					close(output_pipe[1]);
 				}
 				if (dup2(output_pipe[1], STDOUT_FILENO) == -1) {
 					std::cerr << "ERROR: CGI: dup2() failed" << std::endl;
-					perror("dup2()");
 					close(pipefd[0]);
 					close(output_pipe[1]);
 				}
 				if (dup2(output_pipe[1], STDERR_FILENO) == -1) {
 					std::cerr << "ERROR: CGI: dup2() failed" << std::endl;
-					perror("dup2()");
 					close(pipefd[0]);
 					close(output_pipe[1]);
 				}
@@ -120,11 +116,9 @@ void Response::handleCGI(std::string rootedpath, std::string path, Request& req,
 				std::string script_dir = rootedpath.substr(0, rootedpath.find_last_of("/"));
 				if (chdir(script_dir.c_str()) == -1) {
 					std::cerr << "ERROR: CGI: chdir() failed" << std::endl;
-					perror("chdir()");
 				}
 				if (execve(exec_path.c_str(), argv, envp) == -1) {
 					std::cerr << "ERROR: CGI: Failed to execute CGI script" << std::endl;
-					perror("execve()");
 				}
 
 				// Free dynamically allocated memory
@@ -138,7 +132,6 @@ void Response::handleCGI(std::string rootedpath, std::string path, Request& req,
 				close(output_pipe[1]);
 			} else if (p == -1) { // Fork failed
 				std::cerr << "ERROR: CGI: fork() failed to open a new process" << std::endl;
-				perror("fork()");
 				close(pipefd[0]);
 				close(pipefd[1]);
 				close(output_pipe[0]);
@@ -153,7 +146,6 @@ void Response::handleCGI(std::string rootedpath, std::string path, Request& req,
 				if (req.getRequestMethod() == "POST") {
 					if (write(pipefd[1], req.getBody().c_str(), req.getBody().size()) == -1) {
 						std::cerr << "ERROR: CGI: write() failed" << std::endl;
-						perror("write()");
 						close(pipefd[1]);
 						close(output_pipe[0]);
 						CgiError(req, res, 502, "CGI write() error");
@@ -171,7 +163,6 @@ void Response::handleCGI(std::string rootedpath, std::string path, Request& req,
 				pid_t result = waitpid(p, &status, 0);
 				if (result == -1) {
 					std::cerr << "ERROR: CGI: waitpid() failed" << std::endl;
-					perror("waitpid()");
 					close(output_pipe[0]);
 					CgiError(req, res, 502, "CGI waitpid() error");
 					return;
@@ -202,7 +193,6 @@ void Response::handleCGI(std::string rootedpath, std::string path, Request& req,
 					if (!hasError) {
 						if (write(client_fd, buffer, bytesRead) == -1) {
 							std::cerr << "ERROR: CGI: write() to client failed" << std::endl;
-							perror("write()");
 							close(output_pipe[0]);
 							CgiError(req, res, 502, "CGI write() to client error");
 							return;
@@ -212,7 +202,6 @@ void Response::handleCGI(std::string rootedpath, std::string path, Request& req,
 
 				if (bytesRead == -1) {
 					std::cerr << "ERROR: CGI: read() failed" << std::endl;
-					perror("read()");
 					close(output_pipe[0]);
 					CgiError(req, res, 502, "CGI read() error");
 					return;

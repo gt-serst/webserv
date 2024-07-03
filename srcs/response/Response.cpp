@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:28:16 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/07/02 16:31:46 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/07/03 10:44:23 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -78,7 +78,7 @@ void	Response::handleDirective(std::string path, t_locations& loc, Request& req,
 
 	std::string	rooted_path;
 
-	//std::cout << "Response processing started" << std::endl;
+	std::cout << "Response processing started" << std::endl;
 	// Catch POST method early because it depends on upload_path, not uri (=path)
 	if (uploadMethod(loc, path, serv.getConfig().upload_path, serv.getConfig().error_page_paths, req) == true)
 		return;
@@ -281,7 +281,7 @@ bool	Response::findCGI(std::map<std::string, std::string> cgi_path, std::string 
 		std::map<std::string, std::string>::iterator it = cgi_path.begin();
 		while (it != cgi_path.end())
 		{
-			if (path_to_file.compare(path_to_file.length() - it->first.length(), it->first.length(), it->first) == 0)
+			if (path_to_file.length() >= it->first.length() && path_to_file.compare(path_to_file.length() - it->first.length(), it->first.length(), it->first) == 0)
 				return (true);
 			it++;
 		}
