@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
+/*   By: geraudtserstevens <geraudtserstevens@st    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/08 09:59:24 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/07/03 12:00:19 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/07/03 13:26:34 by geraudtsers      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -120,6 +120,7 @@ int	Server::readClientSocket(int client_fd){
 		}
 		return (-1);
 	}
+	buffer[rc] = '\0';
 	_requests[client_fd].append(buffer, rc);
 	// Check for chunked requests
 	size_t i = _requests[client_fd].find("\r\n\r\n");
