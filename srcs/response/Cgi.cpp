@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/25 12:16:01 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/07/01 15:42:10 by febonaer         ###   ########.fr       */
+/*   Updated: 2024/07/03 11:01:14 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,7 +48,7 @@ static std::string intToString(int number) {
 
 void Response::handleCGI(std::string rootedpath, std::string path, Request& req, std::string exec_path, Response& res) {
 	struct stat sb;
-	//std::cout << "CGI processing started" << std::endl;
+	std::cout << "CGI processing started" << std::endl;
 	if (stat(exec_path.c_str(), &sb) == 0 && access(exec_path.c_str(), X_OK) == 0) {
 		if (stat(rootedpath.c_str(), &sb) == 0 && access(rootedpath.c_str(), X_OK) == 0) {
 			int pipefd[2];
