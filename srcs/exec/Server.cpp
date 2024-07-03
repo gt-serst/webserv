@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: geraudtserstevens <geraudtserstevens@st    +#+  +:+       +#+        */
+/*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/08 09:59:24 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/07/03 13:28:19 by geraudtsers      ###   ########.fr       */
+/*   Updated: 2024/07/03 14:00:09 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -192,7 +192,7 @@ int	Server::handleRequest(int client_fd){
 					if (response.getDefaultFile() == true)
 					{
 						// When a default file is found we relaunch all the routine, router and response process
-						//std::cout << "Default file detected, relaunch response processing" << std::endl;
+						std::cout << "Default file detected, relaunch response processing" << std::endl;
 						response.setDefaultFile(false);
 						response.handleDirective(request.getPathToFile(), loc, request, *this);
 					}
@@ -211,7 +211,7 @@ int	Server::handleRequest(int client_fd){
 	}
 	else
 	{
-		//std::cout << "Error detected by parsing" << std::endl;
+		std::cout << "Error detected by parsing" << std::endl;
 		// Catch error from the request parser
 		response.errorResponse(request.getErrorCode(), request.getErrorMsg(), getConfig().error_page_paths);
 	}
@@ -230,37 +230,37 @@ int	Server::sendResponse(int client_fd){
 	//std::cout << _requests[client_fd] << std::endl;
 	len = _requests[client_fd].length();
 	rc = send(client_fd, _requests[client_fd].c_str(), len, 0);
-	if (rc != static_cast<int>(_requests[client_fd].length()))
-	{
-		std::string	still_to_send;
-
-		still_to_send = _requests[client_fd].substr(rc, len);
-		_requests.erase(client_fd);
-		_requests.insert(std::make_pair(client_fd, still_to_send));
-		return (1);
-	}
+	std::cout << "Rc: " << rc << std::endl;
 	if (rc == 0 || rc == -1)
 	{
 		_requests.erase(client_fd);
 		this->closeClientSocket(client_fd);
 		if (!rc)
 		{
-			//std::cout << "Client close connection" << std::endl;
+			std::cout << "Client close connection" << std::endl;
 			return (0);
 		}
 		else
 		{
-			//std::cerr << "ERROR: Send() failed" << std::endl;
+			std::cerr << "ERROR: Send() failed" << std::endl;
 			return (-1);
 		}
 	}
+	else if (rc != static_cast<int>(_requests[client_fd].length()))
+	{
+		std::string	still_to_send;
+
+		std::cout << "Still content to send" << std::endl;
+		still_to_send = _requests[client_fd].substr(rc, len);
+		_requests.erase(client_fd);
+		_requests.insert(std::make_pair(client_fd, still_to_send));
+		return (1);
+	}
 	else
 	{
-		// for (std::map<int, std::string>::iterator it = _requests.begin(); it != _requests.end(); ++it)
-		// 	std::cout << it->first << std::endl;
 		_requests.erase(client_fd);
 		this->closeClientSocket(client_fd);
-		//std::cout << "Response to client sent" << std::endl;
+		std::cout << "Response to client sent" << std::endl;
 		return (0);
 	}
 }
@@ -269,7 +269,7 @@ bool	Server::checkServerAvailability(Request& req){
 
 	if (req.getRequestMethod() == "GET" && req.getPathToFile() == "/exit")
 	{
-		//std::cout << "Server off" << std::endl;
+		std::cout << "Server off" << std::endl;
 		_still_alive = false;
 		return (true);
 	}

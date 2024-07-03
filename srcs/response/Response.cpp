@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: geraudtserstevens <geraudtserstevens@st    +#+  +:+       +#+        */
+/*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:28:16 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/07/03 13:08:33 by geraudtsers      ###   ########.fr       */
+/*   Updated: 2024/07/03 13:37:00 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,8 +26,6 @@
 #include <ctime>
 #include <algorithm>
 #include <iostream>
-
-#include <fcntl.h>
 
 Response::Response(void){
 
@@ -119,7 +117,7 @@ void	Response::handleDirective(std::string path, t_locations& loc, Request& req,
 		else
 			errorResponse(415, "Unsupported Media Type : Not a directory nor a file", serv.getConfig().error_page_paths);
 	}
-	//std::cout << "Response processing finished" << std::endl;
+	std::cout << "Response processing finished" << std::endl;
 }
 
 void	Response::cleanPath(std::string& str){

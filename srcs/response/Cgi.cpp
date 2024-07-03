@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/25 12:16:01 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/07/03 13:12:30 by febonaer         ###   ########.fr       */
+/*   Updated: 2024/07/03 13:35:32 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -214,6 +214,7 @@ void Response::handleCGI(std::string rootedpath, std::string path, Request& req,
 					return;
 				}
 			}
+			std::cout << "CGI processing finished" << std::endl;
 		} else {
 			std::cerr << "ERROR: CGI: Path to " << rootedpath << " executable is not accessible." << std::endl;
 			CgiError(req, res, 502, "CGI executable path not accessible");
