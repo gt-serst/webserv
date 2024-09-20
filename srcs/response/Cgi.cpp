@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/25 12:16:01 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/07/03 13:35:32 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/09/20 11:05:03 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -200,6 +200,11 @@ void Response::handleCGI(std::string rootedpath, std::string path, Request& req,
 					}
 				}
 
+				if (bytesRead == 0)
+				{
+					close(output_pipe[0]);
+					return;
+				}
 				if (bytesRead == -1) {
 					std::cerr << "ERROR: CGI: read() failed" << std::endl;
 					close(output_pipe[0]);

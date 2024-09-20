@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:12:17 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/07/02 16:12:03 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/09/20 12:16:48 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,18 +19,6 @@
 # include <map>
 # include <sys/types.h>
 # include <dirent.h>
-
-typedef enum e_file_type
-{
-	E_PNG,
-	E_JPEG,
-	E_SVG,
-	E_GIF,
-	E_PDF,
-	E_ZIP,
-	E_MP4,
-	E_DEFAULT
-}	t_file_type;
 
 class Response{
 
@@ -70,10 +58,9 @@ class Response{
 		std::string	getCharCount(struct stat file_info);
 		void		insertHtmlIndexLine(std::string redirect_url, std::string txt_button, std::string char_count);
 		void		deleteResponse(void);
-		void		downloadFileResponse(std::string stack);
+		void		downloadFileResponse(std::string path, std::string stack);
 		bool		checkContentType(std::string path);
 		std::string	getContentType(std::string stack);
-		t_file_type	stringToEnum(std::string const& str);
 		void		uploadFileResponse(void);
 		std::string	matchErrorCodeWithPage(int error_code, std::map<int, std::string> error_paths);
 		void		createHtmlErrorPage(int error_code, std::string message);

@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/22 16:28:16 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/09/20 10:59:44 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/09/20 12:16:25 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -50,26 +50,11 @@ Response::~Response(void){
 
 bool	Response::checkContentType(std::string path){
 
-	std::ifstream input(path);
-
-	if (input.is_open())
-	{
-		std::string buffer;
-		std::string stack;
-
-		while (std::getline(input, buffer))
-		{
-			stack += buffer;
-			buffer.clear();
-			stack += '\n';
-		}
-		input.close();
-		std::string type = getContentType(stack);
-		if (type == "text/html" || type == "text/plain" || type == "image/png" || type == "image/jpeg"
-				|| type == "image/svg+xml" || type == "image/gif" || type == "application/pdf"
-				|| type == "application/zip" || type == "video/mp4")
-			return (true);
-	}
+	std::string type = getContentType(path);
+	if (type == "text/html" || type == "text/plain" || type == "image/png" || type == "image/jpeg"
+			|| type == "image/svg+xml" || type == "image/gif" || type == "application/pdf"
+			|| type == "application/zip" || type == "video/mp4" || type == "text/x-shellscript" || type == "application/x-httpd-php")
+		return (true);
 	return (false);
 }
 
@@ -132,41 +117,34 @@ bool	Response::uploadMethod(t_locations loc, std::string& path, std::string uplo
 
 	if (req.getRequestMethod() == "POST")
 	{
-		std::string type = getContentType(req.getBody());
-		if (type == "text/html" || type == "text/plain" || type == "image/png" || type == "image/jpeg"
-				|| type == "image/svg+xml" || type == "image/gif")
+		cleanPath(upload_path);
+		if (isMethodAllowed(loc, req) == true)
 		{
-			cleanPath(upload_path);
-			if (isMethodAllowed(loc, req) == true)
+			const std::map<std::string, std::string>& cgi_path = req._server->getConfig().cgi_path;
+			if (findCGI(cgi_path, req.getPathToFile()) == true)
 			{
-				const std::map<std::string, std::string>& cgi_path = req._server->getConfig().cgi_path;
-				if (findCGI(cgi_path, req.getPathToFile()) == true)
+				std::map<std::string, std::string>::const_iterator it = cgi_path.begin();
+				std::string _path = req.getPathToFile();
+				while (it != cgi_path.end())
 				{
-					std::map<std::string, std::string>::const_iterator it = cgi_path.begin();
-					std::string _path = req.getPathToFile();
-					while (it != cgi_path.end())
+					if (path.compare(_path.length() - it->first.length(), it->first.length(), it->first) == 0 && !it->second.empty())
 					{
-						if (path.compare(_path.length() - it->first.length(), it->first.length(), it->first) == 0 && !it->second.empty())
-						{
-							if (attachRootToPath(path, loc.root_path) == true)
-								handleCGI(path, req.getPathToFile(), req, it->second, *this);
-						}
-						++it;
+						if (attachRootToPath(path, loc.root_path) == true)
+							handleCGI(path, req.getPathToFile(), req, it->second, *this);
 					}
-					this->_cgi = true;
+					++it;
 				}
-				else if (req.getMulti().empty() == false)
-					uploadMultiformFile(upload_path, error_paths, req.getMulti());
-				else if (req.getQuery_args().empty() == false)
-					uploadQueryFile(upload_path, error_paths, req.getQuery_args(), req.getBody());
-				else
-					errorResponse(400, "Bad Request", error_paths);
+				this->_cgi = true;
 			}
+			else if (req.getMulti().empty() == false)
+				uploadMultiformFile(upload_path, error_paths, req.getMulti());
+			else if (req.getQuery_args().empty() == false)
+				uploadQueryFile(upload_path, error_paths, req.getQuery_args(), req.getBody());
 			else
-				errorResponse(405, "Method Not Allowed : File", error_paths);
+				errorResponse(400, "Bad Request", error_paths);
 		}
 		else
-			errorResponse(415, "Unsupported Media Type : File", error_paths);
+			errorResponse(405, "Method Not Allowed : File", error_paths);
 		return (true);
 	}
 	return (false);
@@ -389,7 +367,7 @@ void	Response::downloadFile(std::string rooted_path, std::map<int, std::string> 
 				stack += '\n';
 		}
 		input.close();
-		downloadFileResponse(stack);
+		downloadFileResponse(rooted_path, stack);
 	}
 	else
 		errorResponse(404, "Not Found : Open input failed", error_paths);
@@ -563,81 +541,48 @@ void	Response::deleteResponse(void){
 	generateResponse();
 }
 
-void	Response::downloadFileResponse(std::string stack){
+void	Response::downloadFileResponse(std::string path, std::string stack){
 
 	this->_status_code = 200;
 	this->_status_message = "OK";
-	this->_content_type = getContentType(stack);
+	this->_content_type = getContentType(path);
 	this->_content_len = stack.length();
 	this->_body = stack;
 	generateResponse();
 }
 
-std::string	Response::getContentType(std::string stack){
+std::string Response::getContentType(std::string stack){
 
-	std::stringstream	ss;
-	std::stringstream	ss_hex;
-	std::vector<char>	bytes(8);
-	std::string			octets;
-	bool				text = true;
+	size_t pos = stack.find_last_of('.');
+	if (pos == std::string::npos)
+		return ("application/octet-stream");
 
-	ss << stack;
-	ss.read(&bytes[0], bytes.size());
-	for (size_t i = 0; i < bytes.size(); i++)
-		ss_hex << std::hex << (static_cast<int>(bytes[i]) & 0xFF) << " ";
-	octets = ss_hex.str();
-	ss.clear();
-	ss_hex.clear();
-	bytes.clear();
-	switch (stringToEnum(octets))
-	{
-		case E_PNG:
-			return ("image/png");
-		case E_JPEG:
-			return ("image/jpeg");
-		case E_SVG:
-			return ("image/svg+xml");
-		case E_GIF:
-			return ("image/gif");
-		case E_PDF:
-			return ("application/pdf");
-		case E_ZIP:
-			return ("application/zip");
-		case E_MP4:
-			return ("video/mp4");
-		default:
-			break;
-	}
+	std::string ext = stack.substr(pos + 1);
 
-	if (stack.compare(0, 15, "<!DOCTYPE html>") == 0)
-		return ("text/html");
-
-	for (size_t i = 0; i < stack.length(); i++)
-	{
-		if (!isprint(stack[i]) && !isspace(stack[i]))
-		{
-			text = false;
-			break;
-		}
-	}
-
-	if (text)
+	if (ext == "txt")
 		return ("text/plain");
+	else if (ext == "html")
+		return ("text/html");
+	else if (ext == "png")
+		return ("image/png");
+	else if (ext == "jpeg" || ext == "jpg")
+		return ("image/jpeg");
+	else if (ext == "svg")
+		return ("image/svg+xml");
+	else if (ext == "gif")
+		return ("image/gif");
+	else if (ext == "pdf")
+		return ("application/pdf");
+	else if (ext == "zip")
+		return ("application/zip");
+	else if (ext == "mp4")
+		return ("video/mp4");
+	else if (ext == "sh")
+		return ("text/x-shellscript");
+	else if (ext == "php")
+		return ("application/x-httpd-php");
 
 	return ("application/octet-stream");
-}
-
-t_file_type	Response::stringToEnum(std::string const& str){
-
-	if (str.compare(0, 20, "89 50 4e 47 d a 1a a") == 0) return (E_PNG);
-	if (str.compare(0, 5, "ff d8") == 0) return (E_JPEG);
-	if (str.compare(0, 23, "3c 3f 78 6d 6c 20 76 65") == 0) return (E_SVG);
-	if (str.compare(0, 17, "47 49 46 38 39 61") == 0) return (E_GIF);
-	if (str.compare(0, 11, "25 50 44 46") == 0) return (E_PDF);
-	if (str.compare(0, 18, "50 4b 3 4 14 0 8 0") == 0) return (E_ZIP);
-	if (str.compare(0, 20, "0 0 0 20 66 74 79 70") == 0) return (E_MP4);
-	else
-		return (E_DEFAULT);
 }
 
 void	Response::uploadFileResponse(void){
