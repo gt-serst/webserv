@@ -6,7 +6,7 @@
 /*   By: gt-serst <gt-serst@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/08 09:59:24 by gt-serst          #+#    #+#             */
-/*   Updated: 2024/07/03 14:00:09 by gt-serst         ###   ########.fr       */
+/*   Updated: 2024/09/20 11:00:17 by gt-serst         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -230,7 +230,6 @@ int	Server::sendResponse(int client_fd){
 	//std::cout << _requests[client_fd] << std::endl;
 	len = _requests[client_fd].length();
 	rc = send(client_fd, _requests[client_fd].c_str(), len, 0);
-	std::cout << "Rc: " << rc << std::endl;
 	if (rc == 0 || rc == -1)
 	{
 		_requests.erase(client_fd);
